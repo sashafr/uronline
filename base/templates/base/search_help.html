@@ -1,0 +1,73 @@
+{% extends '_layouts/base.html' %}
+{% load staticfiles %}
+
+<!-- Metadata -->
+{% block page_title %}Search Help{% endblock %}
+<!-- End Metadata -->
+
+{% block content %}
+
+    <!-- Banner -->
+    <div class="banner">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-12">
+            <h2 class="text-center">Search Tips</h2>
+          </div>
+        </div>
+      </div>
+    </div> <!-- End Banner -->
+    
+    <!-- Body Sections-->
+    <div class="content-section-a">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-5 col-sm-6">
+                    <hr class="section-heading-spacer">
+                    <div class="clearfix"></div>
+                    <h2 class="section-heading">Specify a property</h2>
+                    <p class="lead">Select a property to search by from the "Property" menu. This will specify that you would like to search only that property for your Search Terms.</p>
+                    </p>
+                </div>
+                <div class="col-lg-5 col-lg-offset-2 col-sm-6">
+                    <img class="img-responsive" src="{% static 'img/property_example.jpg' %}" alt="How to select a property">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="content-section-b">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-5 col-lg-offset-1 col-sm-push-6  col-sm-6">
+                    <hr class="section-heading-spacer">
+                    <div class="clearfix"></div>
+                    <h2 class="section-heading">Specify a search type</h2>
+                    <p class="lead">
+                        <ul class="lead">
+                            <li><strong>"contains"</strong> - selecting a property and "contains" will check for any object which contains your Search Terms for the specified property. This is the default search.</li>
+                            <li><strong>"like"</strong> - selecting a property and "like" allows you to use <a href="http://en.wikipedia.org/wiki/Wildcard_character">wildcards</a> in your search. To represent a single character, use "?", ie. "te?t". To represent 0 or more characters, use "*", ie. "te*t".</li>
+                            <li><strong>"equals"</strong> - selecting a property and "equals" will check for any object which contains EXACTLY your Search Terms for the specified property.</li>
+                            <li><strong>"blank"</strong> - selecting a property and "blank" will check for any object which does not have any data for the specified property.</li>
+                            <li><strong>"starts with"</strong> - selecting a property and "starts with" will check for any object which contains words that begin with your Search Terms.</li>
+                            <li><strong>"ends with"</strong> - selecting a property and "ends with" will check for any object which contains words that end with your Search Terms.</li>
+                            <li><strong>"greater than", "less than", etc</strong> - selecting one of these search types will treat your Search Terms as a number and search for objects which contain the specified property and that its value evaluates to true using your Search Terms</li>
+                        </ul>
+                    </p>
+                </div>
+                <div class="col-lg-5 col-sm-pull-6  col-sm-6">
+                    <img class="img-responsive" src="{% static 'img/type_example.jpg' %}" alt="How to select a search type">
+                </div>
+            </div>
+        </div>
+    </div>    
+    
+    <!-- End Body Sections-->
+    
+{% endblock %}
+
+
+                        <ul>
+                            <li>Select a property to search by from the "Property" menu. This will specify that you would like to search only that property for your Search Terms.</li>
+                            <li>
+                            </li>
+                        </ul>

@@ -1,0 +1,30 @@
+{% extends "_layouts/base.html" %}
+{% load staticfiles %}
+{% load base_tags %}
+
+<!-- Metadata -->
+{% block page_title %}Subject Detail{% endblock %}
+<!-- End Metadata -->
+{% block body_class %}container{% endblock %}
+{% block artifacts_active %}active{% endblock %} <!-- Selects Artifacts tab in Header Menu -->
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <h3>{{ subject.id }}</h3>
+      <table class="table table-striped">
+        {% for property in subject.subjectproperty_set.all %}
+          <tr>
+            <td>
+              {{ property.property }}
+            </td>
+            <td>
+              {{ property.property_value }}
+            </td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+</div>
+
+{% endblock %}

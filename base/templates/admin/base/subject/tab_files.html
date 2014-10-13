@@ -1,0 +1,37 @@
+<h2 class="legend">Related Media Files</h2>
+
+{% if original.pk %}
+    <table class="table table-bordered table-condensed table-striped">
+        <thead>
+            <tr>
+                <th>Preview</th>
+                <th colspan="1" class="required">
+                    Title
+                </th>
+                <th class="required">
+                    Relation Type
+                </th>
+                <th>Notes</th>
+                <th>Last Mod By</th>
+                <th>Delete?</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr
+        </tbody>
+        <tr>
+            <th>Flag presented by</th>
+          <td>
+            <a href="http://www.geonames.org" target="_blank">http://www.geonames.org</a>
+          </td>
+        </tr>
+        <tr>
+          <th>Flag of {{ original.name }}</th>
+          <td>
+            <img src="http://www.geonames.org/flags/x/{{ original.code|lower }}.gif" alt="" style="width: 50%">
+          </td>
+        </tr>
+      </table>
+    {% else %}
+      Item is not saved yet
+    {% endif %}
