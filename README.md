@@ -55,14 +55,3 @@ Xenith's original base template repository. This version of the UrOnline Digital
 is part of Phase 1 of the website's development schedule. During Phase 2, we hope to 
 combine aspects of our work with OpenContext v.2 currently being developed by Eric
 Kansa to expand our project to include Open Data capabilities.
-
-## Prerequisites ##
-
-- Python 2.6 or 2.7
-- pip
-- virtualenv (virtualenvwrapper is recommended for use during development)
-
-## Installation ##
-
-The project is still currently in development. More information about installation
-instructions will become available at the end of Phase 1, scheduled for August 2014.

@@ -3,11 +3,52 @@
 
 # TEAM
 
-    <name> -- <role> -- <twitter>
-
+    Developer/Database Administrator: Sasha Renninger
+    Contact: sashafr [at] sas [dot] upenn [dot] edu
+    From: Penn Museum, Philadelphia, PA, USA
+    
+    Principle Investigator: Richard Zettler
+    From: Penn Museum, Philadelphia, PA, USA
+    
+    Adviser - Ancient Texts: Steve Tinney
+    Contact: stinney [at] upenn [dot] edu
+    From: Penn Museum, Philadelphia, PA, USA
+    
+    Project Manager: Brad Hafford
+    Contact: whafford [at] sas [dot] upenn [dot] edu
+    From: Penn Museum, Philadelphia, PA, USA
+    
+    Research Assistant/Data Entry: Kyra Kaercher
+    Contact: kaercher [at] bu [dot] edu
+    From: Penn Museum, Philadelphia, PA, USA
+    
+    Advisor/Principle Investigator: Jonathan Tubb
+    From: British Museum, London, UK
+    
+    Curator/Research Assistant: Birger Helgestad
+    bhelgestad [at] britishmuseum [dot] org
+    From: British Museum, London, UK
+    
+    Research Assistant/Data Entry: Gareth Brereton
+    Contact: gbrereton [at] britishmuseum [dot] org
+    From: British Museum, London, UK
+    
 # THANKS
 
-    <name>
+    Leon Levy Foundation
+    British Museum
+    Penn Museum
+    
+    Penn Museum Researchers/Data Entry/Testers:
+    Shannon Advincula
+    Elena Yandola
+    Ryan Placchetti
+    
+    Penn Museum Conservation Team, especially Tessa de Alarcon
+    
+    British Museum Researchers/Data Entry/Testers
+    
+    British Museum Conservation Team, especially Duygu Camurcuoglu
 
 # TECHNOLOGY COLOPHON
 
