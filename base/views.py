@@ -5,6 +5,7 @@ from base.models import FeaturedImgs, Subject, Media, PersonOrg
 from haystack.views import SearchView
 from base.forms import AdvancedSearchForm
 from django.forms.formsets import formset_factory
+from base import tasks
 
 def home(request):
     """ Default view for the root """
@@ -40,3 +41,11 @@ def personorgdetail(request, personorg_id):
 def search_help(request):
 
     return render(request, 'base/search_help.html')
+    
+def about(request):
+
+    return render(request, 'base/about.html')
+    
+def update_index(request):
+    t = tasks.index_update()
+    return HttpResponse(t.task_id)

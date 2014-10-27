@@ -5,6 +5,33 @@ from django.forms.formsets import formset_factory
 from django.db.models import Q
 import re
 from django.forms import Textarea
+from django.utils.translation import ugettext_lazy as _
+
+'''class PublicationSubjectRelationFilter(admin.SimpleListFilter):
+    """ Allows filtering of subjects by related Publications """
+    
+    title = _('publication')
+    
+    parameter_name = 'pub'
+    
+    def lookups(self, request, model_admin):
+        pubs = Media.objects.filter(type=2) # select media with type = 'publication'
+        publist = []
+        
+        # create list of lookups; url coded value is ID of media item, displayed name is media title
+        for pub in pubs:
+            item = (pub.id, _(pub.title))
+            publist.append(item)
+        
+        return publist
+        
+    def queryset(self, request, queryset):
+        mediaid = self.value() # id of publication in media table
+        
+        # get all subjects with a relation to the given publication
+        if mediaid:
+            return queryset.filter(mediasubjectrelations__media_id = mediaid)
+        return queryset'''
 
 class StatusFilter(admin.SimpleListFilter):
 
@@ -94,11 +121,19 @@ class SubjectAdmin(admin.ModelAdmin):
         }),
     ]
     
+#    list_filter = (PublicationSubjectRelationFilter,)
+    
     change_list_template = 'admin/base/subject/change_list.html'
     change_form_template = 'admin/base/change_form.html'
     
+    """ Query set for this admin module will only include subjects of type "object" """
+    def queryset(self, request):
+        qs = super(SubjectAdmin, self).queryset(request)
+        return qs.filter(type__type='object')
+    
     def save_model(self, request, obj, form, change):
         obj.last_mod_by = request.user
+        obj.type_id = 1 #sets any object created from this admin module to type "object"
         obj.save()
         
     def save_formset(self, request, form, formset, change):
@@ -109,10 +144,10 @@ class SubjectAdmin(admin.ModelAdmin):
                 instance.last_mod_by = request.user            
                 instance.save()
     
-    def changelist_view(self, request, extra_context=None):
+'''    def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
         extra_context['advanced_formset'] = 'test for context'
-        return super(SubjectAdmin, self).changelist_view(request, extra_context=extra_context)
+        return super(SubjectAdmin, self).changelist_view(request, extra_context=extra_context)'''
         
     def get_search_results(self, request, queryset, search_term):
         '''Override the regular keyword search to perform the advanced search
@@ -124,6 +159,8 @@ class SubjectAdmin(admin.ModelAdmin):
         '''
         queryset, use_distinct = super(SubjectAdmin, self).get_search_results(request, queryset, search_term)
 
+        queryset = self.model.objects.all()
+        
         query_rows = search_term.split('???') #list of queries from search_term
 
         # make sure we received list of queries
@@ -135,10 +172,21 @@ class SubjectAdmin(admin.ModelAdmin):
                 connector = '' # AND/OR/NOTHING
                 kwargs = {}
                 current_query = Q()
-                
                 terms = row.split('___')                
-                
-                if len(terms) >= 3:
+
+                if row.startswith('pub='):
+                    pub_filter = row[4:]
+                    if pub_filter == '':
+                        continue
+                    elif pub_filter == '0':
+                        current_query = Q(mediasubjectrelations__relation_type=2)
+                    else:
+                        current_query = Q(mediasubjectrelations__media=pub_filter)
+
+                elif row.startswith('img=true'):
+                    current_query = Q(mediasubjectrelations__relation_type=3)
+                        
+                elif len(terms) >= 3:
                     # we got at least the number of terms we need
 
                     # CURRENT TERMS FORMAT: ([&AND/OR,] PROPERTY, [not_]SEARCH_TYPE, [SEARCH_KEYWORDS])
@@ -200,18 +248,18 @@ class SubjectAdmin(admin.ModelAdmin):
                             else:
                                 current_query = Q(Q(subjectproperty__property = terms[0]) & Q(**kwargs))
                     
-                    # modify query set
-                    if connector == 'AND':
-                        queryset = queryset.filter(current_query)
-                    elif connector == 'OR':
-                        queryset = queryset | self.model.objects.filter(current_query)
+                # modify query set
+                if connector == 'AND':
+                    queryset = queryset.filter(current_query)
+                elif connector == 'OR':
+                    queryset = queryset | self.model.objects.filter(current_query)
+                else:
+                    if i == 0:
+                        # in this case, current query should be the first query, so no connector
+                        queryset = self.model.objects.filter(current_query)
                     else:
-                        if i == 0:
-                            # in this case, current query should be the first query, so no connector
-                            queryset = self.model.objects.filter(current_query)
-                        else:
-                            # if connector wasn't set, use &
-                            queryset = queryset.filter(current_query)
+                        # if connector wasn't set, use &
+                        queryset = queryset.filter(current_query)
             
         return queryset.order_by('id').distinct(), use_distinct
 
@@ -347,3 +395,147 @@ class StatusAdmin(admin.ModelAdmin):
         obj.save()
     
 admin.site.register(Status, StatusAdmin)
+
+'''class LocationAdmin(admin.ModelAdmin):
+    readonly_fields = ('last_mod_by',)    
+#    inlines = [SubjectPropertyInline, MediaSubjectRelationsInline, FileInline]
+    search_fields = ['title']
+    list_display = ('id1', 'id2', 'id3', 'desc1', 'desc2', 'desc3')
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_form_tabs = (('general', 'General'), ('files', 'Files'))
+    fieldsets = [
+        (None, {
+            'classes': ('suit-tab', 'suit-tab-general'),
+            'fields': ['title', 'notes', 'last_mod_by']
+        }),
+    ]
+    
+    change_list_template = 'admin/base/subject/change_list.html'
+    change_form_template = 'admin/base/change_form.html'
+    
+    """ Query set for this admin module will only include subjects of type "object" """
+    def queryset(self, request):
+        qs = super(SubjectAdmin, self).queryset(request)
+        return qs.filter(type__type='object')
+    
+    def save_model(self, request, obj, form, change):
+        obj.last_mod_by = request.user
+        obj.save()
+        
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
+        for instance in instances:
+            if isinstance(instance, SubjectProperty) or isinstance(instance, MediaSubjectRelations): #Check if it is the correct type of inline
+                instance.last_mod_by = request.user            
+                instance.save()
+    
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['advanced_formset'] = 'test for context'
+        return super(SubjectAdmin, self).changelist_view(request, extra_context=extra_context)
+        
+    def get_search_results(self, request, queryset, search_term):
+        """Override the regular keyword search to perform the advanced search
+        
+        Because of the modified search_form.html template, the search_term will be specially
+        generated to work with this method. Each set of queries is delimited by ??? and takes
+        the form [&AND/OR]PROPERTY___SEARCH_TYPE___[SEARCH_KEYWORDS]??? This search method will 
+        return inaccurate results if someone searches ??? as a keyword
+        """
+        queryset, use_distinct = super(SubjectAdmin, self).get_search_results(request, queryset, search_term)
+
+        query_rows = search_term.split('???') #list of queries from search_term
+
+        # make sure we received list of queries
+        if len(query_rows) > 0:
+                   
+            for i, row in enumerate(query_rows):
+            
+                negate = False # whether the query will be negated
+                connector = '' # AND/OR/NOTHING
+                kwargs = {}
+                current_query = Q()
+                
+                terms = row.split('___')                
+                
+                if len(terms) >= 3:
+                    # we got at least the number of terms we need
+
+                    # CURRENT TERMS FORMAT: ([&AND/OR,] PROPERTY, [not_]SEARCH_TYPE, [SEARCH_KEYWORDS])
+                
+                    # remove and save the operator, if present
+                    if terms[0].startswith('&'): 
+                        connector = terms[0][1:]
+                        terms = terms[1:]
+
+                    # CURRENT TERMS FORMAT: (PROPERTY, [not_]SEARCH_TYPE, [SEARCH_KEYWORDS])
+                        
+                    # remove and save the negation, if present
+                    if terms[1].startswith('not'):
+                        negate = True
+                        terms[1] = terms[1][4:]
+
+                    # CURRENT TERMS FORMAT: (PROPERTY, SEARCH_TYPE, [SEARCH_KEYWORDS])
+                    
+                    # if this row is blank, than skip
+                    if (terms[2] == '') and (terms[1] != 'blank'):
+                        continue
+                    
+                    ########### PROBLEM: THIS IS VERY DEPENDENT ON THE DATA AND UNUM REMAINING AT ID 23
+                    # if search is for U Number, remove any non-numbers at the beginning
+                    if terms[0] == '23':
+                        d = re.search("\d", terms[2])
+                        if d is not None:
+                            start_index = d.start()
+                            terms[2] = terms[2][start_index:]
+                    ###########
+                    
+                    # create current query
+                    if terms[1] == 'blank':
+                        #if property is Any, then return all b/c query asks for doc with 'any' blank properties
+                        if terms[0] == '0':
+                            continue
+                            
+                        # BLANK is a special case negation (essentially a double negative), so handle differently
+                        if negate:
+                            current_query = Q(subjectproperty__property = terms[0])
+                        else:
+                            current_query = ~Q(subjectproperty__property = terms[0])
+                        
+                    else:
+                        kwargs = {str('subjectproperty__property_value__%s' % terms[1]) : str('%s' % terms[2])}
+
+                        # check if a property was selected and build the current query
+                        if terms[0] == '0':
+                            # if no property selected, than search thru ALL properties
+                            # use negation
+                            if negate:
+                                current_query = ~Q(**kwargs)
+                            else:
+                                current_query = Q(**kwargs)
+                        else:
+                            # use negation
+                            if negate:
+                                current_query = Q(Q(subjectproperty__property = terms[0]) & ~Q(**kwargs))
+                            else:
+                                current_query = Q(Q(subjectproperty__property = terms[0]) & Q(**kwargs))
+                    
+                    # modify query set
+                    if connector == 'AND':
+                        queryset = queryset.filter(current_query)
+                    elif connector == 'OR':
+                        queryset = queryset | self.model.objects.filter(current_query)
+                    else:
+                        if i == 0:
+                            # in this case, current query should be the first query, so no connector
+                            queryset = self.model.objects.filter(current_query)
+                        else:
+                            # if connector wasn't set, use &
+                            queryset = queryset.filter(current_query)
+            
+        return queryset.order_by('id').distinct(), use_distinct
+
+admin.site.register(Subject, SubjectAdmin)'''

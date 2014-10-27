@@ -10,6 +10,7 @@ sqs = SearchQuerySet().facet('prop_19_exact')
 urlpatterns = patterns('base.views',
     url(r'^$', 'home', name='home'),
     url(r'^map/', 'map', name='map'),
+    url(r'^about/', 'about', name='about'),
     url(r'^search/', FacetedSearchView(
         form_class = AdvFacetedSearchForm,
         searchqueryset = sqs
@@ -21,4 +22,5 @@ urlpatterns = patterns('base.views',
     # ex: /ur.iaas.upenn.edu/media/5/
     url(r'^media/(?P<media_id>\d+)/$', 'mediadetail', name='mediadetail'),
     url(r'^search_help/', 'search_help', name='search_help'),
+    url(r'^update_index/', 'update_index', name='update_index'),
 )

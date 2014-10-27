@@ -34,7 +34,14 @@ class MediaType(models.Model):
     type = models.CharField(max_length = 40)
 
     def __unicode__(self):
-        return self.type    
+        return self.type
+        
+"""Used to be more specific about an object type, such as location (type of subject)"""
+class ObjectType(models.Model):
+    type = models.CharField(max_length = 40)
+
+    def __unicode__(self):
+        return self.type 
 
 """Types of descriptive properties (or variables to describe objects)"""
 class DescriptiveProperty(models.Model):
@@ -144,6 +151,7 @@ class Subject(models.Model):
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
     last_mod_by = models.ForeignKey(User, blank = True)
+    type = models.ForeignKey(ObjectType, blank = True, null = True)
     
     def __unicode__(self):
         return self.title
@@ -398,6 +406,18 @@ class File(MediaSubjectRelations):
         return u'<img src="%s" />' % url        
     get_thumbnail.short_description = 'Thumbnail'
     get_thumbnail.allow_tags = True
+    
+    class Meta:
+        proxy = True
+
+""" Manager for subjects specifically of type = 'location' """        
+class LocationManager(models.Manager):
+    def get_query_set(self):
+        return super(LocationManager, self).get_query_set().filter(type__type='location')
+
+""" Proxy model for subjects specifically of type = 'location' """        
+class Location(Subject):
+    objects = LocationManager()
     
     class Meta:
         proxy = True

@@ -15,18 +15,18 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
   <!-- SEO meta tags - Override these on pages extending this template if you want dif values -->
-  <title>{% block site_title %}{% load_globals "site_title" %}{% endblock %} | {% block page_title %}{% endblock %}</title>
-  <meta name="description" content="{% block meta_description %}{% load_globals "site_description" %}{% endblock %}">
-  <meta name="author" content="{% block meta_author %}{% load_globals "site_author" %}{% endblock %}">
-  <meta name="og:title" content="{% block fb_title %}{% load_globals "facebook_title" %}{% endblock %}">
+  <title>{% block site_title %}{% load_globals 'site_title' %}{% endblock %} | {% block page_title %}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{% load_globals 'site_description' %}{% endblock %}">
+  <meta name="author" content="{% block meta_author %}{% load_globals 'site_author' %}{% endblock %}">
+  <meta name="og:title" content="{% block fb_title %}{% load_globals 'facebook_title' %}{% endblock %}">
   <meta name="og:type" content="{% block fb_type %}website{% endblock %}">
   <meta name="og:image" content="{% block fb_image %}{% static 'img/favicon.jpg' %}{% endblock %}">  
-  <meta name="og:url" content="{% block fb_url %}{% load_globals "facebook_url" %}{% endblock %}">  
-  <meta name="og:description" content="{% block fb_desc %}{% load_globals "facebook_description" %}{% endblock %}">  
+  <meta name="og:url" content="{% block fb_url %}{% load_globals 'facebook_url' %}{% endblock %}">  
+  <meta name="og:description" content="{% block fb_desc %}{% load_globals 'facebook_description' %}{% endblock %}">  
   <meta name="twitter:card" content="{% block twitter_card %}summary{% endblock %}">  
-  <meta name="twitter:url" content="{% block twitter_url %}{% load_globals "twitter_url" %}{% endblock %}">  
-  <meta name="twitter:title" content="{% block twitter_title %}{% load_globals "twitter_title" %}{% endblock %}">  
-  <meta name="twitter:description" content="{% block twitter_desc %}{% load_globals "twitter_description" %}{% endblock %}">  
+  <meta name="twitter:url" content="{% block twitter_url %}{% load_globals 'twitter_url' %}{% endblock %}">  
+  <meta name="twitter:title" content="{% block twitter_title %}{% load_globals 'twitter_title' %}{% endblock %}">  
+  <meta name="twitter:description" content="{% block twitter_desc %}{% load_globals 'twitter_description' %}{% endblock %}">  
   <meta name="twitter:image" content="{% block twitter_image %}{% static 'img/favicon.jpg' %}{% endblock %}">  
   <!-- End SEO meta tags -->
   
@@ -41,6 +41,7 @@
   <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
   <!-- End FavIcon -->
   
+  <!-- Styles -->
   {# use the CDN to get bootstrap css. can not be inside compress css block #}
   {% block cdn_css %}
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.2/css/bootstrap.min.css">
@@ -50,6 +51,8 @@
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   {% block css %}{% endblock %}
   {% endcompress %}
+  <!-- End Styles -->
+
   <!-- Custom Fonts -->
   <link href="{% static 'font-awesome-4.1.0/css/font-awesome.min.css' %}" rel="stylesheet" type="text/css">
   <link href="http://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
@@ -61,6 +64,7 @@
   {% compress js %}
   <script src="{% static 'js/libs/modernizr-2.6.2-respond-1.1.0.min.js' %}"></script>
   {% endcompress %}
+  
 </head>
 
 <body class="{% block body_class %}{% endblock %}" {% block body_attributes %}{% endblock %}>

@@ -75,6 +75,8 @@
     var true_button = document.getElementById('true_search');
     var clear_button = document.getElementById('clear_search');
     var search_box = document.getElementById('searchbar');
+    var pub = document.getElementById('pub_drop');
+    var imgchk = document.getElementById('img_chk');
     
     if ("{% get_params_list cl.query 0 %}" != "") {
         prop1.value = "{% get_params_list cl.query 0 %}";
@@ -100,6 +102,12 @@
     if ("{% get_params_list cl.query 9 %}" != "") {
         type3.value = "{% get_params_list cl.query 9 %}";
     }
+    if ("{% get_params_list cl.query 11 %}" != "") {
+        pub.value = "{% get_params_list cl.query 11 %}";
+    }
+    if ("{% get_params_list cl.query 12 %}" == "true") {
+        imgchk.checked=true;
+    }
     
     fake_button.onclick = function() {
       var p1 = prop1.value;
@@ -113,7 +121,9 @@
       var p3 = prop3.value;
       var t3 = '___' + type3.value;
       var q3 = '___' + query3.value + '???';
-      search_box.value = p1 + t1 + q1 + o1 + p2 + t2 + q2 + o2 + p3 + t3 + q3;
+      var pub1 = 'pub=' + pub.value + '???';
+      var img1 = 'img=' + imgchk.value + '???';
+      search_box.value = p1 + t1 + q1 + o1 + p2 + t2 + q2 + o2 + p3 + t3 + q3 + pub1 + img1;
       true_button.click();
     }
     
@@ -130,6 +140,8 @@
         prop3.selectedIndex = 0;
         type3.selectedIndex = 0;
         query3.value = '';
+        pub.selectedIndex = 0;
+        imgchk.checked=false;
     }
   })
 })(django.jQuery);
@@ -250,6 +262,23 @@
             </div>
             <div class="span2">
               <input type="text"  style="width:100%;" name="q1" id="val_box3" value="{% get_params_list cl.query 10 %}" placeholder="Search Term" onkeyup="if (event.keyCode == 13) document.getElementById('fake_search').click()"></input>
+            </div>
+          </div>
+          <div class="row-fluid">
+            <div class="span1">
+              <h2>Filters:</h2>
+            </div>
+            <div class="span2">
+              <select id="pub_drop" style="width:100%;">
+                <option value='' disabled selected>Published in:</option>
+                {% get_pub_dropdown %}
+              </select>
+            </div>
+            <div class="span1">
+              <label for="img_chk" style="padding-top:5px;">
+                <input id="img_chk" type="checkbox" name="has_img" value="true" style="position:relative; vertical-align:middle; bottom:2px;"/>
+                Has Image
+              </label>
             </div>
           </div>
         </div>

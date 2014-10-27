@@ -174,6 +174,16 @@ def get_properties_dropdown():
         options += option
         
     return options
+
+@register.simple_tag
+def get_pub_dropdown():
+    pubs = Media.objects.filter(type=2).order_by('title')
+    options = '<option value="0">Any</option>'
+    for pub in pubs:
+        option = '<option value="' + str(pub.id) + '">' + pub.title + '</option>'
+        options += option
+        
+    return options
     
 @register.simple_tag
 def load_last_query(query):
@@ -225,8 +235,20 @@ def advanced_obj_search(search_term):
             current_query = Q()            
             
             terms = row.split('___')                
-            
-            if len(terms) >= 3:
+
+            if row.startswith('pub='):
+                pub_filter = row[4:]
+                if pub_filter == '':
+                    continue
+                elif pub_filter == '0':
+                    current_query = Q(mediasubjectrelations__relation_type=2)
+                else:
+                    current_query = Q(mediasubjectrelations__media=pub_filter)
+
+            elif row.startswith('img=true'):
+                current_query = Q(mediasubjectrelations__relation_type=3)
+                    
+            elif len(terms) >= 3:
                 # we got at least the number of terms we need
 
                 # CURRENT TERMS FORMAT: ([&AND/OR,] PROPERTY, [not_]SEARCH_TYPE, [SEARCH_KEYWORDS])
@@ -288,18 +310,18 @@ def advanced_obj_search(search_term):
                         else:
                             current_query = Q(Q(subjectproperty__property = terms[0]) & Q(**kwargs))
   
-                # modify query set
-                if connector == 'AND':
-                    queryset = queryset.filter(current_query)
-                elif connector == 'OR':
-                    queryset = queryset | Subject.objects.filter(current_query)
+            # modify query set
+            if connector == 'AND':
+                queryset = queryset.filter(current_query)
+            elif connector == 'OR':
+                queryset = queryset | Subject.objects.filter(current_query)
+            else:
+                if i == 0:
+                    # in this case, current query should be the first query, so no connector
+                    queryset = Subject.objects.filter(current_query)
                 else:
-                    if i == 0:
-                        # in this case, current query should be the first query, so no connector
-                        queryset = Subject.objects.filter(current_query)
-                    else:
-                        # if connector wasn't set, use &
-                        queryset = queryset.filter(current_query)
+                    # if connector wasn't set, use &
+                    queryset = queryset.filter(current_query)
         
     return queryset.order_by('id').distinct()
     
@@ -377,6 +399,8 @@ def get_params_list(query, index):
     params = re.split(r"\?{3}|_{3}", query)
     
     if len(params) >= index + 1:
+        if (params[index].startswith('pub=')) or (params[index].startswith('img=')):
+            return params[index][4:]
         return params[index]
     
     return ''
