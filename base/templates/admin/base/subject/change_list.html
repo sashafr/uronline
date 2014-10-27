@@ -122,7 +122,10 @@
       var t3 = '___' + type3.value;
       var q3 = '___' + query3.value + '???';
       var pub1 = 'pub=' + pub.value + '???';
-      var img1 = 'img=' + imgchk.value + '???';
+      var img1 = 'img=false???';
+      if (imgchk.checked){
+        img1 = 'img=' + imgchk.value + '???';
+      }
       search_box.value = p1 + t1 + q1 + o1 + p2 + t2 + q2 + o2 + p3 + t3 + q3 + pub1 + img1;
       true_button.click();
     }
