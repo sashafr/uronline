@@ -145,3 +145,32 @@ def advanced_search(search_term, model):
                         queryset = queryset.filter(current_query)
         
     return queryset.order_by('id').distinct()
+ 
+def update_display_fields(object_id, object_type):
+ 
+    result_props = {}
+    result_props['title1'] = ResultProperty.objects.get(display_field=object_type+'_title1')
+    result_props['title2'] = ResultProperty.objects.get(display_field=object_type+'_title2')
+    result_props['title3'] = ResultProperty.objects.get(display_field=object_type+'_title3')
+    result_props['desc1'] = ResultProperty.objects.get(display_field=object_type+'_desc1')
+    result_props['desc2'] = ResultProperty.objects.get(display_field=object_type+'_desc2')
+    result_props['desc3'] = ResultProperty.objects.get(display_field=object_type+'_desc3')
+    
+    subjects = Subject.objects.filter(pk=object_id)
+    
+    if subjects and len(subjects) > 0:
+        subject = subjects[0]
+        for key, prop in result_props.iteritems():
+            id_str = ''
+            ids = subject.subjectproperty_set.filter(property=prop.field_type_id)
+            if ids:
+                for i, id in enumerate(ids):
+                    if i > 0:
+                        id_str += ', '
+                    id_str += id.property_value
+            
+            if id_str == '':
+                id_str = '(none)'
+            
+            kwargs = {key : id_str}
+            Subject.objects.filter(id=subject.id).update(**kwargs)

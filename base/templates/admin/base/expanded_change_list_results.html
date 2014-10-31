@@ -20,7 +20,7 @@
        </div>
      {% endif %}
    {% endif %}
-   <div class="text">{% if header.sortable %}<a href="{{ header.url_primary }}">{{ header.text|capfirst }}</a>{% else %}<span>{{ header.text|capfirst }}</span>{% endif %}</div>
+   <div class="text">{% if header.sortable %}<a href="{{ header.url_primary }}">{% custom_header_title header %}</a>{% else %}<span>{% custom_header_title header %}</span>{% endif %}</div>
    <div class="clear"></div>
 </th>{% endfor %}
 </tr>
@@ -30,12 +30,7 @@
 {% if result.form.non_field_errors %}
     <tr><td colspan="{{ result|length }}">{{ result.form.non_field_errors }}</td></tr>
 {% endif %}
-<tr class="{% cycle 'row1' 'row2' %} parent">{% for item in result %}{{ item }}{% endfor %}</tr>
-<tr class="child">
-    <td></td>
-    <td>test</td>
-    <td>test2</td>
-</tr>
+<tr class="{% cycle 'row1' 'row2' %}">{% for item in result %}{{ item }}{% endfor %}</tr>
 {% endfor %}
 </tbody>
 </table>

@@ -7,6 +7,7 @@ import re, urllib
 from django.contrib.admin.views.main import (ALL_VAR, EMPTY_CHANGELIST_VALUE,
     ORDER_VAR, PAGE_VAR, SEARCH_VAR)
 from ordereddict import OrderedDict
+from suit.templatetags.suit_list import result_list_with_context
 
 register = template.Library()
 
@@ -33,11 +34,12 @@ def load_result_display_fields(fields, key):
 
     prop_list = []
     
-    if key.endswith('title'):
-        for i in range(3):
-            title_str = key + str(i + 1)
-            title = ResultProperty.objects.get(display_field = title_str)
-            if title.field_type:
+    for i in range(3):
+        title_str = key + str(i + 1)
+        titles = ResultProperty.objects.filter(display_field = title_str)
+        if titles[0]:
+            title = titles[0]
+            if title.field_type and title.field_type.visible:
                 p = title.field_type.id
                 property_name = title.field_type.property
                 long_id = fields.get('id')
@@ -49,19 +51,6 @@ def load_result_display_fields(fields, key):
                         prop_list.append(property_name + ' : ' + v.property_value + '; ')
                     else: 
                         prop_list.append(property_name + ' : ' + v.property_value)
-    else:
-        prop = ResultProperty.objects.get(display_field = key)
-        if prop.field_type:
-            prop_id = prop.field_type.id
-            long_id = fields.get('id')
-            id_group = long_id.split('.')
-            id = id_group[2]
-            value = SubjectProperty.objects.filter(property_id=prop_id, subject_id=id)
-            for i, v in enumerate(value):
-                if i > 0:
-                    prop_list.append(v.property_value + '; ')
-                else:
-                    prop_list.append(v.property_value)
     prop_str = ''
     
     for p in prop_list:
@@ -100,7 +89,7 @@ def get_result_details(fields):
                 vals = SubjectProperty.objects.filter(property_id=prop_num, subject_id=id)
                 for i, v in enumerate(vals):
                     if i > 0:
-                        value.append('; ' + v.property_value)
+                        value = value + '; ' + v.property_value
                     else: 
                         value = v.property_value                
             try:
@@ -415,3 +404,14 @@ def subject_search_form(cl):
         'show_result_count': cl.result_count != cl.full_result_count,
         'search_var': SEARCH_VAR
     }
+    
+@register.simple_tag
+def custom_header_title(header):
+    field = 'subj_' + header
+    props = ResultProperty.objects.filter(display_field = field)
+    return props[0].field_type.property
+    
+@register.inclusion_tag("admin/base/subject/change_list_results.html", takes_context=True)
+def subject_result_list(context, cl):
+    res = result_list_with_context(context, cl)
+    return res

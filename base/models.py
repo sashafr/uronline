@@ -152,6 +152,12 @@ class Subject(models.Model):
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
     last_mod_by = models.ForeignKey(User, blank = True)
     type = models.ForeignKey(ObjectType, blank = True, null = True)
+    title1 = models.TextField(blank = True)
+    title2 = models.TextField(blank = True)
+    title3 = models.TextField(blank = True)
+    desc1 = models.TextField(blank = True)
+    desc2 = models.TextField(blank = True)
+    desc3 = models.TextField(blank = True)    
     
     def __unicode__(self):
         return self.title
@@ -193,15 +199,6 @@ class Subject(models.Model):
     def id3(self):
         return self.admin_column('subj_title3')
     id3.short_description = admin_column_name('subj_title3')
-    def desc1(self):
-        return self.admin_column('subj_desc')
-    desc1.short_description = admin_column_name('subj_desc')
-    def desc2(self):
-        return self.admin_column('subj_desc2')
-    desc2.short_description = admin_column_name('subj_desc2')
-    def desc3(self):
-        return self.admin_column('subj_desc3')
-    desc3.short_description = admin_column_name('subj_desc3')
     
     def identifiers(self):
         field1 = ResultProperty.objects.get(display_field = 'subj_title1')
