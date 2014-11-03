@@ -71,7 +71,8 @@ class MediaSubjectRelationsInline(admin.TabularInline):
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
-    suit_classes = 'suit-tab suit-tab-general'    
+    suit_classes = 'suit-tab suit-tab-general'
+    extra = 1
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'media':
@@ -99,7 +100,9 @@ class FileInline(admin.TabularInline):
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
-    suit_classes = 'suit-tab suit-tab-files'    
+    suit_classes = 'suit-tab suit-tab-files'
+    extra = 0
+    max_num = 0
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'media':
@@ -415,6 +418,7 @@ class LocationAdmin(admin.ModelAdmin):
     
     def save_model(self, request, obj, form, change):
         obj.last_mod_by = request.user
+        obj.type = ObjectType.objects.get(type='location')
         obj.save()
         update_display_fields(obj.id, 'loc')
         
