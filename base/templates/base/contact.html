@@ -1,0 +1,45 @@
+{% extends '_layouts/base.html' %}
+{% load staticfiles %}
+
+<!-- Metadata -->
+{% block page_title %}Contact{% endblock %}
+<!-- End Metadata -->
+
+{% block content %}
+
+    <!-- Banner -->
+    <div class="banner">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-12">
+            <h2 class="text-center">Contact Us</h2>
+          </div>
+        </div>
+      </div>
+    </div> <!-- End Banner -->
+    
+    <!-- Body Sections-->
+    <div class="content-section-b">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-5 col-lg-offset-1 col-sm-push-6  col-sm-6">
+                    <hr class="section-heading-spacer">
+                    <div class="clearfix"></div>
+                    <h2 class="section-heading">Got Questions? Contact Us!</h2>
+                    <p class="lead">
+                        <strong>Penn Museum Team</strong></br>
+                        <a href="mailto:sashafr@sas.upenn.edu">Email the Developer</a></br>
+                        <strong>British Museum Team</strong></br>
+                        <em>We will be adding more contact information at launch!</em>
+                    </p>
+                </div>
+                <div class="col-lg-5 col-sm-pull-6  col-sm-6">
+                    <img class="img-responsive" src="{% static 'img/contact_telegram.jpg' %}">
+                </div>
+            </div>
+        </div>
+    </div>    
+    
+    <!-- End Body Sections-->
+    
+{% endblock %}

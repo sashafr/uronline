@@ -1,11 +1,12 @@
 """ Views for the base application """
 
 from django.shortcuts import render, get_object_or_404, render_to_response
-from base.models import FeaturedImgs, Subject, Media, PersonOrg
+from base.models import FeaturedImgs, Subject, Media, PersonOrg, Post
 from haystack.views import SearchView
 from base.forms import AdvancedSearchForm
 from django.forms.formsets import formset_factory
 from base import tasks
+from django.core.paginator import Paginator, InvalidPage, EmptyPage
 
 def home(request):
     """ Default view for the root """
@@ -49,3 +50,27 @@ def about(request):
 def update_index(request):
     t = tasks.index_update()
     return HttpResponse(t.task_id)
+    
+def news(request):
+    posts = Post.objects.filter(published=True)
+    paginator = Paginator(posts, 10)
+    
+    try: 
+        page = int(request.GET.get("page", '1'))
+    except ValueError: 
+        page = 1
+    
+    try:
+        posts = paginator.page(page)
+    except (InvalidPage, EmptyPage):
+        posts = paginator.page(paginator.num_pages)
+        
+    return render(request, 'base/news.html', {'posts':posts})
+    
+def post(request, slug):
+    post = get_object_or_404(Post, slug=slug)
+    return render(request, 'base/post.html', {'post':post})
+    
+def contact(request):
+
+    return render(request, 'base/contact.html')    

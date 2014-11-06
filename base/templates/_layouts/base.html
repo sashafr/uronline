@@ -67,7 +67,7 @@
   
 </head>
 
-<body class="{% block body_class %}{% endblock %}" {% block body_attributes %}{% endblock %}>
+<body class="{% block body_class %}{% endblock %}" {% block body_attributes %}{% endblock %} onload="p3setHeight(); window.onresize=p3setHeight()">
 {% block body %}
   <!-- Prompt IE 6 users to install Chrome Frame. Remove this if you support IE 6.
        chromium.org/developers/how-tos/chrome-frame-getting-started -->
@@ -95,25 +95,25 @@
           <form action="/search" method="get" class="navbar-form navbar-left" role="form">
               <div class="form-group">
                   <label class="sr-only" for="general_search">Search</label>
-                  <input type="text" name="q" class="form-control" id="general_search" placeholder="Search UrOnline">
+                  <input type="text" name="q" class="form-control" id="general_search" placeholder="Search {% load_globals 'site_title' %}">
               </div>
           </form>          
           <ul class="nav navbar-nav navbar-right">
             <li><a href="{% url 'search_help' %}" target="_blank">Help</a></li>
             <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+              <a href="{% url 'about' %}" class="dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
               <ul class="dropdown-menu">
-                <li><a href="#">Project</a></li>
-                <li><a href="#">City of Ur</a></li>
-                <li><a href="#">Excavation of Ur</a></li>
-                <li><a href="#">Team Members</a></li>
-                <li><a href="#">Support</a></li>
-                <li><a href="#">For Developers</a></li>                
+                <li><a href="{% url 'about' %}">Project</a></li>
+                <li><a href="{% url 'about' %}#city">City of Ur</a></li>
+                <li><a href="{% url 'about' %}#excavation">Excavation of Ur</a></li>
+                <li><a href="{% url 'about' %}#team">Team Members</a></li>
+                <li><a href="{% url 'about' %}#support">Support</a></li>
+                <li><a href="{% url 'about' %}#developers">For Developers</a></li>                
               </ul>
             </li>
-            <li><a href="#">News</a></li>
-            <li><a href="#">Contact</a></li>
-            <li><a href="#">Login/Sign Up</a></li>            
+            <li><a href="{% url 'news' %}">News</a></li>
+            <li><a href="{% url 'contact' %}">Contact</a></li>
+            <li><a href="{% url 'admin:index' %}">Login/Sign Up</a></li>            
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -124,14 +124,14 @@
 
   <!-- Body -->
   <div role="main">
-    {% block content %}{% endblock %}
+    <div id="content_window">{% block content %}{% endblock %}</div>
   </div>
   <!-- End Body -->
   
   <!-- Footer -->
   <footer>
     {% block footer %}
-    <div class="container">
+    <div class="container" id="p3botbanner">
         <div class="row">
             <div class="col-lg-12">
                 <ul class="list-inline">
@@ -140,19 +140,19 @@
                     </li>
                     <li class="footer-menu-divider">&sdot;</li>
                     <li>
-                        <a href="#">About</a>
+                        <a href="{% url 'about' %}">About</a>
                     </li>
                     <li class="footer-menu-divider">&sdot;</li>
                     <li>
-                        <a href="#">News</a>
+                        <a href="{% url 'news' %}">News</a>
                     </li>
                     <li class="footer-menu-divider">&sdot;</li>
                     <li>
-                        <a href="#">Contact</a>
+                        <a href="{% url 'contact' %}">Contact</a>
                     </li>
                     <li class="footer-menu-divider">&sdot;</li>
                     <li>
-                        <a href="#">Login/Sign Up</a>
+                        <a href="{% url 'admin:index' %}">Login/Sign Up</a>
                     </li>                    
                 </ul>
                 <p class="copyright text-muted small">{% load_globals "footer_text" %}</p>

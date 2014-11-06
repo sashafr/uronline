@@ -1,9 +1,51 @@
 {% extends '_layouts/base.html' %}
 {% load staticfiles %}
+{% load base_tags %}
 
 <!-- Metadata -->
 {% block page_title %}About{% endblock %}
 <!-- End Metadata -->
+
+{% block body_attributes %}data-spy="scroll" data-target="#myScrollspy"{% endblock %}
+
+{% block css %}
+<style type="text/css">
+    /* Custom Styles */
+    ul.nav-tabs{
+        width: 200px;
+        margin-top: 50px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.067);
+    }
+    ul.nav-tabs li{
+        margin: 0;
+        border-top: 1px solid #ddd;
+    }
+    ul.nav-tabs li:first-child{
+        border-top: none;
+    }
+    ul.nav-tabs li a{
+        margin: 0;
+        padding: 8px 16px;
+        border-radius: 0;
+    }
+    ul.nav-tabs li.active a, ul.nav-tabs li.active a:hover{
+        color: #fff;
+        background: #0088cc;
+        border: 1px solid #0088cc;
+    }
+    ul.nav-tabs li:first-child a{
+        border-radius: 4px 4px 0 0;
+    }
+    ul.nav-tabs li:last-child a{
+        border-radius: 0 0 4px 4px;
+    }
+    ul.nav-tabs.affix{
+        top: 30px; /* Set the top position of pinned element */
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 
@@ -12,7 +54,7 @@
       <div class="container">
         <div class="row">
           <div class="col-lg-12">
-            <h2 class="text-center">About UrOnline</h2>
+            <h2 class="text-center">About {% load_globals 'site_title' %}</h2>
           </div>
         </div>
       </div>
@@ -20,11 +62,59 @@
     <!-- End Banner -->
 
     <!-- Body Sections-->
-
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-3" id="myScrollspy">
+                <ul class="nav nav-tabs nav-stacked" data-spy="affix" data-offset-top="125">
+                    <li><h4><a href="#project">The Project</a></h4></li>
+                    <li><h4><a href="#city">The City</a></h4></li>
+                    <li><h4><a href="#excavation">The Excavation</a></h4></li>
+                    <li><h4><a href="#team">The Team</a></h4></li>
+                    <li><h4><a href="#support">Our Supporters</a></h4></li>
+                    <li><h4><a href="#developers">For Developers</a></h4></li>
+                </ul>
+            </div>
+            <div class="col-md-8">
+                <div class="content-section-b" id="project">
+                    <div class="row">
+                        <h2 class="section-heading">About the Project</h2>
+                        <p class="lead">The Ur Project is a dynamic new collaboration between the British Museum, and the Penn Museum. We hope that also the Iraq Museum will become a partner in the future. The project takes the long-standing and successful cooperation as exemplified by the Ur excavations into the 21st century, by digitally reunifying the remarkable finds from the city of Ur in a state-of-the-art online facility. Every object recovered are being digitised and researched, the cuneiform tablets are being translated, whilst the original excavation photographs, the archives, plans, and other documents, are being scanned and indexed. All this data will be made freely available in an open neoteric database that will preserve the complete finds and records in digital formats for posterity. The unification of this diverse information into a single resource, from photographs of Agatha Christie, to excavation diaries and the find-spots of individual artefacts, will enable research that has hitherto been impossible. Our desired outcomes are to stimulate a new level of interest, and open new avenues of research by scholars and students from a range of fields such as archaeology, history, Assyriology, anthropology, art and architectural history, as well as to engage non-expert audiences in the astonishing remains of this wonderful site. The second phase of the project started in July 2013, it is titled *Ur of the Chaldees: A Virtual Vision of Woolley's excavations*, and it was made possible by $1.28 million in lead support from the Leon Levy Foundation.</p>
+                    </div>
+                </div>
+                <div class="content-section-b" id="city">
+                    <div class="row">
+                        <h2 class="section-heading">About the City of Ur</h2>
+                        <p class="lead">Ur, located near modern Nasiriyah, was one of ancient Mesopotamia's largest and most important cities, occupied from *ca.* 5500 to 300 BCE. Having been an important city state during the third millennium, it rose to the rank of imperial capital around 2100 BCE. After the fall of the Ur III empire just a century later, it functioned as a major city within the long series of empires that followed.</p>
+                    </div>
+                </div>
+                <div class="content-section-b" id="excavation">
+                    <div class="row">
+                        <h2 class="section-heading">About the Excavation of Ur</h2>
+                        <p class="lead">Ur is unique. It offers an unparalleled opportunity to relate archaeology and ancient texts. Between 1922­-1934 Sir Leonard Woolley led the excavations, jointly sponsored by the British Museum and the Penn Museum, which uncovered Ur's famous ziggurat complex, areas of densely packed private houses, and the spectacular Royal Graves with rich inventories of gold and macabre evidence of human sacrifice.</p>
+                        <p class="lead">Woolley's excavations encapsulate the moment when early large-scale explorations gave way to the advent of modern scientific excavation techniques. Thus the vast scale of the finds he recovered---numbering into the tens of thousands---are contextualised by an abundance of documentation. As the first excavation in the modern nation state of Iraq, under the terms of the new Antiquities Law (1924) the finds were divided between Iraq and the excavators. Today half the finds are housed in the Iraq Museum, with the other half shared equally between the British Museum and the Penn Museum.</p>
+                    </div>
+                </div>
+                <div class="content-section-b" id="team">
+                    <div class="row">
+                        <h2 class="section-heading">About the Team Members</h2>
+                        <p class="lead">More Information to Come!</p>
+                    </div>
+                </div>
+                <div class="content-section-b" id="support">
+                    <div class="row">
+                        <h2 class="section-heading">About Our Supporters</h2>
+                        <p class="lead">This project is made possible by $1.28 million in lead support from the Leon Levy Foundation</p>
+                    </div>
+                </div>
+                <div class="content-section-b" id="developers">
+                    <div class="row">
+                        <h2 class="section-heading">About the Development</h2>
+                        <p class="lead">Check out the code on <a href="https://github.com/sashafr/uronline">Github</a></p>
+                    </div>
+                </div>                
             </div>
         </div>
-    </div>    
-    
+    </div>
     <!-- End Body Sections-->
     
 {% endblock %}

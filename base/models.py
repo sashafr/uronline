@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Q
+from mptt.models import MPTTModel, TreeForeignKey
+from django.core.urlresolvers import reverse
 
 """Variables used by pages throughout the site"""
 class GlobalVars(models.Model):
@@ -376,6 +378,21 @@ class Status(models.Model):
         verbose_name = 'Status'    
         verbose_name_plural = 'Status'
         
+class ControlField(MPTTModel):
+    title = models.CharField(max_length = 60, blank = True)
+    notes = models.TextField(blank = True)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+    type = models.ForeignKey(ObjectType, blank = True, null = True)
+    parent = TreeForeignKey('self', null = True, blank = True, related_name = 'children')
+    
+    class MPTTMeta:
+        order_insertion_by = ['title']
+    
+    def __unicode__(self):
+        return self.title    
+        
 class PublicationManager(models.Manager):
     def get_query_set(self):
         return super(PublicationManager, self).get_query_set().filter(relation_type=2)
@@ -418,3 +435,20 @@ class Location(Subject):
     
     class Meta:
         proxy = True
+        
+class Post(models.Model):
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(unique=True, max_length=255)
+    body = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    published = models.BooleanField(default=True)
+    author = models.ForeignKey(User)
+        
+    class Meta:
+        ordering = ['-created']
+            
+    def __unicode__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse('base.views.post', args=[self.slug])

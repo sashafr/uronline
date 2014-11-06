@@ -23,4 +23,7 @@ urlpatterns = patterns('base.views',
     url(r'^media/(?P<media_id>\d+)/$', 'mediadetail', name='mediadetail'),
     url(r'^search_help/', 'search_help', name='search_help'),
     url(r'^update_index/', 'update_index', name='update_index'),
+    url(r'^news/(?P<slug>[\w\-]+)/$', 'post'),
+    url(r'^news/', 'news', name='news'),
+    url(r'^contact/', 'contact', name='contact'),    
 )

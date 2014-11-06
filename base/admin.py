@@ -7,6 +7,7 @@ import re
 from django.forms import Textarea
 from django.utils.translation import ugettext_lazy as _
 from base.utils import update_display_fields
+from mptt.admin import MPTTModelAdmin
 
 '''class PublicationSubjectRelationFilter(admin.SimpleListFilter):
     """ Allows filtering of subjects by related Publications """
@@ -76,7 +77,7 @@ class MediaSubjectRelationsInline(admin.TabularInline):
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'media':
-            kwargs["queryset"] = Media.objects.filter(type__type = 'publication')
+            kwargs["queryset"] = Media.objects.filter(type__type = 'publication').order_by('title')
         return super(MediaSubjectRelationsInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
         
     def get_queryset(self, request):
@@ -432,3 +433,15 @@ class LocationAdmin(admin.ModelAdmin):
                 update_display_fields(instance.subject_id, 'loc')
 
 admin.site.register(Location, LocationAdmin)
+
+admin.site.register(ControlField, MPTTModelAdmin)
+
+class PostAdmin(admin.ModelAdmin):
+    list_display = ['title']
+    list_filter = ['published', 'created']
+    search_fields = ['title', 'body']
+    date_hierarchy = 'created'
+    save_on_top = True
+    prepopulated_fields = {"slug": ("title",)}
+
+admin.site.register(Post, PostAdmin)
