@@ -67,7 +67,7 @@
   
 </head>
 
-<body class="{% block body_class %}{% endblock %}" {% block body_attributes %}{% endblock %} onload="p3setHeight(); window.onresize=p3setHeight()">
+<body class="{% block body_class %}{% endblock %}" {% block body_attributes %}{% endblock %}>
 {% block body %}
   <!-- Prompt IE 6 users to install Chrome Frame. Remove this if you support IE 6.
        chromium.org/developers/how-tos/chrome-frame-getting-started -->
@@ -131,7 +131,7 @@
   <!-- Footer -->
   <footer>
     {% block footer %}
-    <div class="container" id="p3botbanner">
+    <div class="container">
         <div class="row">
             <div class="col-lg-12">
                 <ul class="list-inline">

@@ -6,9 +6,20 @@
    css/less/bootstrap.less file.
 
    ========================================================================== */
+*,
+*:before,
+*:after {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing:    border-box;
+  box-sizing:         border-box;
+}
+   
 body,
 html {
     width: 100%;
+}
+
+html {
     height: 100%;
 }
 
@@ -22,6 +33,13 @@ h5,
 h6 {
     font-family: "Lato","Helvetica Neue",Helvetica,Arial,sans-serif;
     font-weight: 700;
+}
+
+body {
+    position: relative;
+    margin: 0;
+    padding-bottom: 12rem;
+    min-height: 100%;
 }
 
 .lead, .lead > li {
@@ -170,6 +188,10 @@ h6 {
 footer {
     padding: 50px 0;
     background-color: #f8f8f8;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
 }
 
 p.copyright {
@@ -178,4 +200,10 @@ p.copyright {
 
 .adv-form  *{
     width: 100%;
+}
+
+.content {
+    margin: 0 auto;
+    max-width: 700px;
+    width: 90%
 }

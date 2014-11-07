@@ -84,6 +84,16 @@ class MediaSubjectRelationsInline(admin.TabularInline):
         qs = super(MediaSubjectRelationsInline, self).get_queryset(request)
         return qs.filter(relation_type=2)
         
+class LocationSubjectRelationsInline(admin.TabularInline):
+    model = LocationSubjectRelations
+    fields = ['location', 'relation_type', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)        
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_classes = 'suit-tab suit-tab-general'
+    extra = 1      
+        
 class SubjectSubjectRelationsInline(admin.TabularInline):
     model = SubjectSubjectRelations
     fk_name = "subject1"
@@ -112,7 +122,7 @@ class FileInline(admin.TabularInline):
         
 class SubjectAdmin(admin.ModelAdmin):
     readonly_fields = ('last_mod_by',)    
-    inlines = [SubjectPropertyInline, MediaSubjectRelationsInline, FileInline]
+    inlines = [SubjectPropertyInline, MediaSubjectRelationsInline, FileInline, LocationSubjectRelationsInline]
     search_fields = ['title']
     list_display = ('title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3')
     formfield_overrides = {
@@ -368,6 +378,20 @@ class MediaSubjectRelationsAdmin(admin.ModelAdmin):
 
 admin.site.register(MediaSubjectRelations, MediaSubjectRelationsAdmin)
 
+class LocationSubjectRelationsAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'modified', 'last_mod_by')
+    fields = ['location', 'subject', 'relation_type', 'notes', 'created', 'modified', 'last_mod_by']
+    list_display = ['location', 'subject', 'relation_type', 'notes', 'created', 'modified', 'last_mod_by']
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2})},
+    }
+    
+    def save_model(self, request, obj, form, change):
+        obj.last_mod_by = request.user
+        obj.save()
+
+admin.site.register(LocationSubjectRelations, LocationSubjectRelationsAdmin)
+
 class SubjectSubjectRelationsAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'modified', 'last_mod_by')
     fields = ['subject1', 'subject2', 'relation_type', 'notes', 'created', 'modified', 'last_mod_by']
@@ -398,39 +422,40 @@ class StatusAdmin(admin.ModelAdmin):
     
 admin.site.register(Status, StatusAdmin)
 
-class LocationAdmin(admin.ModelAdmin):
+class LocationPropertyInline(admin.TabularInline):
+    model = LocationProperty
+    fields = ['property', 'property_value', 'notes', 'last_mod_by']
     readonly_fields = ('last_mod_by',)    
-    inlines = [SubjectPropertyInline]
-    search_fields = ['title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3']
-    list_display = ('title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3')
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
-    suit_form_tabs = (('general', 'General'), ('files', 'Files'))
-    fieldsets = [
-        (None, {
-            'classes': ('suit-tab', 'suit-tab-general'),
-            'fields': ['title', 'notes', 'last_mod_by']
-        }),
-    ]
+    ordering = ('property__order',)
     
-#    change_list_template = 'admin/base/subject/change_list.html'
-#    change_form_template = 'admin/base/change_form.html'
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'property':
+            kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='AL') | Q(primary_type='SL'))
+        return super(LocationPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+class LocationAdmin(MPTTModelAdmin):
+    readonly_fields = ('last_mod_by',)    
+    inlines = [LocationPropertyInline]
+    search_fields = ['title']
+    list_display = ('title', 'notes', 'type')
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
     
     def save_model(self, request, obj, form, change):
         obj.last_mod_by = request.user
-        obj.type = ObjectType.objects.get(type='location')
         obj.save()
-        update_display_fields(obj.id, 'loc')
         
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
 
         for instance in instances:
-            if isinstance(instance, SubjectProperty) or isinstance(instance, MediaSubjectRelations): #Check if it is the correct type of inline
+            if isinstance(instance, LocationProperty): #Check if it is the correct type of inline
                 instance.last_mod_by = request.user            
                 instance.save()
-                update_display_fields(instance.subject_id, 'loc')
 
 admin.site.register(Location, LocationAdmin)
 
@@ -445,3 +470,4 @@ class PostAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
 
 admin.site.register(Post, PostAdmin)
+admin.site.register(ObjectType)

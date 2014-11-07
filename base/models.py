@@ -41,6 +41,10 @@ class MediaType(models.Model):
 """Used to be more specific about an object type, such as location (type of subject)"""
 class ObjectType(models.Model):
     type = models.CharField(max_length = 40)
+    notes = models.TextField(blank = True)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User)    
 
     def __unicode__(self):
         return self.type 
@@ -424,17 +428,52 @@ class File(MediaSubjectRelations):
     class Meta:
         proxy = True
 
-""" Manager for subjects specifically of type = 'location' """        
-class LocationManager(models.Manager):
-    def get_query_set(self):
-        return super(LocationManager, self).get_query_set().filter(type__type='location')
-
-""" Proxy model for subjects specifically of type = 'location' """        
-class Location(Subject):
-    objects = LocationManager()
+class Location(MPTTModel):
+    title = models.CharField(max_length = 100)
+    notes = models.TextField(blank = True)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+    type = models.ForeignKey(ObjectType, blank = True, null = True)
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
     
+    def __unicode__(self):
+        return self.title
+     
+    class MPTTMeta:
+        order_insertion_by = ['title']
+        
+class LocationProperty(models.Model):
+    location = models.ForeignKey(Location)
+    property = models.ForeignKey(DescriptiveProperty)
+    property_value = models.TextField()
+    notes = models.TextField(blank = True)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+
     class Meta:
-        proxy = True
+        verbose_name = 'Location Property'    
+        verbose_name_plural = 'Location Properties'    
+
+    def __unicode__(self):
+        return self.property_value
+        
+class LocationSubjectRelations(models.Model):
+    location = models.ForeignKey(Location)
+    subject = models.ForeignKey(Subject)
+    relation_type = models.ForeignKey(Relations)
+    notes = models.TextField(blank = True)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+
+    def __unicode__(self):
+        return self.location.title + ":" + self.subject.title
+        
+    class Meta:
+        verbose_name = 'Location-Object Relation'
+        verbose_name_plural = 'Location-Object Relations'        
         
 class Post(models.Model):
     title = models.CharField(max_length=255)
