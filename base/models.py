@@ -443,6 +443,13 @@ class Location(MPTTModel):
     class MPTTMeta:
         order_insertion_by = ['title']
         
+    def ancestors(self):
+        ancients = self.get_ancestors(include_self=False)
+        ancs = ''
+        for ancient in ancients:
+            ancs = ancs + ancient.title + '>>'
+        return ancs
+        
 class LocationProperty(models.Model):
     location = models.ForeignKey(Location)
     property = models.ForeignKey(DescriptiveProperty)

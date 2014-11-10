@@ -156,7 +156,7 @@ class SubjectAdmin(admin.ModelAdmin):
         instances = formset.save(commit=False)
 
         for instance in instances:
-            if isinstance(instance, SubjectProperty) or isinstance(instance, MediaSubjectRelations): #Check if it is the correct type of inline
+            if isinstance(instance, SubjectProperty) or isinstance(instance, MediaSubjectRelations) or isinstance(instance, LocationSubjectRelations): #Check if it is the correct type of inline
                 instance.last_mod_by = request.user            
                 instance.save()
                 update_display_fields(instance.subject_id, 'subj')
@@ -440,7 +440,7 @@ class LocationAdmin(MPTTModelAdmin):
     readonly_fields = ('last_mod_by',)    
     inlines = [LocationPropertyInline]
     search_fields = ['title']
-    list_display = ('title', 'notes', 'type')
+    list_display = ('title', 'notes', 'type', 'ancestors')
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
