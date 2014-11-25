@@ -1,10 +1,10 @@
 from django import forms
-from haystack.forms import ModelSearchForm, SearchForm
-from base.models import DescriptiveProperty
+from haystack.forms import SearchForm, model_choices
+from base.models import DescriptiveProperty, ResultProperty
 from haystack.inputs import Raw
-from haystack.query import SearchQuerySet
+from haystack.query import SearchQuerySet, SQ
+from django.db import models
 import re
-from haystack.query import SQ
 
 OPERATOR = (
     ('and', 'AND'),
@@ -30,32 +30,12 @@ SEARCH_TYPE = (
     ('lte', 'is less than or equal to'),
 )
 
-class PropertySelectorSearchForm(ModelSearchForm):
-    property = forms.ModelChoiceField(required=False, label=('Property'), queryset=DescriptiveProperty.objects.all(), empty_label="Any")
-    q = forms.CharField(required=False, label=(''), widget=forms.TextInput(attrs={'type': 'search'}))
-    
-    def __init__(self, *args, **kwargs):
-        super(PropertySelectorSearchForm, self).__init__(*args, **kwargs)
-        self.fields.keyOrder = [ 'property', 'q' , 'models']
-        
-    def no_query_found(self):
-        return self.searchqueryset.all()
-        
-    def search(self):
-        # First, store the SearchQuerySet received from other processing.
-        sqs = super(PropertySelectorSearchForm, self).search()
-
-        if not self.is_valid():
-            return self.no_query_found()
-            
-        if self.cleaned_data['property'] != None:
-            prop = self.cleaned_data['property']
-        
-            sqs = SearchQuerySet().filter(content=Raw('prop_' + str(prop.id) + ':' + self.cleaned_data['q']))
-        
-        return sqs
-        
 class AdvancedSearchForm(SearchForm):
+    """Search form allows user to search Solr index by property
+    
+    This allows the user to specify the property, type of search and
+    AND/OR methods for combining searches"""
+    
     property = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(visible=True), empty_label="Any")
     search_type = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
     q = forms.CharField(label='', required=False)
@@ -67,13 +47,20 @@ class AdvancedSearchForm(SearchForm):
     property3 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(visible=True), empty_label="Any")
     search_type3 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
     q3 = forms.CharField(label='', required=False)
+    order = forms.ModelChoiceField(label='', required=False, queryset=ResultProperty.objects.filter(display_field__startswith='subj_title'))
     
     def __init__(self, *args, **kwargs):
         super(AdvancedSearchForm, self).__init__(*args, **kwargs)    
-        
+
     def search(self):
-    
-        sqs = SearchQuerySet().facet('prop_19_exact')   
+        """This search method starts from a new query of all documents
+        in the index instead of getting the existing SearchQuerySet from the super class. This is mainly to clear the default
+        query of the index for the value of q. HOWEVER, this requires
+        redoing any actions normally taken before the SearchForm 
+        is called, such as faceting the SearchQuerySet."""
+        
+        # faceting must be done here manually b/c we are creating a new SearchQuerySet
+        sqs = SearchQuerySet().facet('facet_prop_19')   
         
         if not self.is_valid():
             return self.no_query_found()
@@ -95,11 +82,11 @@ class AdvancedSearchForm(SearchForm):
             negate = False
             kwargs = {}
 
-            # Check for operator
+            # check for operator
             if j > 0:
                 operator = op_list[j - 1]
             
-            # Check for not
+            # check for not
             if type.startswith('!'):
                 negate = True
                 type = type[1:]            
@@ -108,20 +95,21 @@ class AdvancedSearchForm(SearchForm):
             if (query == '') and (type != 'blank'):
                 continue
                 
-            # Check if a property was selected
+            # check if a property was selected
             if prop_list[j] != None:
-                prop = 'prop_'+ str(prop_list[j].id)
-                
-            # Check if search type was selected
+                if prop_list[j].solr_type != '_t':
+                    prop = 'sprop_' + str(prop_list[j].id) + prop_list[j].solr_type
+                else:
+                    prop = 'prop_'+ str(prop_list[j].id)
+
+            # check if search type was selected
             if type == '':
                 type = 'contains'               
                 
-            # Determine the type of search
+            # determine the type of search
                 
             # CONTAINS -> special case misspellings
             if type == 'contains':
-            
-                add_or = False
             
                 query_text = '('
             
@@ -131,30 +119,14 @@ class AdvancedSearchForm(SearchForm):
                     match = re.search(r'(\d+[a-zA-Z]?)', query)
                     if match:
                         query = match.group(0)
-                        query_text += ('' + query + '?')
-                        add_or = True
+                        query_text += (' ' + query + '? OR ')
                 else:
                     query = re.sub(r'(\s*)([uU]\s*?\.?\s*)(\d+)([a-zA-Z]*)', r'\1u* *\3*', query)
                     query = re.sub(r'(\s*)([pP][gG]\s*?[\./]?\s*)(\w+)', r'\1pg* *\3*', query)
                 
-                keywords = query.split()
-                
-                if keywords:
-                    
-                    if add_or:
-                        query_text += ' OR '
-                
-                    query_text += '('
-                
-                    for i, word in enumerate(keywords):
-                        
-                        if i > 0: 
-                            query_text += ' AND '
-                        query_text += word
-                    
-                    query_text += '))'
-                    
-                    kwargs = {str('%s' % prop) : Raw(query_text)}            
+                query_text += '(' + query + '))'
+
+                kwargs = {str('%s' % prop) : Raw(query_text)}            
             
             # LIKE -> 'a*b' or 'a?b'
             elif type == 'like':
@@ -227,8 +199,12 @@ class AdvancedSearchForm(SearchForm):
                     sq = SQ(**kwargs)                
 
         sqs = sqs.filter(sq)                
- 
-        return sqs
+        
+        if self.cleaned_data['order']:
+            prop_order = self.cleaned_data['order'].display_field[5:]
+            return sqs.order_by(prop_order)
+        else:
+            return sqs
         
 class AdvFacetedSearchForm(AdvancedSearchForm):
     def __init__(self, *args, **kwargs):
@@ -250,3 +226,22 @@ class AdvFacetedSearchForm(AdvancedSearchForm):
                 sqs = sqs.narrow(u'%s:"%s"' % (field, sqs.query.clean(value)))
 
         return sqs
+        
+class AdvModelSearchForm(AdvFacetedSearchForm):
+    def __init__(self, *args, **kwargs):
+        super(AdvModelSearchForm, self).__init__(*args, **kwargs)
+        self.fields['models'] = forms.MultipleChoiceField(choices=model_choices(), required=False, label='Limit Search To:', widget=forms.CheckboxSelectMultiple)
+
+    def get_models(self):
+        """Return an alphabetical list of model classes in the index."""
+        search_models = []
+
+        if self.is_valid():
+            for model in self.cleaned_data['models']:
+                search_models.append(models.get_model(*model.split('.')))
+
+        return search_models
+
+    def search(self):
+        sqs = super(AdvModelSearchForm, self).search()
+        return sqs.models(*self.get_models())        

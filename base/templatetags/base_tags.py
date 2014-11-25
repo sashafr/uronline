@@ -1,6 +1,6 @@
 from django import template
 from django.core.urlresolvers import reverse
-from base.models import GlobalVars, ResultProperty, DescriptiveProperty, MediaSubjectRelations, MediaPersonOrgRelations, Subject, SubjectProperty, Media, MediaProperty
+from base.models import *
 from django.contrib.admin.templatetags.admin_list import result_list
 from django.db.models import Q
 import re, urllib
@@ -120,39 +120,58 @@ def get_result_details(fields):
     return rowhtml
     
 @register.simple_tag    
-def get_img_thumb(object, type):
+def get_img_thumb(object, type, size):
     if type == 'ms':
         relation = MediaSubjectRelations.objects.filter(subject = object.id, relation_type = 1)
     elif type == 'mpo':
         relation = MediaPersonOrgRelations.objects.filter(person_org = object.id, relation_type = 1)
+    elif type == 'ml':
+        relation = MediaLocationRelations.objects.filter(location = object.id, relation_type = 1)
     else:
-        rs_ids = MediaProperty.objects.filter(media = object.id, property__property = 'Resource Space ID')
-        if rs_ids:
-            rs_id = rs_ids[0].property_value
-            return 'http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref=' + rs_id + '&size=thm'
-        else:
-            return 'http://ur.iaas.upenn.edu/static/img/no_img.jpg'
+        relation = MediaMediaRelations.objects.filter(media1 = object.id, relation_type = 1)
+        if relation:
+            first_rel = relation[0]
+            rs_ids = first_rel.media2.mediaproperty_set.filter(property__property = 'Resource Space ID')
+            if rs_ids:
+                rs_id = rs_ids[0].property_value
+                return 'http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref=' + rs_id + '&size=' + size
+        return 'http://ur.iaas.upenn.edu/static/img/no_img.jpg'
     
     if relation:
         first_rel = relation[0]
         rs_ids = first_rel.media.mediaproperty_set.filter(property__property = 'Resource Space ID')
         if rs_ids:
             rs_id = rs_ids[0].property_value
-            return 'http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref=' + rs_id + '&size=thm'
+            return 'http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref=' + rs_id + '&size=' + size
     
     return 'http://ur.iaas.upenn.edu/static/img/no_img.jpg'
     
 @register.simple_tag    
-def get_img_thumb_po(object):
-    relation = MediaPersonOrgRelations.objects.filter(person_org = object.id)
+def get_img_url(object, type):
+    if type == 'ms':
+        relation = MediaSubjectRelations.objects.filter(subject = object.id, relation_type = 1)
+    elif type == 'mpo':
+        relation = MediaPersonOrgRelations.objects.filter(person_org = object.id, relation_type = 1)
+    elif type == 'ml':
+        relation = MediaLocationRelations.objects.filter(location = object.id, relation_type = 1)
+    else:
+        relation = MediaMediaRelations.objects.filter(media1 = object.id, relation_type = 1)
+        if relation:
+            first_rel = relation[0]
+            rs_ids = first_rel.media2.mediaproperty_set.filter(property__property = 'Resource Space ID')
+            if rs_ids:
+                rs_id = rs_ids[0].property_value
+                return 'http://ur.iaas.upenn.edu/resourcespace/pages/view.php?ref=' + rs_id
+        return 'http://ur.iaas.upenn.edu/static/img/no_img.jpg'
     
     if relation:
         first_rel = relation[0]
-        uri_prop = first_rel.media.mediaproperty_set.filter(property__property = 'URI')
-        if uri_prop:
-            return uri_prop[0].property_value
-    
-    return 'http://ur.iaas.upenn.edu/static/img/no_img.jpg'
+        rs_ids = first_rel.media.mediaproperty_set.filter(property__property = 'Resource Space ID')
+        if rs_ids:
+            rs_id = rs_ids[0].property_value
+            return 'http://ur.iaas.upenn.edu/resourcespace/pages/view.php?ref=' + rs_id
+            
+    return ''
     
 @register.simple_tag
 def get_properties_dropdown():
@@ -415,3 +434,21 @@ def custom_header_title(header):
 def subject_result_list(context, cl):
     res = result_list_with_context(context, cl)
     return res
+    
+@register.assignment_tag
+def get_linked_data_url(property_id):
+    urls = ControlFieldLinkedData.objects.filter(control_field_id=property_id)
+    
+    if urls:
+        return urls
+    else:
+        return []
+        
+@register.assignment_tag
+def get_visible_subj_props(subject):
+    props = subject.subjectproperty_set.filter(property__visible=True)[:3]
+    
+    if props:
+        return props
+    else:
+        return []

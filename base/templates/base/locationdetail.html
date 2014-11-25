@@ -3,7 +3,7 @@
 {% load base_tags %}
 
 <!-- Metadata -->
-{% block page_title %}Object Detail{% endblock %}
+{% block page_title %}Context Detail{% endblock %}
 <!-- End Metadata -->
 
 {% block content %}
@@ -12,7 +12,7 @@
             <div class="row">
                 <div class="col-sm-4">
                     <div class="row">
-                        <a href="{% get_img_url subject 'ms' %}"><img class="img-responsive" style="display: inline-block; padding: 5px 5px 5px 0px;" src="{% get_img_thumb subject 'ms' 'pre' %}" alt=""></a>
+                        <a href="{% get_img_url location 'ml' %}"><img class="img-responsive" style="display: inline-block; padding: 5px 5px 5px 0px;" src="{% get_img_thumb location 'ml' 'pre' %}" alt=""></a>
                     </div>
                     <div class="row">
                         <h3>Related Files:</h3>
@@ -27,22 +27,6 @@
                     <div class="row">
                         <h3>{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}</h3>
                         <table class="table table-striped">
-                            {% for cp in control_properties %}
-                                <tr>
-                                    <td>
-                                        <a href="#" data-toggle="popover" data-html="true" data-content="{{ cp.control_property.notes }}">{{ cp.control_property }}:</a>
-                                    </td>
-                                    <td>
-                                        <a href="#" data-toggle="popover" data-html="true" data-content="{{ cp.control_property_value.notes }}">{{ cp.control_property_value.title }}</a>
-                                        {% get_linked_data_url cp.control_property_value as linked_data %}
-                                        {% if linked_data %}
-                                            {% for link_url in linked_data %}
-                                                <a href="{{ link_url.link }}"><span class="glyphicon glyphicon-link"></span></a>                       
-                                            {% endfor %}
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                            {% endfor %}                    
                             {% for property in properties|slice:"1:" %}
                                 <tr>
                                     <td>
@@ -54,32 +38,6 @@
                                 </tr>
                             {% endfor %}
                         </table>
-                    </div>
-                    <div class="row">
-                        <div class="well">
-                            <h3>Related Context</h3>
-                            <ul class="list-group">
-                                {% for location_relation in subject.locationsubjectrelations_set.all %}
-                                    <a href="{% url 'locationdetail' location_relation.location.id %}"><li class="list-group-item">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <img class="img-responsive" src="{% get_img_thumb location_relation.location 'ml' 'thm' %}" alt=""></img>    
-                                            </div>
-                                            <div class="col-md-9">
-                                                <table class="table table-striped">
-                                                    {% for location_props in location_relation.location.locationproperty_set.all|slice:":3" %}
-                                                        <tr>
-                                                            <td>{{ location_props.property }}</td>
-                                                            <td>{{ location_props.property_value }}</td>
-                                                        </tr>
-                                                    {% endfor %}
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </li></a>
-                                {% endfor %}
-                            </ul>
-                        </div>
                     </div>
                     <div class="row">
                         <div class="well">
@@ -97,6 +55,33 @@
                                                         <tr>
                                                             <td>{{ media_props.property }}</td>
                                                             <td>{{ media_props.property_value }}</td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </li></a>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="well">
+                            <h3>Related Objects</h3>
+                            <ul class="list-group">
+                                {% for object_relation in related_objects %}
+                                    <a href="{% url 'subjectdetail' object_relation.subject.id %}"><li class="list-group-item">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <img class="img-responsive" src="{% get_img_thumb object_relation.subject 'ms' 'thm' %}" alt=""></img>    
+                                            </div>
+                                            <div class="col-md-9">
+                                                <table class="table table-striped">
+                                                    {% get_visible_subj_props object_relation.subject as subject_props %}
+                                                    {% for subject_prop in subject_props %}
+                                                        <tr>
+                                                            <td>{{ subject_prop.property }}</td>
+                                                            <td>{{ subject_prop.property_value }}</td>
                                                         </tr>
                                                     {% endfor %}
                                                 </table>

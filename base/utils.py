@@ -1,6 +1,20 @@
 """ Utility functions for the base application """
 
+import csv
 from base.models import *
+from django.utils.encoding import smart_str
+
+def export_csv(results):
+    response = HttpResponse(mimetype='text/csv')
+    response['Content-Disposition'] = 'attachment; filename=results.csv'
+    writer = csv.writer(response, csv.excel)
+    response.write(u'\ufeff'.encode('utf8')) # BOM (optional...Excel needs it to open UTF-8 file properly)
+    for result in results:
+        new_row = []
+        for field, value in result.get_additional_fields():
+            new_row.append(smart_str(value))
+        writer.writerow(new_row)
+    return response
 
 def load_globals():
     """ Returns a dictionary of globals for this app """
@@ -174,3 +188,30 @@ def update_display_fields(object_id, object_type):
             
             kwargs = {key : id_str}
             Subject.objects.filter(id=subject.id).update(**kwargs)
+            
+def get_img_ids(object, type):
+    imgs = []
+
+    if type == 'ms':
+        relations = MediaSubjectRelations.objects.filter(subject = object.id, relation_type = 3)
+    elif type == 'mpo':
+        relations = MediaPersonOrgRelations.objects.filter(person_org = object.id, relation_type = 3)
+    elif type == 'ml':
+        relations = MediaLocationRelations.objects.filter(location = object.id, relation_type = 3)        
+    else:
+        relations = MediaMediaRelations.objects.filter(media1 = object.id, relation_type = 3)
+        for relation in relations:
+            rs_ids = relation.media2.mediaproperty_set.filter(property__property = 'Resource Space ID')
+            if rs_ids:
+                for rs_id in rs_ids:
+                    imgs.append(rs_id.property_value)
+        return imgs
+        
+    if relations:
+        for relation in relations:
+            rs_ids = relation.media.mediaproperty_set.filter(property__property = 'Resource Space ID')
+            if rs_ids:
+                for rs_id in rs_ids:
+                    imgs.append(rs_id.property_value)
+    
+    return imgs            

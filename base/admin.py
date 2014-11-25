@@ -8,6 +8,7 @@ from django.forms import Textarea
 from django.utils.translation import ugettext_lazy as _
 from base.utils import update_display_fields
 from mptt.admin import MPTTModelAdmin
+from django.forms import ModelChoiceField, ModelForm
 
 '''class PublicationSubjectRelationFilter(admin.SimpleListFilter):
     """ Allows filtering of subjects by related Publications """
@@ -65,6 +66,16 @@ class SubjectPropertyInline(admin.TabularInline):
             kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='SO') | Q(primary_type='AL') | Q(primary_type='SL'))
         return super(SubjectPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
         
+class SubjectControlPropertyInline(admin.TabularInline):
+    model = SubjectControlProperty
+    fields = ['control_property', 'control_property_value', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_classes = 'suit-tab suit-tab-general'
+    extra = 1
+        
 class MediaSubjectRelationsInline(admin.TabularInline):
     model = MediaSubjectRelations
     fields = ['media', 'relation_type', 'notes', 'last_mod_by']
@@ -83,6 +94,20 @@ class MediaSubjectRelationsInline(admin.TabularInline):
     def get_queryset(self, request):
         qs = super(MediaSubjectRelationsInline, self).get_queryset(request)
         return qs.filter(relation_type=2)
+
+class LocationTreeChoiceField(ModelChoiceField):
+    def label_from_instance(self, obj):
+        level = obj.level
+        padding = ''
+        while (level > 0):
+            padding = padding + '+--'
+            level = level - 1
+        return padding + obj.title
+        
+class LocationRelationAdminForm(ModelForm):
+    location = LocationTreeChoiceField(queryset=Location.objects.all()) 
+    class Meta:
+          model = LocationSubjectRelations
         
 class LocationSubjectRelationsInline(admin.TabularInline):
     model = LocationSubjectRelations
@@ -92,7 +117,8 @@ class LocationSubjectRelationsInline(admin.TabularInline):
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
     suit_classes = 'suit-tab suit-tab-general'
-    extra = 1      
+    extra = 1
+    form = LocationRelationAdminForm
         
 class SubjectSubjectRelationsInline(admin.TabularInline):
     model = SubjectSubjectRelations
@@ -122,7 +148,7 @@ class FileInline(admin.TabularInline):
         
 class SubjectAdmin(admin.ModelAdmin):
     readonly_fields = ('last_mod_by',)    
-    inlines = [SubjectPropertyInline, MediaSubjectRelationsInline, FileInline, LocationSubjectRelationsInline]
+    inlines = [SubjectPropertyInline, MediaSubjectRelationsInline, FileInline, LocationSubjectRelationsInline, SubjectControlPropertyInline]
     search_fields = ['title']
     list_display = ('title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3')
     formfield_overrides = {
@@ -331,14 +357,14 @@ admin.site.register(MediaType)
 
 class DescriptivePropertyAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'modified', 'last_mod_by')
-    fields = ['property', 'primary_type', 'order', 'visible', 'notes', 'created', 'modified', 'last_mod_by']
-    list_display = ['property', 'primary_type', 'order', 'visible', 'notes', 'created', 'modified', 'last_mod_by']
+    fields = ['property', 'primary_type', 'order', 'visible', 'solr_type', 'facet', 'notes', 'created', 'modified', 'last_mod_by']
+    list_display = ['property', 'primary_type', 'order', 'visible', 'solr_type', 'facet', 'notes', 'created', 'modified', 'last_mod_by']
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2})},
     }
     search_fields = ['property']
-    list_filter = ('primary_type', 'visible')
-    list_editable = ('primary_type', 'order', 'visible', 'notes')
+    list_filter = ('primary_type', 'visible', 'solr_type', 'facet')
+    list_editable = ('primary_type', 'order', 'visible', 'solr_type', 'facet', 'notes')
     
     def save_model(self, request, obj, form, change):
         obj.last_mod_by = request.user
@@ -444,6 +470,7 @@ class LocationAdmin(MPTTModelAdmin):
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
+    list_filter = ['type']
     
     def save_model(self, request, obj, form, change):
         obj.last_mod_by = request.user
@@ -471,3 +498,44 @@ class PostAdmin(admin.ModelAdmin):
 
 admin.site.register(Post, PostAdmin)
 admin.site.register(ObjectType)
+
+class LinkedDataAdmin(admin.ModelAdmin):
+    list_display = ['control_field', 'source', 'show_url']
+    search_fields = ['control_field']
+    
+    def show_url(self, obj):
+        return '<a href="%s">%s</a>' % (obj.link, obj.link)
+    show_url.allow_tags = True
+    show_url.short_description = "Link"
+
+admin.site.register(ControlFieldLinkedData, LinkedDataAdmin)
+
+class LinkedDataInline(admin.TabularInline):
+    model = ControlFieldLinkedData
+    fields = ['control_field', 'source', 'link']    
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+
+class ArtifactTypeAdmin(MPTTModelAdmin):
+    readonly_fields = ('last_mod_by', 'type')    
+    inlines = [LinkedDataInline]
+    search_fields = ['title']
+    list_display = ('title', 'notes')
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    
+    def save_model(self, request, obj, form, change):
+        obj.last_mod_by = request.user
+        obj.save()
+        
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
+        for instance in instances:
+            if isinstance(instance, ControlFieldLinkedData): #Check if it is the correct type of inline
+                instance.last_mod_by = request.user            
+                instance.save()
+
+admin.site.register(ArtifactType, ArtifactTypeAdmin)

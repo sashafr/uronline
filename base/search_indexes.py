@@ -1,5 +1,5 @@
 from haystack import indexes
-from base.models import Media, Subject, PersonOrg
+from base.models import Media, Subject, PersonOrg, Location
 
 class MediaPropertyIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
@@ -18,3 +18,9 @@ class PersonOrgPropertyIndex(indexes.SearchIndex, indexes.Indexable):
 
     def get_model(self):
         return PersonOrg
+        
+class LocationPropertyIndex(indexes.SearchIndex, indexes.Indexable):
+    text = indexes.CharField(document=True, use_template=True)
+
+    def get_model(self):
+        return Location

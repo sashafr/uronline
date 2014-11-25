@@ -1,5 +1,4 @@
 {% extends '_layouts/base.html' %}
-{% load base_tags %}
 
 <!-- Metadata -->
 {% block page_title %}Search{% endblock %}
@@ -7,133 +6,155 @@
 
 {% block content %}
 
-  <form method="get" action=".">
+    <form method="get" action=".">
 
-    <!-- Advanced Search Box -->
-    <div class="banner">
-      <div class="container">
-        <div class="row">
-          <div class="col-lg-12">
-            <h2 class="text-center">
-                Advanced Search
-            </h2>
-            <hr class="intro-divider">
-            <p>{{ form.non_field_errors }}</p>
-            {% for field in form %}
-                <p>{{ field.errors }}</p>
-            {% endfor %}
-            <div class="form-group">
-              <div class="col-sm-4 col-sm-offset-1 adv-form">
-                {{ form.property }}
-              </div>
-              <div class="col-sm-3 adv-form">
-                {{ form.search_type }}
-              </div>
-              <div class="col-sm-4 adv-form">
-                {{ form.q }}
-              </div>
-            </div>
-            <div class="form-group">
-              <div class="col-sm-1 adv-form">
-                {{ form.op }}
-              </div>
-              <div class="col-sm-4 adv-form">
-                {{ form.property2 }}
-              </div>
-              <div class="col-sm-3 adv-form">
-                {{ form.search_type2 }}
-              </div>
-              <div class="col-sm-4 adv-form">
-                {{ form.q2 }}
-              </div>
-            </div>
-            <div class="form-group">
-              <div class="col-sm-1 adv-form">
-                {{ form.op2 }}
-              </div>
-              <div class="col-sm-4 adv-form">
-                {{ form.property3 }}
-              </div>
-              <div class="col-sm-3 adv-form">
-                {{ form.search_type3 }}
-              </div>
-              <div class="col-sm-4 adv-form">
-                {{ form.q3 }}
-              </div>
-            </div>
-            <ul class="list-inline center-block text-center">
-              <li>
-                <p><input type="submit" value="Search">
-                </p>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div> <!-- End Advanced Search Box -->
-
-    {% if query or page.object_list %}
-    <div class="content-section-b">
-      <div class="container">
-        <div class="row">
-      
-          <!-- Facets Column -->
-          <div class="col-md-4">
-            <div class="well">
-
-              <!-- Begin faceting -->
-              <div id="ot_facetname">
-                <h4>By Object Type</h4>
-              </div>
-              <dl id="ot_facetvalues">
-                  {% if facets.fields.prop_19_exact %}
-                      {% for prop in facets.fields.prop_19_exact %}
-                          {% if prop.1 > 0 %}
-                              <dd><a href="{{ request.get_full_path }}&amp;selected_facets=prop_19_exact:{{ prop.0|urlencode }}">{{ prop.0 }}</a> ({{ prop.1 }})</dd>
-                          {% endif %}
-                      {% endfor %}
-                  {% else %}
-                      <p>No object type facets.</p>
-                  {% endif %}
-              </dl>
-              <div id="ot_slidermenu"></div>
-              <!-- End faceting -->    
-          
-            </div>  
-          </div>
-          <!-- End Facets Column -->
-        
-          <!-- Results Column -->
-          <div class="col-md-8">
-            <h2 style="text-align:center">Results</h2>
-            
-              <!-- Result Count -->
-              <p>{{ page.paginator.count }} results</p>
-              
-              {% for result in page.object_list %}
-                {% include 'search/_result_object.html' %}
-              {% empty %}
-                <p>No results found.</p>
-              {% endfor %}
-
-              {% if page.has_previous or page.has_next %}
-                <div>
-                  {% if page.has_previous %}<a href="?{{ request.GET.urlencode }}&amp;page={{ page.previous_page_number }}">{% endif %}&laquo; Previous{% if page.has_previous %}</a>{% endif %}
-                  |
-                  {% if page.has_next %}<a href="?{{ request.GET.urlencode }}&amp;page={{ page.next_page_number }}">{% endif %}Next &raquo;{% if page.has_next %}</a>{% endif %}
+        <!-- Advanced Search Box -->
+        <div class="banner">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h2 class="text-center">Advanced Search</h2>
+                        <hr class="intro-divider">
+                        <div class="form-group">
+                            <div class="col-sm-4 col-sm-offset-1 adv-form">
+                                {{ form.property }}
+                            </div>
+                            <div class="col-sm-3 adv-form">
+                                {{ form.search_type }}
+                            </div>
+                            <div class="col-sm-4 adv-form">
+                                {{ form.q }}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-1 adv-form">
+                                {{ form.op }}
+                            </div>
+                            <div class="col-sm-4 adv-form">
+                                {{ form.property2 }}
+                            </div>
+                            <div class="col-sm-3 adv-form">
+                                {{ form.search_type2 }}
+                            </div>
+                            <div class="col-sm-4 adv-form">
+                                {{ form.q2 }}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-1 adv-form">
+                                {{ form.op2 }}
+                            </div>
+                            <div class="col-sm-4 adv-form">
+                                {{ form.property3 }}
+                            </div>
+                            <div class="col-sm-3 adv-form">
+                                {{ form.search_type3 }}
+                            </div>
+                            <div class="col-sm-4 adv-form">
+                                {{ form.q3 }}
+                            </div>
+                        </div>
+                        <div class="model_selector">
+                            <div class="col-sm-2 col-sm-offset-2">
+                                <p>Limit Search To: </p>
+                            </div>
+                            <div class="col-sm-8">                   
+                                {{ form.models }}
+                            </div>
+                        </div>
+                        <ul class="list-inline center-block text-center adv-form">
+                            <li>
+                                Order By:{{ form.order }}
+                            </li>
+                            <li>
+                                <p>
+                                    <input type="submit" value="Search">
+                                </p>
+                            </li>
+                            <li>
+                                <p>
+                                    <input onClick="clear_pub_search()" type="button" value="Clear" />
+                                </p>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-              {% endif %}
-          </div>
-        <!-- End Results Column -->
-      
+            </div>
         </div>
-      </div>
-    </div>
+        <!-- End Advanced Search Box -->
 
-    {% else %}
-      {# Show some example queries to run, maybe query syntax, something else? #}
-    {% endif %}
-  </form>
+        {% if query or page.object_list %}
+            <div class="content-section-b">
+                <div class="container">
+                    <div class="row">
+          
+                        <!-- Facets Column -->
+                        <div class="col-md-4">
+                            <div class="well">
+                                <!-- Begin faceting -->
+                                <div id="ot_facetname">
+                                    <h4>By Object Type</h4>
+                                </div>
+                                <dl id="ot_facetvalues">
+                                    {% if facets.fields.facet_prop_19 %}
+                                        {% for prop in facets.fields.facet_prop_19 %}
+                                            {% if prop.1 > 0 %}
+                                                <dd><a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_19:{{ prop.0|urlencode }}">{{ prop.0 }}</a> ({{ prop.1 }})</dd>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <p>No object type facets.</p>
+                                    {% endif %}
+                                </dl>
+                                <div id="ot_slidermenu"></div>
+                            </div>  
+                        </div>
+                        <!-- End Facets Column -->
+        
+                        <!-- Results Column -->
+                        <div class="col-md-8">
+                            <h2 style="text-align:center">Results</h2>
+            
+                            <!-- Result Count -->
+                            <p>{{ page.paginator.count }} results</p>
+                            <button
+              
+                            {% for result in page.object_list %}
+                                {% include 'search/_result_object.html' %}
+                            {% empty %}
+                                <p>No results found.</p>
+                            {% endfor %}
+
+                            {% if page.has_previous or page.has_next %}
+                                <div>
+                                    {% if page.has_previous %}
+                                        <a href="?{{ request.GET.urlencode }}&amp;page={{ page.previous_page_number }}">
+                                    {% endif %}
+                                    &laquo; Previous
+                                    {% if page.has_previous %}
+                                        </a>
+                                    {% endif %}
+                                    |
+                                    {% if page.has_next %}
+                                        <a href="?{{ request.GET.urlencode }}&amp;page={{ page.next_page_number }}">
+                                    {% endif %}
+                                    Next &raquo;
+                                    {% if page.has_next %}
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <!-- End Results Column -->
+      
+                    </div>
+                </div>
+            </div>
+
+        {% else %}
+            {# Show some example queries to run, maybe query syntax, something else? #}
+        {% endif %}
+    </form>
 {% endblock %}
 
 <!-- Search Unique JS -->

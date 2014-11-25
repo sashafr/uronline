@@ -65,6 +65,27 @@ class DescriptiveProperty(models.Model):
         (PERSON_ORGANIZATION, 'Person/Organization'),
         (ALL, 'All'),
     )
+    
+    INT = '_i'
+    STRING = '_s'
+    LONG = '_l'
+    TEXT = '_t'
+    BOOLEAN = '_b'
+    FLOAT = '_f'
+    DOUBLE = '_d'
+    DATE = '_dt'
+    LOCATION = '_p'
+    SOLR_TYPE = (
+        (INT, 'Integer'),
+        (STRING, 'String'),
+        (LONG, 'Long'),
+        (TEXT, 'Text'),
+        (BOOLEAN, 'Boolean'),
+        (FLOAT, 'Float'),
+        (DOUBLE, 'Double'),
+        (DATE, 'Date'),
+        (LOCATION, 'Location'),
+    )
 
     property = models.CharField(max_length = 60)
     notes = models.TextField(blank = True)
@@ -74,6 +95,8 @@ class DescriptiveProperty(models.Model):
     primary_type = models.CharField(max_length=2, choices=TYPE, default=ALL, blank = True)
     order = models.IntegerField(blank = True, default=99)
     visible = models.BooleanField(default = False)
+    solr_type = models.CharField(max_length = 45, choices = SOLR_TYPE, default = TEXT, blank = True)
+    facet = models.BooleanField(default = False)
 
     def __unicode__(self):
         return self.property
@@ -93,7 +116,7 @@ class ResultProperty(models.Model):
         verbose_name_plural = 'Result Properties'
 
     def __unicode__(self):
-        return self.display_field
+        return self.field_type.property
         
 """Types of relationships between objects"""
 class Relations(models.Model):
@@ -249,7 +272,8 @@ class SubjectProperty(models.Model):
 
     class Meta:
         verbose_name = 'Object Property'    
-        verbose_name_plural = 'Object Properties'    
+        verbose_name_plural = 'Object Properties'
+        ordering = ['property__order']
 
     def __unicode__(self):
         return self.property_value
@@ -264,6 +288,10 @@ class PersonOrg(models.Model):
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
     last_mod_by = models.ForeignKey(User)
+    
+    class Meta:
+        verbose_name = 'Person/Organization'
+        verbose_name_plural = 'People/Organizations'    
     
     def __unicode__(self):
         return self.title
@@ -395,8 +423,63 @@ class ControlField(MPTTModel):
         order_insertion_by = ['title']
     
     def __unicode__(self):
-        return self.title    
+        return self.title
         
+class LinkedDataSource(models.Model):
+    title = models.CharField(max_length = 60, blank = True)
+    link = models.URLField(blank = True)
+
+    def __unicode__(self):
+        return self.title
+    
+    class Meta:
+        verbose_name = 'Linked Data Source'
+        verbose_name_plural = 'Linked Data Sources'        
+
+class ControlFieldLinkedData(models.Model):
+    control_field = models.ForeignKey(ControlField)
+    source = models.ForeignKey(LinkedDataSource)
+    link = models.URLField(blank = True)
+    
+    class Meta:
+        verbose_name = 'Linked Data'
+        verbose_name_plural = 'Linked Data'
+
+class SubjectControlProperty(models.Model):
+    subject = models.ForeignKey(Subject)
+    control_property = models.ForeignKey(ObjectType)
+    control_property_value = models.ForeignKey(ControlField)
+    notes = models.TextField(blank = True)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+
+    class Meta:
+        verbose_name = 'Controled Object Property'    
+        verbose_name_plural = 'Controled Object Properties'    
+
+    def __unicode__(self):
+        return self.control_property_value        
+    
+class ArtifactTypeManager(models.Manager):
+    def get_query_set(self):
+        return super(ArtifactTypeManager, self).get_query_set().filter(type=9)
+        
+class ArtifactType(ControlField):
+    objects = ArtifactTypeManager()
+    
+    def __unicode__(self):
+        return self.title
+        
+    def __init__(self, *args, **kwargs):
+        self._meta.get_field('type').default = 9
+        super(ArtifactType, self).__init__(*args, **kwargs)
+    
+    class Meta:
+        proxy = True
+        verbose_name = 'Artifact Type'
+        verbose_name_plural = 'Artifact Types'
+
 class PublicationManager(models.Manager):
     def get_query_set(self):
         return super(PublicationManager, self).get_query_set().filter(relation_type=2)
@@ -498,3 +581,19 @@ class Post(models.Model):
 
     def get_absolute_url(self):
         return reverse('base.views.post', args=[self.slug])
+        
+class MediaLocationRelations(models.Model):
+    media = models.ForeignKey(Media)
+    location = models.ForeignKey(Location)
+    relation_type = models.ForeignKey(Relations)
+    notes = models.TextField(blank = True)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+
+    def __unicode__(self):
+        return self.media.title + ":" + self.location.title
+        
+    class Meta:
+        verbose_name = 'Media-Location Relation'
+        verbose_name_plural = 'Media-Location Relations'
