@@ -1,13 +1,18 @@
 """ Views for the base application """
 
 from django.shortcuts import render, get_object_or_404, render_to_response
-from base.models import FeaturedImgs, Subject, Media, PersonOrg, Post, Location
+from base.models import *
 from haystack.views import SearchView
 from base.forms import AdvancedSearchForm
 from django.forms.formsets import formset_factory
 from base import tasks
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
-from base.utils import get_img_ids, export_csv
+from base.utils import get_img_ids, search_for_export
+from django.db.models import Count
+import djqscsv
+from django.core import serializers
+import csv
+from django.http import HttpResponse
 
 def home(request):
     """ Default view for the root """
@@ -109,5 +114,107 @@ def contact(request):
 
     return render(request, 'base/contact.html')
 
-'''def export_results(request, results):
-    return export_csv(results)'''
+def propertydetail(request, prop_id):
+
+    order = request.GET.get('o', '')
+    type = request.GET.get('type', '')
+    
+    if not(order == 'property_value' or order == 'count' or order == '-property_value' or order == '-count'):
+        order = 'property_value'
+    
+    prop = get_object_or_404(DescriptiveProperty, pk=prop_id)
+    all_objs = None
+    
+    linked_data = DescPropertyLinkedData.objects.filter(desc_prop_id=prop_id)
+
+    if prop:
+        if type == 'l':
+            all_objs = LocationProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
+        elif type == 'm':
+            all_objs = MediaProperty.objects.filter(property_id = prop_id, media__type__id = 2).values('property_value').annotate(count = Count('property_value')).order_by(order)
+        elif type == 'po':
+            all_objs = PersonOrgProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
+        else: 
+            all_objs = SubjectProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)       
+            
+    return render(request, 'base/propertydetail.html', {'property': prop, 'all_objs': all_objs, 'order': order, 'type': type, 'linked_data': linked_data })
+        
+def export_property_details(request, prop_id):
+    order = request.GET.get('o', '')
+    type = request.GET.get('type', '')
+
+    if not(order == 'property_value' or order == 'count' or order == '-property_value' or order == '-count'):
+        order = 'property_value'
+
+    prop = get_object_or_404(DescriptiveProperty, pk=prop_id)        
+    all_objs = None
+
+    if prop:
+        if type == 'l':
+            all_objs = LocationProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
+        elif type == 'm':
+            all_objs = MediaProperty.objects.filter(property_id = prop_id, media__type__id = 2).values('property_value').annotate(count = Count('property_value')).order_by(order)
+        elif type == 'po':
+            all_objs = PersonOrgProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
+        else: 
+            all_objs = SubjectProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="property_detail.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Property Value', 'Count'])
+    for obj in all_objs:
+        writer.writerow([str(obj['property_value']), obj['count']])
+    return response
+    
+def export_search_results(request):
+    p1 = request.GET.get('p1', '')
+    st1 = request.GET.get('st1', '')
+    q1 = request.GET.get('q1', '')
+    op1 = request.GET.get('op1', '')
+    p2 = request.GET.get('p2', '')
+    st2 = request.GET.get('st2', '')
+    q2 = request.GET.get('q2', '')
+    op2 = request.GET.get('op2', '')
+    p3 = request.GET.get('p3', '')
+    st3 = request.GET.get('st3', '')
+    q3 = request.GET.get('q3', '')
+    order = request.GET.get('order', '')
+
+    qs = search_for_export(p1, st1, q1, op1, p2, st2, q2, op2, p3, st3, q3, order) 
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="search_result.csv"'
+
+    writer = csv.writer(response)
+    flattened_result = {}
+    for result in qs:
+        pkey = result.pk
+        props = SubjectProperty.objects.filter(subject_id = pkey, property__visible = True)
+        for each_prop in props:
+            prop_name = str(each_prop.property.property)
+            prop_value = str(each_prop.property_value)
+            if not (prop_name in flattened_result):
+                flattened_result[prop_name] = {pkey: prop_value}
+            else:
+                current_property = flattened_result[prop_name]
+                if pkey in current_property:
+                    current_property[pkey] != '; ' + prop_value
+                else:
+                    current_property[pkey] = prop_value
+
+    titles = []
+    for k in flattened_result:
+        titles.append(k)
+    writer.writerow(titles)
+    for result in qs:
+        row = []
+        for k in flattened_result:
+            prop_dict = flattened_result[k]
+            if result.pk in prop_dict:
+                row.append(prop_dict[result.pk])
+            else:
+                row.append('')
+        writer.writerow(row)
+    return response

@@ -44,7 +44,8 @@ class ObjectType(models.Model):
     notes = models.TextField(blank = True)
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User)    
+    last_mod_by = models.ForeignKey(User) 
+    control_field = models.BooleanField(default = False)    
 
     def __unicode__(self):
         return self.type 
@@ -97,6 +98,7 @@ class DescriptiveProperty(models.Model):
     visible = models.BooleanField(default = False)
     solr_type = models.CharField(max_length = 45, choices = SOLR_TYPE, default = TEXT, blank = True)
     facet = models.BooleanField(default = False)
+    control_field = models.BooleanField(default = False)    
 
     def __unicode__(self):
         return self.property
@@ -416,7 +418,7 @@ class ControlField(MPTTModel):
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
     last_mod_by = models.ForeignKey(User, blank = True)
-    type = models.ForeignKey(ObjectType, blank = True, null = True)
+    type = models.ForeignKey(DescriptiveProperty, blank = True, null = True)
     parent = TreeForeignKey('self', null = True, blank = True, related_name = 'children')
     
     class MPTTMeta:
@@ -444,10 +446,19 @@ class ControlFieldLinkedData(models.Model):
     class Meta:
         verbose_name = 'Linked Data'
         verbose_name_plural = 'Linked Data'
+        
+class DescPropertyLinkedData(models.Model):
+    desc_prop = models.ForeignKey(DescriptiveProperty)
+    source = models.ForeignKey(LinkedDataSource)
+    link = models.URLField(blank = True)
+    
+    class Meta:
+        verbose_name = 'Linked Data'
+        verbose_name_plural = 'Linked Data'        
 
 class SubjectControlProperty(models.Model):
     subject = models.ForeignKey(Subject)
-    control_property = models.ForeignKey(ObjectType)
+    control_property = models.ForeignKey(DescriptiveProperty)
     control_property_value = models.ForeignKey(ControlField)
     notes = models.TextField(blank = True)
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
@@ -463,7 +474,7 @@ class SubjectControlProperty(models.Model):
     
 class ArtifactTypeManager(models.Manager):
     def get_query_set(self):
-        return super(ArtifactTypeManager, self).get_query_set().filter(type=9)
+        return super(ArtifactTypeManager, self).get_query_set().filter(type=19)
         
 class ArtifactType(ControlField):
     objects = ArtifactTypeManager()
@@ -472,7 +483,7 @@ class ArtifactType(ControlField):
         return self.title
         
     def __init__(self, *args, **kwargs):
-        self._meta.get_field('type').default = 9
+        self._meta.get_field('type').default = 19
         super(ArtifactType, self).__init__(*args, **kwargs)
     
     class Meta:

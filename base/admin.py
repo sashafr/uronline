@@ -68,13 +68,19 @@ class SubjectPropertyInline(admin.TabularInline):
         
 class SubjectControlPropertyInline(admin.TabularInline):
     model = SubjectControlProperty
-    fields = ['control_property', 'control_property_value', 'notes', 'last_mod_by']
+    fields = ['control_property', 'notes', 'last_mod_by']
     readonly_fields = ('last_mod_by',)
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
     suit_classes = 'suit-tab suit-tab-general'
     extra = 1
+    template = 'admin/base/subject/tabular.html'
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'control_property':
+            kwargs["queryset"] = DescriptiveProperty.objects.filter(control_field = True)
+        return super(SubjectControlPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)    
         
 class MediaSubjectRelationsInline(admin.TabularInline):
     model = MediaSubjectRelations
@@ -186,6 +192,11 @@ class SubjectAdmin(admin.ModelAdmin):
                 instance.last_mod_by = request.user            
                 instance.save()
                 update_display_fields(instance.subject_id, 'subj')
+                
+            if isinstance (instance, SubjectControlProperty):
+                instance.control_property_value = ControlField.objects.get(pk=request.POST['control_prop_val'])
+                instance.last_mod_by = request.user            
+                instance.save()
             
     def get_search_results(self, request, queryset, search_term):
         '''Override the regular keyword search to perform the advanced search

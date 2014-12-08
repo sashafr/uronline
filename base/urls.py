@@ -21,11 +21,13 @@ urlpatterns = patterns('base.views',
     url(r'^personorg/(?P<personorg_id>\d+)/$', 'personorgdetail', name='personorgdetail'),
     # ex: /ur.iaas.upenn.edu/media/5/
     url(r'^media_item/(?P<media_id>\d+)/$', 'mediadetail', name='mediadetail'),
+    url(r'^property/(?P<prop_id>\d+)/$', 'propertydetail', name='propertydetail'),    
     url(r'^location/(?P<location_id>\d+)/$', 'locationdetail', name='locationdetail'),    
     url(r'^search_help/', 'search_help', name='search_help'),
     url(r'^update_index/', 'update_index', name='update_index'),
     url(r'^news/(?P<slug>[\w\-]+)/$', 'post'),
     url(r'^news/', 'news', name='news'),
     url(r'^contact/', 'contact', name='contact'),
-'''    url(r'^export_results/', 'export_results', name='export_results')'''
+    url(r'^property_export/(?P<prop_id>\d+)/$', 'export_property_details', name='export_property_details'),
+    url(r'^result_export/', 'export_search_results', name='export_search_results'),    
 )

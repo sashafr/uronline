@@ -1,0 +1,76 @@
+{% extends "_layouts/base.html" %}
+{% load staticfiles %}
+{% load base_tags %}
+
+<!-- Metadata -->
+{% block page_title %}Property Detail{% endblock %}
+<!-- End Metadata -->
+
+{% block content %}
+    <div class="content-section-b" style="padding-top: 80px;">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-8">
+                    <h3>{{ property.property }}</h3>
+                    <p>{{ property.notes }}</p>
+                    <div class="row">
+                        <div class="col-sm-8"></div>
+                        <div class="dropdown col-sm-4">
+                            <button class="btn btn-default" type="button" >
+                                <a href="{% url 'export_property_details' property.id %}?o={{ order }}&type={{ type }}">Export</a>
+                            </button>
+                            <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
+                                Order By:
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu" role="menu">
+                                <li><a href="{% url 'propertydetail' property.id %}?o=property_value">Property(Asc)</a></li>
+                                <li><a href="{% url 'propertydetail' property.id %}?o=-property_value">Property(Desc)</a></li>
+                                <li><a href="{% url 'propertydetail' property.id %}?o=count">Count(Asc)</a></li>
+                                <li><a href="{% url 'propertydetail' property.id %}?o=-count">Count(Desc)</a></li>
+                            </ul>
+                        </div>                        
+                    </div>
+                    {% if all_objs %}
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th><h4>Property</h4></th>
+                                    <th><h4>Count</h4></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sp in all_objs %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'haystack_search' %}?property={{ property.id }}&search_type=exact&q={{ sp.property_value }}&op=and&property2=&search_type2=contains&q2=&op2=and&property3=&search_type3=contains&q3=&order=">{{ sp.property_value }}:</a>
+                                        </td>
+                                        <td>
+                                            {{ sp.count }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>There are currently no values for this property.</p>
+                    {% endif %}
+                </div>
+                <div class="col-sm-4">
+                    <div class="well" style="margin-top: 50px;">
+                        <h4>Linked Data</h4>
+                            {% if linked_data %}
+                              <ul style="list-style-type: none;">
+                                {% for link in linked_data %}
+                                    <li>
+                                        <a href="{{ link.link }}">{{ link.source.title }}</a>
+                                    </li>
+                                {% endfor %}
+                              </ul>
+                            {% endif %}
+                    </div>
+                </div>
+            </div>  
+        </div>
+    </div>
+{% endblock %}

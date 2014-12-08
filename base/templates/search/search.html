@@ -114,10 +114,11 @@
                         <!-- Results Column -->
                         <div class="col-md-8">
                             <h2 style="text-align:center">Results</h2>
-            
+                            <button class="btn btn-default" style="float: right;"><a href="{% url 'export_search_results' %}?p1={{ request.GET.property }}&st1={{ request.GET.search_type }}&q1={{ request.GET.q }}&op1={{ request.GET.op }}&p2={{ request.GET.property2 }}&st2={{ request.GET.search_type2 }}&q2={{ request.GET.q2 }}&op2={{ request.GET.op2 }}&p3={{ request.GET.property3 }}&st3={{ request.GET.search_type3 }}&q3={{ request.GET.q3 }}&order={{ request.GET.order }}">Export</a></button>
+                            <button id="collapse-init" class="btn btn-default" style="float: right;">Expand All</button></br>
+                            
                             <!-- Result Count -->
                             <p>{{ page.paginator.count }} results</p>
-                            <button
               
                             {% for result in page.object_list %}
                                 {% include 'search/_result_object.html' %}
@@ -163,8 +164,29 @@
 {{ block.super }}
 
   <script>
-    $(document).ready(function() {
-      $('#accordion').collapse();
+    $(document).ready(function () {
+
+        var active = true;
+
+        $('#collapse-init').click(function (event) {
+            event.preventDefault();
+            if (active) {
+                active = false;
+                $('.panel-collapse').collapse('show');
+                $('.panel-title').attr('data-toggle', '');
+                $(this).text('Collapse All');
+            } else {
+                active = true;
+                $('.panel-collapse').collapse('hide');
+                $('.panel-title').attr('data-toggle', 'collapse');
+                $(this).text('Expand All');
+            }
+        });
+        
+        $('#accordion').on('show.bs.collapse', function () {
+            if (active) $('#accordion .in').collapse('hide');
+        });
+
     });
   </script>
   

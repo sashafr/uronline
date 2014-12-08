@@ -121,6 +121,7 @@ def get_result_details(fields):
     
 @register.simple_tag    
 def get_img_thumb(object, type, size):
+
     if type == 'ms':
         relation = MediaSubjectRelations.objects.filter(subject = object.id, relation_type = 1)
     elif type == 'mpo':
@@ -452,3 +453,27 @@ def get_visible_subj_props(subject):
         return props
     else:
         return []
+        
+@register.assignment_tag
+def get_control_fields():
+    fields = DescriptiveProperty.objects.filter(control_field=True)
+    if fields:
+        return fields
+    return []
+    
+@register.simple_tag
+def get_control_prop_vals(control_prop):
+    results = ControlField.objects.filter(type__id = control_prop)
+    result_list = ""
+    for result in results:
+        result_list += "<option value='" + str(result.id) + "'>" + result.title + "</option>"
+    return result_list
+    
+@register.simple_tag
+def get_current_control_field_val(field):
+    primary_key = field.value()
+    if primary_key != '':
+        control_field_prop = SubjectControlProperty.objects.filter(pk=primary_key)
+        if control_field_prop:
+            return control_field_prop[0].control_property_value.title
+    return ''
