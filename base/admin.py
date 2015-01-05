@@ -95,11 +95,13 @@ class MediaSubjectRelationsInline(admin.TabularInline):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'media':
             kwargs["queryset"] = Media.objects.filter(type__type = 'publication').order_by('title')
+        elif db_field.name == 'relation_type':
+            kwargs["queryset"] = Relations.objects.filter(Q(pk=2) | Q(pk=5))
         return super(MediaSubjectRelationsInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
         
     def get_queryset(self, request):
         qs = super(MediaSubjectRelationsInline, self).get_queryset(request)
-        return qs.filter(relation_type=2)
+        return qs.filter(Q(relation_type=2) | Q(relation_type=5))
 
 class LocationTreeChoiceField(ModelChoiceField):
     def label_from_instance(self, obj):
@@ -117,7 +119,7 @@ class LocationRelationAdminForm(ModelForm):
         
 class LocationSubjectRelationsInline(admin.TabularInline):
     model = LocationSubjectRelations
-    fields = ['location', 'relation_type', 'notes', 'last_mod_by']
+    fields = ['location', 'notes', 'last_mod_by']
     readonly_fields = ('last_mod_by',)        
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
@@ -154,7 +156,7 @@ class FileInline(admin.TabularInline):
         
 class SubjectAdmin(admin.ModelAdmin):
     readonly_fields = ('last_mod_by',)    
-    inlines = [SubjectPropertyInline, MediaSubjectRelationsInline, FileInline, LocationSubjectRelationsInline, SubjectControlPropertyInline]
+    inlines = [SubjectPropertyInline, SubjectControlPropertyInline, MediaSubjectRelationsInline, FileInline, LocationSubjectRelationsInline]
     search_fields = ['title']
     list_display = ('title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3')
     formfield_overrides = {
@@ -188,7 +190,7 @@ class SubjectAdmin(admin.ModelAdmin):
         instances = formset.save(commit=False)
 
         for instance in instances:
-            if isinstance(instance, SubjectProperty) or isinstance(instance, MediaSubjectRelations) or isinstance(instance, LocationSubjectRelations): #Check if it is the correct type of inline
+            if isinstance(instance, SubjectProperty) or isinstance(instance, MediaSubjectRelations): #Check if it is the correct type of inline
                 instance.last_mod_by = request.user            
                 instance.save()
                 update_display_fields(instance.subject_id, 'subj')
@@ -197,6 +199,11 @@ class SubjectAdmin(admin.ModelAdmin):
                 instance.control_property_value = ControlField.objects.get(pk=request.POST['control_prop_val'])
                 instance.last_mod_by = request.user            
                 instance.save()
+
+            if isinstance (instance, LocationSubjectRelations):
+                instance.relation_type = Relations.objects.get(pk=4)
+                instance.last_mod_by = request.user            
+                instance.save()                
             
     def get_search_results(self, request, queryset, search_term):
         '''Override the regular keyword search to perform the advanced search
@@ -472,10 +479,30 @@ class LocationPropertyInline(admin.TabularInline):
         if db_field.name == 'property':
             kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='AL') | Q(primary_type='SL'))
         return super(LocationPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        
+class MediaLocationRelationsInline(admin.TabularInline):
+    model = MediaLocationRelations
+    fields = ['media', 'relation_type', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)        
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    extra = 1
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'media':
+            kwargs["queryset"] = Media.objects.filter(type__type = 'publication').order_by('title')
+        elif db_field.name == 'relation_type':
+            kwargs["queryset"] = Relations.objects.filter(Q(pk=2) | Q(pk=5))
+        return super(MediaLocationRelationsInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        
+    def get_queryset(self, request):
+        qs = super(MediaLocationRelationsInline, self).get_queryset(request)
+        return qs.filter(Q(relation_type=2) | Q(relation_type=5))        
 
 class LocationAdmin(MPTTModelAdmin):
     readonly_fields = ('last_mod_by',)    
-    inlines = [LocationPropertyInline]
+    inlines = [LocationPropertyInline, MediaLocationRelationsInline]
     search_fields = ['title']
     list_display = ('title', 'notes', 'type', 'ancestors')
     formfield_overrides = {
@@ -491,7 +518,7 @@ class LocationAdmin(MPTTModelAdmin):
         instances = formset.save(commit=False)
 
         for instance in instances:
-            if isinstance(instance, LocationProperty): #Check if it is the correct type of inline
+            if isinstance(instance, LocationProperty) or isinstance(instance, MediaLocationRelations): #Check if it is the correct type of inline
                 instance.last_mod_by = request.user            
                 instance.save()
 
@@ -508,7 +535,19 @@ class PostAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
 
 admin.site.register(Post, PostAdmin)
-admin.site.register(ObjectType)
+
+class ObjectTypeAdmin(admin.ModelAdmin):
+    readonly_fields = ('last_mod_by',)
+    list_display = ('type', 'notes', 'control_field')
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    
+    def save_model(self, request, obj, form, change):
+        obj.last_mod_by = request.user
+        obj.save()
+        
+admin.site.register(ObjectType, ObjectTypeAdmin)
 
 class LinkedDataAdmin(admin.ModelAdmin):
     list_display = ['control_field', 'source', 'show_url']

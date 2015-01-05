@@ -6,7 +6,7 @@
   <li class="list-group-item">
   
     {% if obj.get_type == 'media' %}
-      <span class="badge">Media</span>
+      <a href="{% url 'mediadetail' obj.id %}" role="button" class="btn btn-default btn-xs" style="float: right;">View Details</a>
       <div class="row">
         <div class="col-md-3">
           <img src="{% get_img_thumb obj 'mm' 'thm' %}" style="display: inline; margin: 0 5px;"></img>        
@@ -28,6 +28,7 @@
           {% get_result_details result.get_additional_fields %}
         </table>
       </div>
+      
     {% elif obj.get_type == 'subject' %}
       <a href="{% url 'subjectdetail' obj.id %}" role="button" class="btn btn-default btn-xs" style="float: right;">View Details</a>
       <div class="row">
@@ -51,16 +52,16 @@
           {% get_result_details result.get_additional_fields %}
         </table>
       </div>
-    {% else %}
-      <span class="badge">Person/Organization</span>
+    {% elif obj.get_type == 'person_org' %}
+      <a href="{% url 'personorgdetail' obj.id %}" role="button" class="btn btn-default btn-xs" style="float: right;">View Details</a>
       <div class="row">
         <div class="col-md-3">
           <img src="{% get_img_thumb obj 'mpo' 'thm' %}" style="display: inline; margin: 0 5px;"></img>        
         </div>
         <div class="col-md-9">
-          <h4 class="list-group-item-heading">
-            {% load_result_display_fields result.get_additional_fields 'po_title' %}
-          </h4>
+          <table class="table table-striped">
+            {% get_result_details result.get_additional_fields %}
+          </table>
           <p>
             {% load_result_display_fields result.get_additional_fields 'po_desc' %}
             <a class="panel-title" data-toggle="collapse" data-parent="#accordion" href="#collapsepo{{ obj.id }}">
@@ -74,6 +75,28 @@
            {% get_result_details result.get_additional_fields %}
         </table>
       </div>
+    {% else %}
+      <a href="{% url 'locationdetail' obj.id %}" role="button" class="btn btn-default btn-xs" style="float: right;">View Details</a>
+      <div class="row">
+        <div class="col-md-3">
+          <img src="{% get_img_thumb obj 'ml' 'thm' %}" style="display: inline; margin: 0 5px;"></img>        
+        </div>
+        <div class="col-md-9">
+          <table class="table table-striped">
+            {% get_result_details result.get_additional_fields %}
+          </table>
+          <p>
+            <a class="panel-title" data-toggle="collapse" data-parent="#accordion" href="#collapsesub{{ obj.id }}">
+              Learn More...
+            </a>
+          </p>
+        </div>
+      </div>
+      <div id="collapsesub{{ obj.id }}" class="panel-collapse collapse">
+        <table class="table table-striped">
+          {% get_result_details result.get_additional_fields %}
+        </table>
+      </div>      
     {% endif %}
     
   </li>

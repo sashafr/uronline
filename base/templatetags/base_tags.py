@@ -477,3 +477,38 @@ def get_current_control_field_val(field):
         if control_field_prop:
             return control_field_prop[0].control_property_value.title
     return ''
+    
+@register.assignment_tag
+def get_loc_ancestors(location):
+    return location.get_ancestors(include_self = True)
+    
+@register.assignment_tag
+def get_loc_siblings(location):
+    return location.get_siblings(include_self = False)
+    
+@register.assignment_tag
+def get_loc_children(location):
+    return location.get_children()
+    
+@register.simple_tag
+def get_bib_ref(media):
+    ref = ""
+    author = MediaProperty.objects.filter(media_id = media.id, property_id = 77)
+    if author:
+        ref += author[0].property_value + '. '
+    year = MediaProperty.objects.filter(media_id = media.id, property_id = 78)
+    if year:
+        ref += '(' + year[0].property_value + ') '
+    title = MediaProperty.objects.filter(media_id = media.id, property_id = 79)
+    if title:
+        ref += '<em>' + title[0].property_value + '</em>, '
+    else:
+        ref += '[title missing], '
+    place = MediaProperty.objects.filter(media_id = media.id, property_id = 86)
+    if place:
+        ref += place[0].property_value + ': '
+    pub = MediaProperty.objects.filter(media_id = media.id, property_id = 85)
+    if pub:
+        ref += pub[0].property_value
+        
+    return ref

@@ -352,7 +352,11 @@ class MediaPersonOrgRelations(models.Model):
     last_mod_by = models.ForeignKey(User)
 
     def __unicode__(self):
-        return self.media.title + ":" + self.person_org.title 
+        return self.media.title + ":" + self.person_org.title
+
+    class Meta:
+        verbose_name = 'Media-Person/Organization Relation'
+        verbose_name_plural = 'Media-Person/Organization Relations'        
         
 """Related subjects"""
 class SubjectSubjectRelations(models.Model):
@@ -456,6 +460,15 @@ class DescPropertyLinkedData(models.Model):
         verbose_name = 'Linked Data'
         verbose_name_plural = 'Linked Data'        
 
+class SubjectLinkedData(models.Model):
+    subject = models.ForeignKey(Subject)
+    source = models.ForeignKey(LinkedDataSource)
+    link = models.URLField(blank = True)
+    
+    class Meta:
+        verbose_name = 'Linked Object Data'
+        verbose_name_plural = 'Linked Object Data'        
+        
 class SubjectControlProperty(models.Model):
     subject = models.ForeignKey(Subject)
     control_property = models.ForeignKey(DescriptiveProperty)

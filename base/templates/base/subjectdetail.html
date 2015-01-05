@@ -10,117 +10,106 @@
     <div class="content-section-b" style="padding-top: 80px;">
         <div class="container">
             <div class="row">
-                <div class="col-sm-4">
-                    <div class="row">
-                        <ul class="enlarge">
-                            <li>
-                                <a href="{% get_img_thumb subject 'ms' '' %}"><img class="img-responsive" src="{% get_img_thumb subject 'ms' 'pre' %}" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'></a>
-                                <span>
-                                    <img src="{% get_img_thumb subject 'ms' 'scr' %}" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'/>
-                                </span>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="row">
-                        <h3>Related Files:</h3>
-                        <ul class="enlarge">
-                            {% for image in images %}
-                                <li>
-                                    <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}"><img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'></a>
-                                    <span>
-                                        <img src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=scr" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'/>
-                                    </span>
-                                </li>
-                            {% endfor %}
-                        </ul>                        
-                    </div>
-                </div>
-                <div class="col-md-8">
+                <div class="col-md-9">
                     <div class="row">
                         <h3>{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}</h3>
-                        <table class="table table-striped">
-                            {% for cp in control_properties %}
-                                <tr>
-                                    <td>
-                                        <a href="{% url 'propertydetail' cp.control_property.id %}?type=s" data-toggle="popover" data-html="true" data-content="{{ cp.control_property.notes }}">{{ cp.control_property }}:</a>
-                                    </td>
-                                    <td>
-                                        <a href="{% url 'haystack_search' %}?property={{ cp.control_property.id }}&search_type=exact&q={{ cp.control_property_value.title }}&op=and&property2=&search_type2=contains&q2=&op2=and&property3=&search_type3=contains&q3=&order=" data-toggle="popover" data-html="true" data-content="{{ cp.control_property_value.notes }}">{{ cp.control_property_value.title }}</a>
-                                        {% get_linked_data_url cp.control_property_value as linked_data %}
-                                        {% if linked_data %}
-                                            {% for link_url in linked_data %}
-                                                <a href="{{ link_url.link }}"><span class="glyphicon glyphicon-link"></span></a>                       
-                                            {% endfor %}
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                            {% endfor %}                    
-                            {% for property in properties|slice:"1:" %}
-                                <tr>
-                                    <td>
-                                        <a href="{% url 'propertydetail' property.property.id %}?type=s" data-toggle="popover" data-html="true" data-content="{{ property.property.notes }}">{{ property.property }}:</a>
-                                    </td>
-                                    <td>
-                                        {{ property.property_value }}
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </table>
-                    </div>
-                    <div class="row">
-                        <div class="well">
-                            <h3>Related Context</h3>
-                            <ul class="list-group">
-                                {% for location_relation in subject.locationsubjectrelations_set.all %}
-                                    <a href="{% url 'locationdetail' location_relation.location.id %}"><li class="list-group-item">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <img class="img-responsive" src="{% get_img_thumb location_relation.location 'ml' 'thm' %}" alt=""></img>    
-                                            </div>
-                                            <div class="col-md-9">
-                                                <table class="table table-striped">
-                                                    {% for location_props in location_relation.location.locationproperty_set.all|slice:":3" %}
-                                                        <tr>
-                                                            <td>{{ location_props.property }}</td>
-                                                            <td>{{ location_props.property_value }}</td>
-                                                        </tr>
-                                                    {% endfor %}
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </li></a>
+                        {% if property_count > 1 %}
+                            <table class="table table-striped">
+                                {% for cp in control_properties %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'propertydetail' cp.control_property.id %}?type=s" data-toggle="popover" data-html="true" data-content="{{ cp.control_property.notes }}">{{ cp.control_property }}:</a>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'haystack_search' %}?property={{ cp.control_property.id }}&search_type=exact&q={{ cp.control_property_value.title }}&op=and&property2=&search_type2=contains&q2=&op2=and&property3=&search_type3=contains&q3=&order=" data-toggle="popover" data-html="true" data-content="{{ cp.control_property_value.notes }}">{{ cp.control_property_value.title }}</a>
+                                            {% get_linked_data_url cp.control_property_value as linked_data %}
+                                            {% if linked_data %}
+                                                {% for link_url in linked_data %}
+                                                    <a href="{{ link_url.link }}"><span class="glyphicon glyphicon-link"></span></a>                       
+                                                {% endfor %}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}                    
+                                {% for property in properties|slice:"1:" %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'propertydetail' property.property.id %}?type=s" data-toggle="popover" data-html="true" data-content="{{ property.property.notes }}">{{ property.property }}:</a>
+                                        </td>
+                                        <td>
+                                            {{ property.property_value }}
+                                        </td>
+                                    </tr>
                                 {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="well">
-                            <h3>Related Media</h3>
-                            <ul class="list-group">
-                                {% for media_relation in related_media %}
-                                    <a href="{% url 'mediadetail' media_relation.media.id %}"><li class="list-group-item">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <img class="img-responsive" src="{% get_img_thumb media_relation.media 'mm' 'thm' %}" alt=""></img>    
-                                            </div>
-                                            <div class="col-md-9">
-                                                <table class="table table-striped">
-                                                    {% for media_props in media_relation.media.mediaproperty_set.all|slice:":3" %}
-                                                        <tr>
-                                                            <td>{{ media_props.property }}</td>
-                                                            <td>{{ media_props.property_value }}</td>
-                                                        </tr>
-                                                    {% endfor %}
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </li></a>
-                                {% endfor %}
-                            </ul>
-                        </div>
+                            </table>
+                        {% else %}
+                            <br /><br />
+                            <div class="alert alert-warning" role="alert">
+                                <p>This object is currently undergoing investigation. More information to come...</p>
+                            </div>
+                        {% endif %}
                     </div>                    
                 </div>
-            </div>  
+                <div class="col-md-3">
+                    <div class="row">
+                        <div class="col-sm-11">
+                            <div class="well" style="margin-top: 50px;">
+                                <h4>Images</h4>
+                                <div class="img-table">
+                                    <ul class="enlarge">
+                                        <li>
+                                            <a href="{% get_img_thumb subject 'ms' '' %}"><img class="img-responsive" src="{% get_img_thumb subject 'ms' 'thm' %}" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'></a>
+                                            <span>
+                                                <img src="{% get_img_thumb subject 'ms' 'scr' %}" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'/>
+                                            </span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <a href="#addimgs" style="text-align: center; display: block;">See More<span class="glyphicon glyphicon-chevron-down"></span></a>
+                                <hr />
+                                <h4>Context</h4>
+                                {% for location_relation in subject.locationsubjectrelations_set.all %}
+                                    <p>{% get_loc_ancestors location_relation.location as location_tree %}
+                                    {% for loc in location_tree %}
+                                        {% if forloop.counter0 > 0 %} >> {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
+                                    {% endfor %}
+                                    {% if location_relation.notes %}: {{ location_relation.notes }}{% endif %}</p>
+                                {% endfor %}
+                                <hr />
+                                <h4>References</h4>
+                                {% for media_relation in related_media %}
+                                    <p>
+                                        <a href="{% url 'mediadetail' media_relation.media.id %}">{% get_bib_ref media_relation.media %}{% if media_relation.notes %}, {{ media_relation.notes }}{% endif %}.</a>
+                                    </p>
+                                {% endfor %}
+                                <hr />
+                                <h4>Linked Resources</h4>
+                                {% for web in related_web %}
+                                    <p>
+                                        <a href="{{ web.link }}">{{ web.source.title }}</a>
+                                    </p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>                    
+            </div>
+            <hr />
+            <div class="row">
+                <div class="row">
+                    <h3 id="addimgs">Additional Images</h3>
+                    <ul class="enlarge">
+                        {% for image in images %}
+                            <li>
+                                <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}"><img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'></a>
+                                <span>
+                                    <img src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=scr" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'/>
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>                        
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}

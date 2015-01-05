@@ -36,12 +36,16 @@ def subjectdetail(request, subject_id):
         properties = subject.subjectproperty_set.filter(property__visible=True)
         control_properties = subject.subjectcontrolproperty_set.all()
         related_media = subject.mediasubjectrelations_set.filter(relation_type_id=2)
+        related_web = subject.subjectlinkeddata_set.all()
+        property_count = subject.subjectproperty_set.filter(property__visible=True).count() + subject.subjectcontrolproperty_set.all().count()
     else:
         images = []
         properties = []
         control_properties = []
         related_media = []
-    return render(request, 'base/subjectdetail.html', {'subject': subject, 'images': images, 'properties': properties, 'control_properties': control_properties, 'related_media': related_media})
+        related_web = []
+        property_count = 0
+    return render(request, 'base/subjectdetail.html', {'subject': subject, 'images': images, 'properties': properties, 'control_properties': control_properties, 'related_media': related_media, 'related_web': related_web, 'property_count': property_count})
     
 def mediadetail(request, media_id):
     """ Detailed view of a media record """
@@ -49,7 +53,7 @@ def mediadetail(request, media_id):
     media = get_object_or_404(Media, pk=media_id)
     if media:
         images = get_img_ids(media, 'mm')
-        properties = media.mediaproperty_set.filter(property__visible=True)
+        properties = media.mediaproperty_set.filter(property__visible=True).order_by('property__order')
         related_objects = media.mediasubjectrelations_set.all()[:10]
     else:
         images = []
