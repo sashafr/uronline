@@ -55,7 +55,7 @@ INSTALLED_APPS = (
 
     # Third-party apps, patches, fixes
     'djcelery',
-    'debug_toolbar', # comment out in production
+    #'debug_toolbar', # comment out in production
     'compressor',
     'haystack',
 
@@ -145,7 +145,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware', # comment out in production
+#    'debug_toolbar.middleware.DebugToolbarMiddleware', # comment out in production
 ]
 
 TEMPLATE_CONTEXT_PROCESSORS = [

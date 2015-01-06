@@ -375,14 +375,14 @@ admin.site.register(MediaType)
 
 class DescriptivePropertyAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'modified', 'last_mod_by')
-    fields = ['property', 'primary_type', 'order', 'visible', 'solr_type', 'facet', 'notes', 'created', 'modified', 'last_mod_by']
-    list_display = ['property', 'primary_type', 'order', 'visible', 'solr_type', 'facet', 'notes', 'created', 'modified', 'last_mod_by']
+    fields = ['property', 'primary_type', 'order', 'data_source_type', 'visible', 'solr_type', 'facet', 'notes', 'created', 'modified', 'last_mod_by']
+    list_display = ['property', 'primary_type', 'order', 'data_source_type', 'visible', 'solr_type', 'facet', 'notes', 'created', 'modified', 'last_mod_by']
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2})},
     }
     search_fields = ['property']
-    list_filter = ('primary_type', 'visible', 'solr_type', 'facet')
-    list_editable = ('primary_type', 'order', 'visible', 'solr_type', 'facet', 'notes')
+    list_filter = ('primary_type', 'visible', 'solr_type', 'facet', 'data_source_type')
+    list_editable = ('primary_type', 'order', 'visible', 'solr_type', 'facet', 'notes', 'data_source_type')
     
     def save_model(self, request, obj, form, change):
         obj.last_mod_by = request.user

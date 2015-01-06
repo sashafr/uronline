@@ -256,8 +256,7 @@ ul.enlarge li:hover span > img {
 }
 
 ul.enlarge span {
-    position: absolute;
-    left: -9999px;    
+    display: none;    
 }
 
 ul.enlarge li:hover {
@@ -266,8 +265,10 @@ ul.enlarge li:hover {
 }
 
 ul.enlarge li:hover span {
-    top: -300px;
-    left: -20px;
+    display: block;
+    position: absolute;
+    top: -20px;
+    left: -300px;
 }
 
 ul.enlarge li:hover:nth-child(2) span {

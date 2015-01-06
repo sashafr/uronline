@@ -87,6 +87,17 @@ class DescriptiveProperty(models.Model):
         (DATE, 'Date'),
         (LOCATION, 'Location'),
     )
+    
+    GEN = 'gen'
+    CON = 'con'
+    ARCH = 'arc'
+    TEXT = 'txt'
+    DATA_SOURCE_TYPE = (
+        (GEN, 'General'),
+        (CON, 'Conservation-Analytic'),
+        (ARCH, 'Archival'),
+        (TEXT, 'Textual'),
+    )
 
     property = models.CharField(max_length = 60)
     notes = models.TextField(blank = True)
@@ -98,7 +109,8 @@ class DescriptiveProperty(models.Model):
     visible = models.BooleanField(default = False)
     solr_type = models.CharField(max_length = 45, choices = SOLR_TYPE, default = TEXT, blank = True)
     facet = models.BooleanField(default = False)
-    control_field = models.BooleanField(default = False)    
+    control_field = models.BooleanField(default = False)
+    data_source_type = models.CharField(max_length=3, choices=DATA_SOURCE_TYPE, default = GEN, blank = True)
 
     def __unicode__(self):
         return self.property

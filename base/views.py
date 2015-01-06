@@ -7,7 +7,7 @@ from base.forms import AdvancedSearchForm
 from django.forms.formsets import formset_factory
 from base import tasks
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
-from base.utils import get_img_ids, search_for_export
+from base.utils import get_img_ids, search_for_export, get_img_ids_spec
 from django.db.models import Count
 import djqscsv
 from django.core import serializers
@@ -32,20 +32,28 @@ def subjectdetail(request, subject_id):
     
     subject = get_object_or_404(Subject, pk=subject_id)
     if subject:
-        images = get_img_ids(subject, 'ms')
-        properties = subject.subjectproperty_set.filter(property__visible=True)
+        gen_images = get_img_ids_spec(subject, 'ms', 3)
+        arc_images = get_img_ids_spec(subject, 'ms', 7)
+        con_images = get_img_ids_spec(subject, 'ms', 6)        
+        gen_properties = subject.subjectproperty_set.filter(property__visible=True, property__data_source_type='gen')
+        arc_properties = subject.subjectproperty_set.filter(property__visible=True, property__data_source_type='arc')
+        con_properties = subject.subjectproperty_set.filter(property__visible=True, property__data_source_type='con')        
         control_properties = subject.subjectcontrolproperty_set.all()
         related_media = subject.mediasubjectrelations_set.filter(relation_type_id=2)
         related_web = subject.subjectlinkeddata_set.all()
         property_count = subject.subjectproperty_set.filter(property__visible=True).count() + subject.subjectcontrolproperty_set.all().count()
     else:
-        images = []
-        properties = []
+        gen_images = []
+        arc_images = []
+        con_images = []        
+        gen_properties = []
+        arc_properties = []
+        con_properties = []
         control_properties = []
         related_media = []
         related_web = []
         property_count = 0
-    return render(request, 'base/subjectdetail.html', {'subject': subject, 'images': images, 'properties': properties, 'control_properties': control_properties, 'related_media': related_media, 'related_web': related_web, 'property_count': property_count})
+    return render(request, 'base/subjectdetail.html', {'subject': subject, 'gen_images': gen_images, 'con_images': con_images, 'arc_images': arc_images, 'gen_properties': gen_properties, 'con_properties': con_properties, 'arc_properties': arc_properties, 'control_properties': control_properties, 'related_media': related_media, 'related_web': related_web, 'property_count': property_count})
     
 def mediadetail(request, media_id):
     """ Detailed view of a media record """

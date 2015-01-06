@@ -45,7 +45,10 @@ def load_result_display_fields(fields, key):
                 long_id = fields.get('id')
                 id_group = long_id.split('.')
                 id = id_group[2]
-                value = SubjectProperty.objects.filter(property_id=p, subject_id=id)
+                if key.startswith('med'):
+                    value = MediaProperty.objects.filter(property_id=p, media_id=id)
+                else:
+                    value = SubjectProperty.objects.filter(property_id=p, subject_id=id)
                 for i, v in enumerate(value):
                     if i > 0:
                         prop_list.append(property_name + ' : ' + v.property_value + '; ')
