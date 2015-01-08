@@ -52,7 +52,7 @@
                                 {% else %}
                                     <br /><br />
                                     <div class="alert alert-warning" role="alert">
-                                        <p>This object is currently undergoing investigation. More information to come...</p>
+                                        <p>This object is currently undergoing analysis. More information to come...</p>
                                     </div>
                                 {% endif %}
                                 <hr />
@@ -60,11 +60,10 @@
                                 <h3 id="addimgs">Additional Images</h3>
                                 <ul class="enlarge">
                                     {% for image in gen_images %}
-                                        <li>
-                                            <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}"><img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'></a>
-                                            <span>
-                                                <img src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=scr" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'/>
-                                            </span>
+                                        <li style="border: 1px solid #ddd; border-radius: 4px; margin: 10px; padding: 10px;">
+                                            <a data-lightbox="image-{{ image }}" href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}"><img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'></a>
+                                            <p style="text-align: center;">
+                                            <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">Download</a></p>
                                         </li>
                                     {% endfor %}
                                 </ul>              
@@ -87,7 +86,7 @@
                                 {% else %}
                                     <br /><br />
                                     <div class="alert alert-warning" role="alert">
-                                        <p>This object is currently undergoing investigation. More information to come...</p>
+                                        <p>This object is currently undergoing analysis. More information to come...</p>
                                     </div>
                                 {% endif %}
                                 {% if arc_images %}
@@ -95,11 +94,10 @@
                                 <h3 id="addimgs">Archival Images</h3>
                                 <ul class="enlarge">
                                     {% for image in arc_images %}
-                                        <li>
-                                            <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}"><img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'></a>
-                                            <span>
-                                                <img src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=scr" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'/>
-                                            </span>
+                                        <li style="border: 1px solid #ddd; border-radius: 4px; margin: 10px; padding: 10px;">
+                                            <a data-lightbox="image-{{ image }}" href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}"><img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'></a>
+                                            <p style="text-align: center;">
+                                            <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">Download</a></p>
                                         </li>
                                     {% endfor %}
                                 </ul>  
@@ -122,7 +120,7 @@
                                 {% else %}
                                     <br /><br />
                                     <div class="alert alert-warning" role="alert">
-                                        <p>This object is currently undergoing investigation. More information to come...</p>
+                                        <p>This object is currently undergoing analysis. More information to come...</p>
                                     </div>
                                 {% endif %}
                                 {% if con_images %}
@@ -130,11 +128,10 @@
                                 <h3 id="addimgs">Conservation/Analytic Images</h3>
                                 <ul class="enlarge">
                                     {% for image in con_images %}
-                                        <li>
-                                            <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}"><img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'></a>
-                                            <span>
-                                                <img src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=scr" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'/>
-                                            </span>
+                                        <li style="border: 1px solid #ddd; border-radius: 4px; margin: 10px; padding: 10px;">
+                                            <a data-lightbox="image-{{ image }}" href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}"><img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'></a>
+                                            <p style="text-align: center;">
+                                            <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">Download</a></p>
                                         </li>
                                     {% endfor %}
                                 </ul>

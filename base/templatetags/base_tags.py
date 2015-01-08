@@ -47,6 +47,10 @@ def load_result_display_fields(fields, key):
                 id = id_group[2]
                 if key.startswith('med'):
                     value = MediaProperty.objects.filter(property_id=p, media_id=id)
+                elif key.startswith('po'):
+                    value = PersonOrgProperty.objects.filter(property_id=p, person_org_id=id)
+                elif key.startswith('loc'):
+                    value = LocationProperty.objects.filter(property_id=p, location_id=id)
                 else:
                     value = SubjectProperty.objects.filter(property_id=p, subject_id=id)
                 for i, v in enumerate(value):
@@ -457,6 +461,16 @@ def get_visible_subj_props(subject):
     else:
         return []
         
+@register.simple_tag
+def get_museum(subj):
+    museum = SubjectProperty.objects.filter(subject=subj, property_id = 59)
+    
+    if museum:
+        if museum[0]:
+            return museum[0].property_value
+    else:
+        return ''
+        
 @register.assignment_tag
 def get_control_fields():
     fields = DescriptiveProperty.objects.filter(control_field=True)
@@ -515,3 +529,10 @@ def get_bib_ref(media):
         ref += pub[0].property_value
         
     return ref
+    
+@register.assignment_tag
+def img_id_from_rsref(rsref):
+    id = MediaProperty.objects.filter(property__property = 'Resource Space ID', property_value = rsref)
+    if id and id[0]:
+        return id[0].media_id
+    return None

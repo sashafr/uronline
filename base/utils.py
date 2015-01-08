@@ -200,7 +200,12 @@ def get_img_ids(object, type):
     elif type == 'mpo':
         relations = MediaPersonOrgRelations.objects.filter(person_org = object.id, relation_type = 3)
     elif type == 'ml':
-        relations = MediaLocationRelations.objects.filter(location = object.id, relation_type = 3)        
+        relations = MediaLocationRelations.objects.filter(location = object.id, relation_type = 3)
+    elif type == 'mf':
+        prop = MediaProperty.objects.filter(media_id = object.id, property__property = 'Resource Space ID')
+        if prop and prop[0]:
+            imgs.append(prop[0].property_value)
+        return imgs
     else:
         relations = MediaMediaRelations.objects.filter(media1 = object.id, relation_type = 3)
         for relation in relations:

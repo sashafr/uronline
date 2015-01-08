@@ -10,33 +10,7 @@
     <div class="content-section-b" style="padding-top: 80px;">
         <div class="container">
             <div class="row">
-                <div class="col-sm-3" style="padding-top: 10px;">
-                    <div class="row">
-                        <ul class="enlarge">
-                            <li>
-                                <a href="{% get_img_url media 'mm' %}"><img class="img-responsive" src="{% get_img_thumb media 'mm' 'pre' %}" alt="" /></a>
-                                <span>
-                                    <img src="{% get_img_thumb media 'mm' 'scr' %}" alt=''/>
-                                </span>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="row">
-                        <ul class="enlarge">
-                            {% for image in images %}
-                            <li>
-                            <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">
-                                <img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt="">
-                            </a>
-                                <span>
-                                    <img src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=scr" alt=''/>
-                                </span>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-6">
+                <div class="col-md-9">
                     <div class="row">
                         <h3>{{ media.title }}</h3>
                         <table class="table table-striped">
@@ -51,7 +25,27 @@
                                 </tr>
                             {% endfor %}
                         </table>
+                        {% if images %}
+                            <hr />
+                            <h3>Files</h3>
+                            <ul class="enlarge">
+                                {% for image in images %}
+                                <li style="border: 1px solid #ddd; border-radius: 4px; margin: 10px; padding: 10px;">
+                                    <a data-lightbox="image-{{ image }}" href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">
+                                        <img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt="">
+                                    </a>
+                                    <p style="text-align: center;">
+                                    {% if request.GET.isfile != 'true' %}
+                                    {% img_id_from_rsref image as img_id %}
+                                    <a href="{% url 'mediadetail' img_id %}?isfile=true">View Details</a> | 
+                                    {% endif %}
+                                    <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">Download</a></p>
+                                </li>
+                                {% endfor %}
+                            </ul>                            
+                        {% endif %}
                     </div>
+                    {% if related_objects %}
                     <div class="row">
                         <div class="well">
                             <h3>Related Objects</h3>
@@ -78,12 +72,14 @@
                                 {% endfor %}
                             </ul>
                         </div>
-                    </div>                    
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="col-md-3">
                     <div class="row">
                         <div class="col-sm-11">
                             <div class="well" style="margin-top: 50px;">
+                                {% if media.medialocationrelations_set.all %}
                                 <h4>Related Contexts</h4>
                                 {% for location_relation in media.medialocationrelations_set.all %}
                                     <p>{% get_loc_ancestors location_relation.location as location_tree %}
@@ -92,6 +88,14 @@
                                     {% endfor %}
                                     {% if location_relation.notes %}: {{ location_relation.notes }}{% endif %}</p>
                                 {% endfor %}
+                                <hr />                                
+                                {% endif %}
+                                <h4>Linked Resources</h4>
+                                {% for web in related_web %}
+                                    <p>
+                                        <a href="{{ web.link }}">{{ web.source.title }}</a>
+                                    </p>
+                                {% endfor %}                                
                             </div>
                         </div>
                     </div>

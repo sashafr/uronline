@@ -240,7 +240,7 @@ ul.enlarge li {
 }
 
 ul.enlarge img {
-    padding: 10px 10px 10px 0;
+    padding: 10px 10px 10px 10px;
 }
 
 ul.enlarge li:hover span > img {

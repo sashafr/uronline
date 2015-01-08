@@ -10,33 +10,7 @@
     <div class="content-section-b" style="padding-top: 80px;">
         <div class="container">
             <div class="row">
-                <div class="col-sm-3" style="padding-top: 10px;">
-                    <div class="row">
-                        <ul class="enlarge">
-                            <li>
-                                <a href="{% get_img_thumb location 'ml' '' %}"><img class="img-responsive" src="{% get_img_thumb location 'ml' 'pre' %}" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}' /></a>
-                                <span>
-                                    <img src="{% get_img_thumb location 'ml' 'scr' %}" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'/>
-                                </span>                            
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="row">
-                        <ul class="enlarge">
-                            {% for image in images %}
-                                <li>
-                                    <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">
-                                        <img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'>
-                                    </a>
-                                    <span>
-                                        <img src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=scr" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'/>
-                                    </span>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-6">
+                <div class="col-md-9">
                     <div class="row">
                         <h3>{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}</h3>
                         <table class="table table-striped">
@@ -51,6 +25,21 @@
                                 </tr>
                             {% endfor %}
                         </table>
+                        <hr />
+                        {% if images %}
+                            <h3>Images</h3>
+                            <ul class="enlarge">
+                                {% for image in images %}
+                                    <li style="border: 1px solid #ddd; border-radius: 4px; margin: 10px; padding: 10px;">
+                                        <a data-lightbox="image-{{ image }}" href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">
+                                            <img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'>
+                                        </a>
+                                        <p style="text-align: center;">
+                                        <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">Download</a></p>
+                                    </li>
+                                {% endfor %}
+                            </ul>                            
+                        {% endif %}
                     </div>
                     <div class="row">
                         <div class="well">
@@ -72,6 +61,7 @@
                                                         </tr>
                                                     {% endfor %}
                                                 </table>
+                                                <p style="text-align: right;">{% get_museum object_relation.subject %}</p>
                                             </div>
                                         </div>
                                     </li></a>

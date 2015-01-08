@@ -9,7 +9,7 @@
       <a href="{% url 'mediadetail' obj.id %}" role="button" class="btn btn-default btn-xs" style="float: right;">View Details</a>
       <div class="row">
         <div class="col-md-3">
-          <h1><span class="glyphicon glyphicon-book"></span></h1>
+          <h1 style="text-align: center; font-size: 400%"><span class="glyphicon glyphicon-book"></span></h1>
         </div>
         <div class="col-md-9">
           <h4 class="list-group-item-heading">
@@ -56,12 +56,12 @@
       <a href="{% url 'personorgdetail' obj.id %}" role="button" class="btn btn-default btn-xs" style="float: right;">View Details</a>
       <div class="row">
         <div class="col-md-3">
-          <img src="{% get_img_thumb obj 'mpo' 'thm' %}" style="display: inline; margin: 0 5px;"></img>        
+          <h1 style="text-align: center; font-size: 400%"><span class="glyphicon glyphicon-user"></span></h1>        
         </div>
         <div class="col-md-9">
-          <table class="table table-striped">
-            {% get_result_details result.get_additional_fields %}
-          </table>
+          <h4 class="list-group-item-heading">
+            {% load_result_display_fields result.get_additional_fields 'po_title' %}
+          </h4>
           <p>
             {% load_result_display_fields result.get_additional_fields 'po_desc' %}
             <a class="panel-title" data-toggle="collapse" data-parent="#accordion" href="#collapsepo{{ obj.id }}">
@@ -82,11 +82,12 @@
           <img src="{% get_img_thumb obj 'ml' 'thm' %}" style="display: inline; margin: 0 5px;"></img>        
         </div>
         <div class="col-md-9">
-          <table class="table table-striped">
-            {% get_result_details result.get_additional_fields %}
-          </table>
+          <h4 class="list-group-item-heading">
+            {% load_result_display_fields result.get_additional_fields 'loc_title' %}
+          </h4>
           <p>
-            <a class="panel-title" data-toggle="collapse" data-parent="#accordion" href="#collapsesub{{ obj.id }}">
+            {% load_result_display_fields result.get_additional_fields 'loc_desc' %}
+            <a class="panel-title" data-toggle="collapse" data-parent="#accordion" href="#collapsepo{{ obj.id }}">
               Learn More...
             </a>
           </p>

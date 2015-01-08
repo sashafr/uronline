@@ -332,7 +332,7 @@ class MediaPropertyInline(admin.TabularInline):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "property":
             kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='MP') | Q(primary_type='AL'))
-        return super(MediaPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        return super(MediaPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)    
 
 class MediaAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'modified', 'last_mod_by')
@@ -358,15 +358,56 @@ class MediaAdmin(admin.ModelAdmin):
     
 admin.site.register(Media, MediaAdmin)
 
+class MediaPersonOrgRelationsInline(admin.TabularInline):
+    model = MediaPersonOrgRelations
+    fields = ['media', 'relation_type', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)        
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    extra = 1
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'media':
+            kwargs["queryset"] = Media.objects.filter(type__type = 'publication').order_by('title')
+        elif db_field.name == 'relation_type':
+            kwargs["queryset"] = Relations.objects.filter(Q(pk=2) | Q(pk=5))
+        return super(MediaPersonOrgRelationsInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        
+    def get_queryset(self, request):
+        qs = super(MediaPersonOrgRelationsInline, self).get_queryset(request)
+        return qs.filter(Q(relation_type=2) | Q(relation_type=5))    
+
 class PersonOrgPropertyInline(admin.TabularInline):
     model = PersonOrgProperty
     extra = 3
-    fields = ['property', 'property_value', 'last_mod_by']
+    fields = ['property', 'property_value', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',) 
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }    
 
 class PersonOrgAdmin(admin.ModelAdmin):
-    fields = ['title', 'notes', 'last_mod_by']
-    inlines = [PersonOrgPropertyInline]
+    readonly_fields = ('created', 'modified', 'last_mod_by')
+    fields = ['title', 'notes', 'created', 'modified', 'last_mod_by']
+    list_display = ['title', 'notes', 'created', 'modified', 'last_mod_by']
+    inlines = [PersonOrgPropertyInline, MediaPersonOrgRelationsInline]
     search_fields = ['title']
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2})},
+    } 
+
+    def save_model(self, request, obj, form, change):
+        obj.last_mod_by = request.user
+        obj.save()
+        
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
+        for instance in instances:
+            if isinstance(instance, PersonOrgProperty) or isinstance(instance, MediaPersonOrgRelations) : #Check if it is the correct type of inline
+                instance.last_mod_by = request.user            
+                instance.save()    
 
 admin.site.register(PersonOrg, PersonOrgAdmin)
 
@@ -509,6 +550,8 @@ class LocationAdmin(MPTTModelAdmin):
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
     list_filter = ['type']
+    
+    change_form_template = 'admin/base/location/change_form.html'    
     
     def save_model(self, request, obj, form, change):
         obj.last_mod_by = request.user

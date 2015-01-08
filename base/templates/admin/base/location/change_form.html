@@ -114,7 +114,8 @@
                     </a></li>
                   {# {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}</a>#}
                 {% endif %}
-
+                {% if original.previous %}<li><a href="{% url 'admin:base_location_change' original.previous.id %}" class="historylink">« {{original.previous}}</a></li>{% endif %}
+                {% if original.next %}<li><a href="{% url 'admin:base_location_change' original.next.id %}" class="historylink">{{original.next}} »</a></li>{% endif %}
               {% endblock %}
             </ul>
           {% endif %}{% endif %}

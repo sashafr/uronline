@@ -479,7 +479,25 @@ class SubjectLinkedData(models.Model):
     
     class Meta:
         verbose_name = 'Linked Object Data'
-        verbose_name_plural = 'Linked Object Data'        
+        verbose_name_plural = 'Linked Object Data' 
+
+class MediaLinkedData(models.Model):
+    media = models.ForeignKey(Media)
+    source = models.ForeignKey(LinkedDataSource)
+    link = models.URLField(blank = True)
+    
+    class Meta:
+        verbose_name = 'Linked Media Data'
+        verbose_name_plural = 'Linked Media Data'  
+
+class PersonOrgLinkedData(models.Model):
+    personorg = models.ForeignKey(PersonOrg)
+    source = models.ForeignKey(LinkedDataSource)
+    link = models.URLField(blank = True)
+    
+    class Meta:
+        verbose_name = 'Linked Person/Organization Data'
+        verbose_name_plural = 'Linked Person/Organization Data'         
         
 class SubjectControlProperty(models.Model):
     subject = models.ForeignKey(Subject)
@@ -568,6 +586,18 @@ class Location(MPTTModel):
         for ancient in ancients:
             ancs = ancs + ancient.title + '>>'
         return ancs
+        
+    def next(self):
+        try:
+            return Location.objects.get(pk=self.pk+1)
+        except:
+            return None
+            
+    def previous(self):
+        try:
+            return Location.objects.get(pk=self.pk-1)
+        except:
+            return None
         
 class LocationProperty(models.Model):
     location = models.ForeignKey(Location)

@@ -58,22 +58,52 @@ def subjectdetail(request, subject_id):
 def mediadetail(request, media_id):
     """ Detailed view of a media record """
     
+    isfile = request.GET.get('isfile', '')
+    
     media = get_object_or_404(Media, pk=media_id)
     if media:
-        images = get_img_ids(media, 'mm')
+        if isfile == 'true':
+            images = get_img_ids(media, 'mf')
+            '''current_page_qs = MediaProperty.objects.filter(media_id = media.id, property_id = 122)
+            if current_page_qs:
+                if isfloat(current_page_qs[0].property_value):
+                    current_page = int(float(current_page_qs[0].property_value))
+                    current_vol_qs = MediaProperty.objects.filter(media_id = media.id, property_id = 123)
+                    if current_vol_qs:
+                        current_vol = current_vol_qs[0].property_value
+                        next_page_qs = MediaProperty.objects.filter(property_id = 122, property_value = current_page + 1)
+                        if next_page_qs:
+                            for item in next_page_qs:
+                                next_vol_qs = MediaProperty.objects.filter(property_id = 123, media_id = item.id, property_value = current_vol)'''
+        else:
+            images = get_img_ids(media, 'mm')
         properties = media.mediaproperty_set.filter(property__visible=True).order_by('property__order')
         related_objects = media.mediasubjectrelations_set.all()[:10]
+        related_web = media.medialinkeddata_set.all()
     else:
         images = []
         properties = []
         related_objects = []
-    return render(request, 'base/mediadetail.html', {'media': media, 'images': images, 'properties': properties, 'related_objects': related_objects})
+        related_web = []
+    return render(request, 'base/mediadetail.html', {'media': media, 'images': images, 'properties': properties, 'related_objects': related_objects, 'related_web': related_web})
     
 def personorgdetail(request, personorg_id):
     """ Detailed view of a person/organization record """
     
     personorg = get_object_or_404(PersonOrg, pk=personorg_id)
-    return render(request, 'base/personorgdetail.html', {'personorg': personorg})
+    if personorg:
+        images = get_img_ids(personorg, 'mpo')
+        properties = personorg.personorgproperty_set.filter(property__visible=True)
+        related_media = personorg.mediapersonorgrelations_set.filter(relation_type_id=2)
+        related_web = personorg.personorglinkeddata_set.all()
+        property_count = personorg.personorgproperty_set.filter(property__visible=True).count()
+    else:
+        images = []        
+        properties = []
+        related_media = []
+        related_web = []
+        property_count = 0
+    return render(request, 'base/personorgdetail.html', {'personorg': personorg, 'images': images, 'properties': properties, 'related_media': related_media, 'related_web': related_web, 'property_count': property_count})
     
 def locationdetail(request, location_id):
     

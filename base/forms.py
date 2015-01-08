@@ -204,7 +204,7 @@ class AdvancedSearchForm(SearchForm):
             prop_order = self.cleaned_data['order'].display_field[5:]
             return sqs.order_by(prop_order)
         else:
-            return sqs
+            return sqs.order_by('-django_ct')
         
 class AdvFacetedSearchForm(AdvancedSearchForm):
     def __init__(self, *args, **kwargs):
