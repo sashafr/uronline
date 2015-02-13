@@ -1,6 +1,7 @@
 {% extends "_layouts/base.html" %}
 {% load staticfiles %}
 {% load base_tags %}
+{% load mptt_tags %}
 
 <!-- Metadata -->
 {% block page_title %}Property Detail{% endblock %}
@@ -16,42 +17,69 @@
                     <div class="row">
                         <div class="col-sm-8"></div>
                         <div class="dropdown col-sm-4">
-                            <button class="btn btn-default" type="button" >
-                                <a href="{% url 'export_property_details' property.id %}?o={{ order }}&type={{ type }}">Export</a>
-                            </button>
-                            <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
-                                Order By:
-                                <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu" role="menu">
-                                <li><a href="{% url 'propertydetail' property.id %}?o=property_value">Property(Asc)</a></li>
-                                <li><a href="{% url 'propertydetail' property.id %}?o=-property_value">Property(Desc)</a></li>
-                                <li><a href="{% url 'propertydetail' property.id %}?o=count">Count(Asc)</a></li>
-                                <li><a href="{% url 'propertydetail' property.id %}?o=-count">Count(Desc)</a></li>
-                            </ul>
+                            {% if property.facet %}
+                                <a class="btn btn-default" type="button" href="{% url 'export_control_property_details' property.id %}">
+                                    Export
+                                </a>                            
+                                <button class="btn btn-default" id="collapse-all">Expand All</button>
+                            {% else %}                        
+                                <button class="btn btn-default" type="button" >
+                                    <a href="{% url 'export_property_details' property.id %}?o={{ order }}&type={{ type }}">Export</a>
+                                </button>
+                                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
+                                    Order By:
+                                    <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu" role="menu">
+                                    <li><a href="{% url 'propertydetail' property.id %}?o=property_value">Property(Asc)</a></li>
+                                    <li><a href="{% url 'propertydetail' property.id %}?o=-property_value">Property(Desc)</a></li>
+                                    <li><a href="{% url 'propertydetail' property.id %}?o=count">Count(Asc)</a></li>
+                                    <li><a href="{% url 'propertydetail' property.id %}?o=-count">Count(Desc)</a></li>
+                                </ul>
+                            {% endif %}
                         </div>                        
                     </div>
                     {% if all_objs %}
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th><h4>Property</h4></th>
-                                    <th><h4>Count</h4></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for sp in all_objs %}
+                        {% if property.facet %}
+                        <div class="row">
+                            <ul style="list-style-type: none;">
+                                {% recursetree all_objs %}
+                                    <li>
+                                        <a href="{% url 'haystack_search' %}?property={{ property.id }}&search_type=exact&q={{ node.title }}" data-toggle="popover" data-html="true" data-content="{{ node.notes }}"><span style="font-size: 18px; font-weight: 500; margin-top: 10px; margin-bottom: 10px; ">{{ node.title }} ({{ node.count_subj_instances }})</span></a>
+                                        {% if not node.is_leaf_node %}
+                                            <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse" style="color: #555;">  + Expand</a>
+                                            <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
+                                                <ul>
+                                                    {{ children }}
+                                                </ul>
+                                            </div>
+                                        {% endif %}
+                                    </li>
+                                {% endrecursetree %}
+                            </ul>
+                        </div>
+                        {% else %}                    
+                            <table class="table table-striped">
+                                <thead>
                                     <tr>
-                                        <td>
-                                            <a href="{% url 'haystack_search' %}?property={{ property.id }}&search_type=exact&q={{ sp.property_value }}&op=and&property2=&search_type2=contains&q2=&op2=and&property3=&search_type3=contains&q3=&order=">{{ sp.property_value }}:</a>
-                                        </td>
-                                        <td>
-                                            {{ sp.count }}
-                                        </td>
+                                        <th><h4>Property</h4></th>
+                                        <th><h4>Count</h4></th>
                                     </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {% for sp in all_objs %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'haystack_search' %}?property={{ property.id }}&search_type=exact&q={{ sp.property_value }}&op=and&property2=&search_type2=contains&q2=&op2=and&property3=&search_type3=contains&q3=&order=">{{ sp.property_value }}:</a>
+                                            </td>
+                                            <td>
+                                                {{ sp.count }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% endif %}
                     {% else %}
                         <p>There are currently no values for this property.</p>
                     {% endif %}
@@ -73,4 +101,44 @@
             </div>  
         </div>
     </div>
+{% endblock %}
+
+{% block js %}
+
+{{ block.super }}
+
+  <script type="text/javascript">
+    $(document).ready(function(){
+    
+        var active = true;
+
+        $('#collapse-all').click(function (event) {
+            event.preventDefault();
+            if (active) {
+                active = false;
+                $('.collapse-unit').collapse('show');
+                $('.collapse-button').html('  - Collapse');
+                $(this).text('Collapse All');
+            } else {
+                active = true;
+                $('.collapse-unit').collapse('hide');
+                $('.collapse-button').html('  + Expand');
+                $(this).text('Expand All');
+            }
+        });
+
+        $('.collapse-button').click(function () {
+            if($(this).next().hasClass('in')) {
+                $(this).html('  + Expand');
+            } else {
+                $(this).html('  - Collapse');
+            }
+        });
+        
+        $("[data-toggle=popover]").popover({
+            trigger : 'hover'
+        }); 
+    });
+  </script>
+
 {% endblock %}

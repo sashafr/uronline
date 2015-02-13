@@ -8,7 +8,7 @@
 {% block css %}
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">
-    <!--
+    var BMfeedURI = "http://blog.britishmuseum.org/feed/";
     var PMfeedURI = "http://www.penn.museum/blog/feed/";
     var GitFeedURI = "https://github.com/sashafr/uronline/commits/master.atom";
     
@@ -42,11 +42,11 @@
     }
     
     function initialize() {
+        doFeed(BMfeedURI,"BM-feed");
         doFeed(PMfeedURI,"PM-feed");
         doFeed(GitFeedURI,"Git-feed");
     }
     google.setOnLoadCallback(initialize);
-    -->
 </script>
 {% endblock %}
 
@@ -116,11 +116,20 @@
                         <h2>Related News</h2>
                         <div class="newsfeed_box">
                             <h3>
+                                <a href="http://www.britishmuseum.org/blog.aspx" class="rsswidget" title="Latest news from the British Museum">British Museum Blog</a>
+                            </h3>
+                            <div id="BM-feed"></div>
+                            <p>
+                                <a href="http://blog.britishmuseum.org/feed/" class="rss icon" title="Latest news from the British Museum">Get the British Museum News Feed</a>
+                            </p>
+                        </div>                        
+                        <div class="newsfeed_box">
+                            <h3>
                                 <a href="http://www.penn.museum/blog/tag/ur/" class="rsswidget" title="Latest news from the Penn Museum">Penn Museum Blog</a>
                             </h3>
                             <div id="PM-feed"></div>
                             <p>
-                                <a href="http://www.penn.museum/blog/feed/" class="rss icon" title="Latest news from the Penn Museum">Get the News Feed</a>
+                                <a href="http://www.penn.museum/blog/feed/" class="rss icon" title="Latest news from the Penn Museum">Get the Penn Museum News Feed</a>
                             </p>
                         </div>
                         <div class="newsfeed_box">

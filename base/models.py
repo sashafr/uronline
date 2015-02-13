@@ -4,51 +4,7 @@ from django.db.models import Q
 from mptt.models import MPTTModel, TreeForeignKey
 from django.core.urlresolvers import reverse
 
-"""Variables used by pages throughout the site"""
-class GlobalVars(models.Model):
-    variable = models.CharField(max_length = 200)
-    val = models.TextField()
-    human_title = models.CharField(max_length = 200)
-	
-    class Meta:
-        verbose_name = 'Site Setting'
-        verbose_name_plural = 'Site Settings'
-    
-    def __unicode__(self):
-        return self.human_title + " = " + self.val
-        
-"""Featured images for home page"""
-# consider removing
-class FeaturedImgs(models.Model):
-    uri = models.URLField()
-    description = models.CharField(max_length = 200)
-
-    class Meta:
-        verbose_name = 'Featured Image'
-        verbose_name_plural = 'Featured Images'
-        
-    def __unicode__(self):
-        return self.description
-    
-"""Types of Media, such as image/jpeg, text/html, etc"""
-# consider removing
-class MediaType(models.Model):
-    type = models.CharField(max_length = 40)
-
-    def __unicode__(self):
-        return self.type
-        
-"""Used to be more specific about an object type, such as location (type of subject)"""
-class ObjectType(models.Model):
-    type = models.CharField(max_length = 40)
-    notes = models.TextField(blank = True)
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User) 
-    control_field = models.BooleanField(default = False)    
-
-    def __unicode__(self):
-        return self.type 
+""" DESCRIPTIVE PROPERTY & CONTROLLED PROPERTY MODELS """
 
 """Types of descriptive properties (or variables to describe objects)"""
 class DescriptiveProperty(models.Model):
@@ -119,6 +75,156 @@ class DescriptiveProperty(models.Model):
         verbose_name = 'Descriptive Property'
         verbose_name_plural = 'Descriptive Properties'
         ordering = ['order']
+
+class ControlField(MPTTModel):
+    """Controlled values for descriptive properties
+
+    Values are subdivided into their associated descriptive properties
+    in proxy models. Mptt is used to allow for parent-child relationships
+    in the values."""
+    title = models.CharField(max_length = 60, blank = True)
+    notes = models.TextField(blank = True)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+    type = models.ForeignKey(DescriptiveProperty, blank = True, null = True) #type is the descriptive property for which this control field can be a value
+    parent = TreeForeignKey('self', null = True, blank = True, related_name = 'children')
+    
+    class MPTTMeta:
+        order_insertion_by = ['title']
+    
+    def __unicode__(self):
+        return self.title
+        
+    class Meta:
+        verbose_name = 'Control Field'    
+        verbose_name_plural = 'Control Fields'
+        
+    def next(self):
+        greaterpk = ControlField.objects.filter(id__gt=self.id).order_by('id')
+        if greaterpk:
+            return greaterpk[0]
+        else:
+            return None
+            
+    def previous(self):
+        smallerpk = ControlField.objects.filter(id__lt=self.id).order_by('-id')
+        if smallerpk:
+            return smallerpk[0]
+        else:
+            return None
+        
+    def ancestors(self):
+        """ Creates a string representing all the ancestors of this node in tree """
+        ancs = self.get_ancestors()
+        ancestor_string = ''
+        for i, anc in enumerate(ancs):
+            if i != 0:
+                ancestor_string = ancestor_string + ' >> '                
+            ancestor_string = ancestor_string + anc.title
+        return ancestor_string
+    ancestors.short_description = 'Parent Categories'
+    
+    def count_subj_instances(self):
+        tree = self.get_descendants(include_self=True)
+        
+        total = 0
+        
+        for node in tree:
+            total += SubjectControlProperty.objects.filter(control_property_value = node).count()
+            
+        return total
+    
+class ArtifactTypeManager(models.Manager):
+    """ Manager for Object Type Control Field Proxy
+    
+    Had to rename to Artifact Type instead of Object Type because
+    Object Type was already being used to mean something else in the system """
+    
+    def get_query_set(self):
+        return super(ArtifactTypeManager, self).get_query_set().filter(type=19)
+        
+class ArtifactType(ControlField):
+    """ Proxy for Object Type Control Field
+    
+    Had to rename to Artifact Type instead of Object Type because
+    Object Type was already being used to mean something else in the system """
+
+    objects = ArtifactTypeManager()
+    
+    def __unicode__(self):
+        return self.title
+        
+    def __init__(self, *args, **kwargs):
+        self._meta.get_field('type').default = 19
+        super(ArtifactType, self).__init__(*args, **kwargs)
+    
+    class Meta:
+        proxy = True
+        verbose_name = 'Object Type'
+        verbose_name_plural = 'Object Types'    
+
+"""Variables used by pages throughout the site"""
+class GlobalVars(models.Model):
+    variable = models.CharField(max_length = 200)
+    val = models.TextField(verbose_name='Value')
+    human_title = models.CharField(max_length = 200, verbose_name='Setting')
+	
+    class Meta:
+        verbose_name = 'Site Setting'
+        verbose_name_plural = 'Site Settings'
+    
+    def __unicode__(self):
+        return self.human_title
+        
+class SiteContent(models.Model):
+    variable = models.CharField(max_length = 200)
+    val = models.TextField(verbose_name='Value')
+    human_title = models.CharField(max_length = 200, verbose_name='Content Text')
+	
+    class Meta:
+        verbose_name = 'Site Content'
+        verbose_name_plural = 'Site Content'
+    
+    def __unicode__(self):
+        return self.human_title        
+        
+"""Featured images for home page"""
+# consider removing
+class FeaturedImgs(models.Model):
+    uri = models.URLField()
+    description = models.CharField(max_length = 200)
+
+    class Meta:
+        verbose_name = 'Featured Image'
+        verbose_name_plural = 'Featured Images'
+        
+    def __unicode__(self):
+        return self.description
+    
+"""Types of Media, such as image/jpeg, text/html, etc"""
+# consider removing
+class MediaType(models.Model):
+    type = models.CharField(max_length = 40)
+
+    def __unicode__(self):
+        return self.type
+        
+"""Used to be more specific about an object type, such as location (type of subject)"""
+class ObjectType(models.Model):
+    type = models.CharField(max_length = 40)
+    notes = models.TextField(blank = True)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User) 
+    control_field = models.BooleanField(default = False)    
+
+    def __unicode__(self):
+        return self.type
+        
+    class Meta:
+        verbose_name = 'Entity Type'
+        verbose_name_plural = 'Entity Types'
 
 """Descriptive properties used for displaying search results"""
 class ResultProperty(models.Model):
@@ -426,22 +532,7 @@ class Status(models.Model):
     
     class Meta:
         verbose_name = 'Status'    
-        verbose_name_plural = 'Status'
-        
-class ControlField(MPTTModel):
-    title = models.CharField(max_length = 60, blank = True)
-    notes = models.TextField(blank = True)
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User, blank = True)
-    type = models.ForeignKey(DescriptiveProperty, blank = True, null = True)
-    parent = TreeForeignKey('self', null = True, blank = True, related_name = 'children')
-    
-    class MPTTMeta:
-        order_insertion_by = ['title']
-    
-    def __unicode__(self):
-        return self.title
+        verbose_name_plural = 'Status'        
         
 class LinkedDataSource(models.Model):
     title = models.CharField(max_length = 60, blank = True)
@@ -509,30 +600,11 @@ class SubjectControlProperty(models.Model):
     last_mod_by = models.ForeignKey(User, blank = True)
 
     class Meta:
-        verbose_name = 'Controled Object Property'    
-        verbose_name_plural = 'Controled Object Properties'    
+        verbose_name = 'Controlled Object Property'    
+        verbose_name_plural = 'Controlled Object Properties'    
 
     def __unicode__(self):
-        return self.control_property_value        
-    
-class ArtifactTypeManager(models.Manager):
-    def get_query_set(self):
-        return super(ArtifactTypeManager, self).get_query_set().filter(type=19)
-        
-class ArtifactType(ControlField):
-    objects = ArtifactTypeManager()
-    
-    def __unicode__(self):
-        return self.title
-        
-    def __init__(self, *args, **kwargs):
-        self._meta.get_field('type').default = 19
-        super(ArtifactType, self).__init__(*args, **kwargs)
-    
-    class Meta:
-        proxy = True
-        verbose_name = 'Artifact Type'
-        verbose_name_plural = 'Artifact Types'
+        return self.control_property_value
 
 class PublicationManager(models.Manager):
     def get_query_set(self):
@@ -546,7 +618,7 @@ class Publication(MediaSubjectRelations):
         
 class FileManager(models.Manager):
     def get_query_set(self):
-        return super(FileManager, self).get_query_set().filter(Q(relation_type=3) | Q(relation_type=1))
+        return super(FileManager, self).get_query_set().filter(Q(relation_type=3))
         
 class File(MediaSubjectRelations):
     objects = FileManager()

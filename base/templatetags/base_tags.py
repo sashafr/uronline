@@ -8,8 +8,13 @@ from django.contrib.admin.views.main import (ALL_VAR, EMPTY_CHANGELIST_VALUE,
     ORDER_VAR, PAGE_VAR, SEARCH_VAR)
 from ordereddict import OrderedDict
 from suit.templatetags.suit_list import result_list_with_context
+from django.utils.http import urlencode
+from django.utils.safestring import mark_safe
+from django.utils.html import escape
 
 register = template.Library()
+
+DOT = '.'
 
 @register.simple_tag
 def navactive(request, urls):
@@ -183,7 +188,17 @@ def get_img_url(object, type):
     
 @register.simple_tag
 def get_properties_dropdown():
-    props = DescriptiveProperty.objects.filter(Q(primary_type='SO') | Q(primary_type='AL')).order_by('order')
+    props = DescriptiveProperty.objects.filter(Q(primary_type='SO') | Q(primary_type='AL')).exclude(control_field=True).order_by('order')
+    options = '<option value="0">Any</option>'
+    for prop in props:
+        option = '<option value="' + str(prop.id) + '">' + prop.property + '</option>'
+        options += option
+        
+    return options
+    
+@register.simple_tag
+def get_cntl_properties_dropdown():
+    props = DescriptiveProperty.objects.filter(control_field=True).order_by('order')
     options = '<option value="0">Any</option>'
     for prop in props:
         option = '<option value="' + str(prop.id) + '">' + prop.property + '</option>'
@@ -421,12 +436,13 @@ def get_params_list(query, index):
     
     return ''
     
-@register.inclusion_tag('admin/base/subject/search_form.html')
-def subject_search_form(cl):
-    """
-    Displays a search form for searching the list.
-    """
+@register.inclusion_tag('admin/base/subject/search_form.html', takes_context=True)
+def subject_search_form(context, cl):
+    """ Displays an advanced search form for searching the list.
+    
+    Includes context. """
     return {
+        'asf': context.get('asf'),
         'cl': cl,
         'show_result_count': cl.result_count != cl.full_result_count,
         'search_var': SEARCH_VAR
@@ -479,21 +495,24 @@ def get_control_fields():
     return []
     
 @register.simple_tag
-def get_control_prop_vals(control_prop):
+def get_control_prop_vals(control_prop, current_val):
+
+    if control_prop == '':
+        return ""
+
+    # build the set of control property values for this control property
     results = ControlField.objects.filter(type__id = control_prop)
     result_list = ""
     for result in results:
-        result_list += "<option value='" + str(result.id) + "'>" + result.title + "</option>"
+        # must build the indent because we aren't using a tree choice field
+        indent = ""
+        for i in range(result.level):
+            indent = indent + "---"
+        result_list += "<option value='" + str(result.id) + "'"
+        if current_val == result.id:
+            result_list += " selected"
+        result_list += ">" + indent + result.title + "</option>"
     return result_list
-    
-@register.simple_tag
-def get_current_control_field_val(field):
-    primary_key = field.value()
-    if primary_key != '':
-        control_field_prop = SubjectControlProperty.objects.filter(pk=primary_key)
-        if control_field_prop:
-            return control_field_prop[0].control_property_value.title
-    return ''
     
 @register.assignment_tag
 def get_loc_ancestors(location):
@@ -502,10 +521,19 @@ def get_loc_ancestors(location):
 @register.assignment_tag
 def get_loc_siblings(location):
     return location.get_siblings(include_self = False)
-    
+
 @register.assignment_tag
 def get_loc_children(location):
     return location.get_children()
+    
+@register.assignment_tag
+def has_spec_context(location_tree):
+    for location in location_tree:
+        if location.type_id == 10:
+            return 'Publication Context:'
+        elif location.type_id == 12:
+            return 'Excavation Context:'
+    return None
     
 @register.simple_tag
 def get_bib_ref(media):

@@ -40,6 +40,7 @@ INSTALLED_APPS = (
     
     # Third party admin app
     'suit',
+    'suit_ckeditor',
     'import_export',
     'mptt',
     
@@ -145,7 +146,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-#    'debug_toolbar.middleware.DebugToolbarMiddleware', # comment out in production
+    #'debug_toolbar.middleware.DebugToolbarMiddleware', # comment out in production
 ]
 
 TEMPLATE_CONTEXT_PROCESSORS = [
@@ -291,3 +292,5 @@ DEV = False
 #CEF_VENDOR = 'Your Company'
 #CEF_VERSION = '0'
 #CEF_DEVICE_VERSION = '0'
+
+MPTT_ADMIN_LEVEL_INDENT = 20

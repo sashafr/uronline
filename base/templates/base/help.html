@@ -1,0 +1,36 @@
+{% extends '_layouts/base.html' %}
+{% load staticfiles %}
+
+<!-- Metadata -->
+{% block page_title %}How to Use UrOnline{% endblock %}
+<!-- End Metadata -->
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'jinvertscroll/css/jInvertScroll.css' %}">
+{% endblock %}
+
+{% block content %}
+
+    <div class="horizon scroll">
+        <img src="{% static 'img/horizon.png' %}" alt="" />
+    </div>
+    <div class="middle scroll">
+        <img src="{% static 'img/middle.png' %}" alt="" />
+    </div>
+    <div class="front scroll">
+        <img src="{% static 'img/front.png' %}" alt="" />
+    </div>
+    
+{% endblock %}
+
+{% block js %}
+    {{ block.super }}
+    <link src="{% static 'jinvertscroll/js/jquery.jInvertScroll.js' %}">
+    
+    <script type="text/javascript">
+        $(document).ready(function(){
+           $.jInvertScroll(['.scroll']);   
+        });
+    </script>
+{% endblock %}

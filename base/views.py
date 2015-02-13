@@ -13,6 +13,7 @@ import djqscsv
 from django.core import serializers
 import csv
 from django.http import HttpResponse
+from django.http import Http404
 
 def home(request):
     """ Default view for the root """
@@ -124,9 +125,20 @@ def search_help(request):
 
     return render(request, 'base/search_help.html')
     
+def help(request):
+
+    return render(request, 'base/help.html')
+    
 def about(request):
 
-    return render(request, 'base/about.html')
+    project = get_object_or_404(SiteContent, variable='about_project')
+    site = get_object_or_404(SiteContent, variable='about_site')
+    excavation = get_object_or_404(SiteContent, variable='about_excavation')
+    team = get_object_or_404(SiteContent, variable='about_team')
+    support = get_object_or_404(SiteContent, variable='about_support')
+    dev = get_object_or_404(SiteContent, variable='about_dev')
+    
+    return render(request, 'base/about.html', {'project': project, 'site': site, 'excavation': excavation, 'team': team, 'support': support, 'dev': dev})
     
 def update_index(request):
     t = tasks.index_update()
@@ -161,16 +173,19 @@ def propertydetail(request, prop_id):
     order = request.GET.get('o', '')
     type = request.GET.get('type', '')
     
-    if not(order == 'property_value' or order == 'count' or order == '-property_value' or order == '-count'):
-        order = 'property_value'
-    
     prop = get_object_or_404(DescriptiveProperty, pk=prop_id)
+    
+    if not(order == 'property_value' or order == 'count' or order == '-property_value' or order == '-count'):
+            order = 'property_value'
+
     all_objs = None
     
     linked_data = DescPropertyLinkedData.objects.filter(desc_prop_id=prop_id)
 
     if prop:
-        if type == 'l':
+        if prop.facet:
+            all_objs = ControlField.objects.filter(type_id = prop_id)
+        elif type == 'l':
             all_objs = LocationProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
         elif type == 'm':
             all_objs = MediaProperty.objects.filter(property_id = prop_id, media__type__id = 2).values('property_value').annotate(count = Count('property_value')).order_by(order)
@@ -180,6 +195,35 @@ def propertydetail(request, prop_id):
             all_objs = SubjectProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)       
             
     return render(request, 'base/propertydetail.html', {'property': prop, 'all_objs': all_objs, 'order': order, 'type': type, 'linked_data': linked_data })
+    
+def mapdetail(request, location_id):
+    
+    current_map_id = request.GET.get('mapid', '')
+    location = get_object_or_404(Location, pk = location_id)
+    maps = MediaLocationRelations.objects.filter(location__id = location_id, relation_type_id = 9)
+    
+    if current_map_id == '':
+        current_map = get_object_or_404(Media, pk = maps[0].media_id)
+        maps = maps[1:]
+    else:
+        maps = maps.exclude(media_id = current_map_id)
+        current_map = get_object_or_404(Media, pk = current_map_id)
+    
+    other_maps = []
+    for m in maps:
+        try:
+            id_pair = (m.media_id, m.media.notes, MediaProperty.objects.filter(media_id = m.media_id, property_id = 94)[0])
+            other_maps.append(id_pair)
+        except IndexError:
+            continue
+    
+    loci = MediaLocationRelations.objects.filter(media_id = current_map.id, relation_type = 10).order_by('location__title')
+    try:
+        rsid = MediaProperty.objects.filter(media_id = current_map.id, property_id = 94)[0]
+    except IndexError:
+        raise Http404("Could not find map image")
+    
+    return render(request, 'base/mapdetail.html', {'location': location, 'current_map': current_map, 'other_maps': other_maps, 'loci': loci, 'rsid': rsid})
         
 def export_property_details(request, prop_id):
     order = request.GET.get('o', '')
@@ -208,6 +252,26 @@ def export_property_details(request, prop_id):
     writer.writerow(['Property Value', 'Count'])
     for obj in all_objs:
         writer.writerow([str(obj['property_value']), obj['count']])
+    return response
+    
+def export_control_property_details(request, prop_id):
+
+    prop = get_object_or_404(DescriptiveProperty, pk=prop_id)        
+    all_objs = None
+
+    if prop:
+        all_objs = ControlField.objects.filter(type_id = prop_id)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="property_detail.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Parent Category', 'Property Value', 'Specific Count', 'Cumulative Count'])
+    for obj in all_objs:
+        ancs = obj.ancestors()
+        spec_count = SubjectControlProperty.objects.filter(control_property_value_id = obj.id).count()
+        cum_count = obj.count_subj_instances()
+        writer.writerow([ancs, obj.title, spec_count, cum_count])
     return response
     
 def export_search_results(request):

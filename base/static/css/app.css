@@ -23,7 +23,6 @@ html {
     height: 100%;
 }
 
-body,
 h1,
 h2,
 h3,
@@ -294,4 +293,8 @@ ul.enlarge span img{
 .img-table {
     display: table;
     margin: 0 auto;
+}
+
+@media screen and (min-width: 0px) and (max-width: 400px) {
+  .hideonsmall { display: none; }  /* hide it on small screens */
 }

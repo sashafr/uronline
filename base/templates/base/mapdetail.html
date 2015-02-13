@@ -1,0 +1,51 @@
+{% extends "_layouts/base.html" %}
+{% load staticfiles %}
+{% load base_tags %}
+
+<!-- Metadata -->
+{% block page_title %}Map Detail{% endblock %}
+<!-- End Metadata -->
+
+{% block content %}
+    <div class="content-section-b" style="padding-top: 80px;">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">Map of {{ location.title }}<br><small>{{ current_map.notes }}</small></h1>
+                </div>            
+            </div>        
+            <div class="row">
+                <div class="col-md-8">
+                    <img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ rsid }}&size=scr" alt="{{ current_map.notes }}"></img>
+                </div>
+                <div class="col-md-4">
+                    <h3>Browse Locations</h3>
+                    <h4><small>Click on a link below to view a location from the map:</small></h4>
+                    <ul>
+                        {% for locus in loci %}
+                            <li>
+                                <a href="{% url 'locationdetail' locus.location_id %}"><h4>{{ locus.location.title }}</h4></a>
+                            </li>
+                        {% endfor %}                    
+                    </ul>
+                </div>                    
+            </div>
+            {% if other_maps %}
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">More Maps of {{ location.title }}</h3>
+                    </div>
+                    <div class="col-lg-12">
+                        <ul class="enlarge">
+                            {% for other_map in other_maps %}
+                                <li style="border: 1px solid #ddd; border-radius: 4px; margin: 10px; padding: 10px;">
+                                    <a href="{% url 'mapdetail' location.id %}?mapid={{ other_map.0 }}"><img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ other_map.2 }}&size=thm" alt='{{ other_map.1 }}'></a>
+                                </li>
+                            {% endfor %}
+                        </ul>  
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

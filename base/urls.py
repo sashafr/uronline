@@ -9,7 +9,7 @@ sqs = SearchQuerySet().facet('prop_19_exact')
 
 urlpatterns = patterns('base.views',
     url(r'^$', 'home', name='home'),
-    url(r'^map/', 'map', name='map'),
+    url(r'^map/(?P<location_id>\d+)/$', 'mapdetail', name='mapdetail'),
     url(r'^about/', 'about', name='about'),
     url(r'^search/', FacetedSearchView(
         form_class = AdvModelSearchForm,
@@ -24,10 +24,12 @@ urlpatterns = patterns('base.views',
     url(r'^property/(?P<prop_id>\d+)/$', 'propertydetail', name='propertydetail'),    
     url(r'^location/(?P<location_id>\d+)/$', 'locationdetail', name='locationdetail'),    
     url(r'^search_help/', 'search_help', name='search_help'),
+    url(r'^help/', 'help', name='help'),
     url(r'^update_index/', 'update_index', name='update_index'),
     url(r'^news/(?P<slug>[\w\-]+)/$', 'post'),
     url(r'^news/', 'news', name='news'),
     url(r'^contact/', 'contact', name='contact'),
     url(r'^property_export/(?P<prop_id>\d+)/$', 'export_property_details', name='export_property_details'),
-    url(r'^result_export/', 'export_search_results', name='export_search_results'),    
+    url(r'^control_property_export/(?P<prop_id>\d+)/$', 'export_control_property_details', name='export_control_property_details'),    
+    url(r'^result_export/', 'export_search_results', name='export_search_results'),
 )

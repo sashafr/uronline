@@ -158,6 +158,8 @@
                                 <h4>Context</h4>
                                 {% for location_relation in subject.locationsubjectrelations_set.all %}
                                     <p>{% get_loc_ancestors location_relation.location as location_tree %}
+                                    {% has_spec_context location_tree as spec_context %}
+                                    {% if spec_context %}{{ spec_context }}{% endif %}
                                     {% for loc in location_tree %}
                                         {% if forloop.counter0 > 0 %} >> {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
                                     {% endfor %}

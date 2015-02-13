@@ -1,0 +1,8 @@
+<h2 class="legend">Search</h2>
+<div class="box">
+    <i class="icon-search icon-alpha75"></i>&nbsp;&nbsp;
+    Find <a href="http://www.ur-online.org/admin/base/subject/?cp1={{ original.type.id }}&cst1=exact&cv1={{ original.id }}" target="_blank"> {{ original.title }}</a> on the admin site.
+    <br><br>
+    <i class="icon-search icon-alpha75"></i>&nbsp;&nbsp;
+    Find <a href="{% url 'haystack_search' %}?property={{ original.type.id }}&search_type=exact&q={{ original.title }}&op=and&property2=&search_type2=contains&q2=&op2=and&property3=&search_type3=contains&q3=&order=" target="_blank"> {{ original.title }}</a> on the public site.    
+</div>

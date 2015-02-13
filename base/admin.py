@@ -4,37 +4,199 @@ from base.forms import AdvancedSearchForm
 from django.forms.formsets import formset_factory
 from django.db.models import Q
 import re
-from django.forms import Textarea
+from django.forms import Textarea, ModelChoiceField, ModelForm
 from django.utils.translation import ugettext_lazy as _
 from base.utils import update_display_fields
 from mptt.admin import MPTTModelAdmin
-from django.forms import ModelChoiceField, ModelForm
+from suit_ckeditor.widgets import CKEditorWidget
+from mptt.forms import TreeNodeChoiceField
+from django import forms
+from django.contrib.admin.views.main import ChangeList
+from django.utils.http import urlencode
 
-'''class PublicationSubjectRelationFilter(admin.SimpleListFilter):
-    """ Allows filtering of subjects by related Publications """
+OPERATOR = (
+    ('and', 'AND'),
+    ('or', 'OR'),
+)
+
+SEARCH_TYPE = (
+    ('icontains', 'contains'),
+    ('not_icontains', 'does not contain'),
+    ('exact', 'equals'),
+    ('not_exact', 'does not equal'),
+    ('blank', 'is blank'),
+    ('not_blank', 'is not blank'),
+    ('istartswith', 'starts with'),
+    ('not_istartswith', 'does not start with'),
+    ('iendswith', 'ends with'),
+    ('not_iendswith', 'does not end with'),
+    ('gt', 'is greater than'),
+    ('gte', 'is greater than or equal to'),
+    ('lt', 'is less than'),
+    ('lte', 'is less than or equal to'),
+)
+
+CONTROL_SEARCH_TYPE = (
+    ('exact', 'equals'),
+    ('not_exact', 'does not equal'),
+)
+
+""" LIST FILTERS """
+
+class ControlFieldTypeListFilter(admin.SimpleListFilter):
+    """ Modified Descriptive Property filter that only includes Descriptive
+    Properties marked as control_field = true """
     
-    title = _('publication')
-    
-    parameter_name = 'pub'
-    
+    title = _('type')
+    parameter_name = 'field_type'
+
     def lookups(self, request, model_admin):
-        pubs = Media.objects.filter(type=2) # select media with type = 'publication'
-        publist = []
-        
-        # create list of lookups; url coded value is ID of media item, displayed name is media title
-        for pub in pubs:
-            item = (pub.id, _(pub.title))
-            publist.append(item)
-        
-        return publist
-        
+        control_fields = tuple((prop.id, prop.property) for prop in DescriptiveProperty.objects.filter(control_field=True))
+        return control_fields
+
     def queryset(self, request, queryset):
-        mediaid = self.value() # id of publication in media table
+        if self.value():
+            prop_id = self.value()
+            return queryset.filter(type__id = prop_id)
+            
+""" FORMS """
         
-        # get all subjects with a relation to the given publication
-        if mediaid:
-            return queryset.filter(mediasubjectrelations__media_id = mediaid)
-        return queryset'''
+class AdminAdvSearchForm(forms.Form):
+    """ Used on the Subject Admin page to search objects by related Properties """
+    
+    # controlled properties
+    cp1 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(control_field = True))
+    cst1 = forms.ChoiceField(label='', required=False, choices=CONTROL_SEARCH_TYPE)
+    cv1 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))
+    cp2 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(control_field = True))
+    cst2 = forms.ChoiceField(label='', required=False, choices=CONTROL_SEARCH_TYPE)
+    cv2 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))    
+    
+    # free-form properties
+    fp1 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.all())
+    fst1 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
+    fv1 = forms.CharField(label='', required=False)
+    op1 = forms.ChoiceField(label='', required=False, choices=OPERATOR)
+    fp2 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.all())
+    fst2 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
+    fv2 = forms.CharField(label='', required=False)
+    op2 = forms.ChoiceField(label='', required=False, choices=OPERATOR)
+    fp3 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.all())
+    fst3 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
+    fv3 = forms.CharField(label='', required=False)
+
+""" TABULAR INLINES """
+
+""" LINKED DATA INLINES """
+
+class ControlFieldLinkedDataInline(admin.TabularInline):
+    model = ControlFieldLinkedData
+    fields = ['source', 'link']    
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    extra = 1
+
+""" DESCRIPTIVE PROPERTY & CONTROLLED PROPERTY INLINES """
+
+""" PROPERTY VALUE INLINES """
+
+class SubjectControlPropertyInline(admin.TabularInline):
+    
+    model = SubjectControlProperty
+    fields = ['control_property', 'control_property_value', 'notes', 'last_mod_by'] 
+    readonly_fields = ('last_mod_by',)
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_classes = 'suit-tab suit-tab-general'
+    extra = 1
+    template = 'admin/base/subject/tabular.html'
+    
+    # for control property form dropdown, only show descriptive properties marked as control_field = true
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'control_property':
+            kwargs["queryset"] = DescriptiveProperty.objects.filter(control_field = True)
+        return super(SubjectControlPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)    
+
+""" ADMINS """
+
+""" LINKED DATA ADMIN """
+
+class LinkedDataSourceAdmin(admin.ModelAdmin):    
+    search_fields = ['title']
+    list_display = ('title', 'link')
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    
+admin.site.register(LinkedDataSource, LinkedDataSourceAdmin)   
+    
+""" DESCRIPTIVE PROPERTY & CONTROLLED PROPERTY ADMIN """    
+    
+class ControlFieldAdmin(MPTTModelAdmin):
+    readonly_fields = ('created', 'modified', 'last_mod_by')    
+    inlines = [ControlFieldLinkedDataInline]
+    search_fields = ['title', 'notes']
+    list_display = ('ancestors', 'title', 'notes', 'type')
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    list_filter = (ControlFieldTypeListFilter,)
+    list_display_links = ('title',)
+    change_form_template = 'admin/base/change_form_tree_models.html'
+    suit_form_includes = (
+        ('admin/base/control_field_search.html', 'bottom'),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        obj.last_mod_by = request.user
+        obj.save()
+        
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
+        for instance in instances:
+            if isinstance(instance, ControlFieldLinkedData): #Check if it is the correct type of inline
+                instance.last_mod_by = request.user            
+                instance.save()
+                
+    # limit types visible on change form to descriptive properties marked as control_field = true
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'type':
+            kwargs["queryset"] = DescriptiveProperty.objects.filter(control_field = True)
+        return super(ControlFieldAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+admin.site.register(ControlField, ControlFieldAdmin)
+
+class ArtifactTypeAdmin(MPTTModelAdmin):
+    readonly_fields = ('created', 'modified', 'last_mod_by')
+    fields = ['title', 'notes', 'parent', 'created', 'modified', 'last_mod_by']    
+    inlines = [ControlFieldLinkedDataInline]
+    search_fields = ['title', 'notes']
+    list_display = ('ancestors', 'title', 'notes')
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    list_display_links = ('title',)
+    change_form_template = 'admin/base/change_form_tree_models.html'
+    suit_form_includes = (
+        ('admin/base/control_field_search.html', 'bottom'),
+    )    
+    
+    def save_model(self, request, obj, form, change):
+        obj.last_mod_by = request.user
+        obj.save()
+        
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
+        for instance in instances:
+            if isinstance(instance, ControlFieldLinkedData): #Check if it is the correct type of inline
+                instance.last_mod_by = request.user            
+                instance.save()
+
+admin.site.register(ArtifactType, ArtifactTypeAdmin)
 
 class StatusFilter(admin.SimpleListFilter):
 
@@ -64,23 +226,7 @@ class SubjectPropertyInline(admin.TabularInline):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'property':
             kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='SO') | Q(primary_type='AL') | Q(primary_type='SL'))
-        return super(SubjectPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
-        
-class SubjectControlPropertyInline(admin.TabularInline):
-    model = SubjectControlProperty
-    fields = ['control_property', 'notes', 'last_mod_by']
-    readonly_fields = ('last_mod_by',)
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
-    suit_classes = 'suit-tab suit-tab-general'
-    extra = 1
-    template = 'admin/base/subject/tabular.html'
-    
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'control_property':
-            kwargs["queryset"] = DescriptiveProperty.objects.filter(control_field = True)
-        return super(SubjectControlPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)    
+        return super(SubjectPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs) 
         
 class MediaSubjectRelationsInline(admin.TabularInline):
     model = MediaSubjectRelations
@@ -141,23 +287,18 @@ class SubjectSubjectRelationsInline(admin.TabularInline):
 class FileInline(admin.TabularInline):
     model = File
     fields = ['get_thumbnail', 'media', 'relation_type', 'notes', 'last_mod_by']
-    readonly_fields = ('get_thumbnail', 'last_mod_by',)        
+    readonly_fields = ('get_thumbnail', 'last_mod_by', 'media', 'relation_type')        
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
     suit_classes = 'suit-tab suit-tab-files'
     extra = 0
     max_num = 0
-    
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'media':
-            kwargs["queryset"] = Media.objects.filter(type__type = 'image/jpeg')
-        return super(FileInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
         
 class SubjectAdmin(admin.ModelAdmin):
     readonly_fields = ('last_mod_by',)    
     inlines = [SubjectPropertyInline, SubjectControlPropertyInline, MediaSubjectRelationsInline, FileInline, LocationSubjectRelationsInline]
-    search_fields = ['title']
+    search_fields = ['title', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3']
     list_display = ('title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3')
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
@@ -169,6 +310,7 @@ class SubjectAdmin(admin.ModelAdmin):
             'fields': ['title', 'notes', 'last_mod_by']
         }),
     ]
+    advanced_search_form = AdminAdvSearchForm()
     
 #    list_filter = (PublicationSubjectRelationFilter,)
     
@@ -190,134 +332,178 @@ class SubjectAdmin(admin.ModelAdmin):
         instances = formset.save(commit=False)
 
         for instance in instances:
-            if isinstance(instance, SubjectProperty) or isinstance(instance, MediaSubjectRelations): #Check if it is the correct type of inline
+            if isinstance(instance, SubjectProperty) or isinstance(instance, MediaSubjectRelations) or isinstance (instance, SubjectControlProperty): #Check if it is the correct type of inline
                 instance.last_mod_by = request.user            
                 instance.save()
                 update_display_fields(instance.subject_id, 'subj')
-                
-            if isinstance (instance, SubjectControlProperty):
-                instance.control_property_value = ControlField.objects.get(pk=request.POST['control_prop_val'])
-                instance.last_mod_by = request.user            
-                instance.save()
 
             if isinstance (instance, LocationSubjectRelations):
                 instance.relation_type = Relations.objects.get(pk=4)
                 instance.last_mod_by = request.user            
                 instance.save()                
             
-    def get_search_results(self, request, queryset, search_term):
-        '''Override the regular keyword search to perform the advanced search
-        
-        Because of the modified search_form.html template, the search_term will be specially
-        generated to work with this method. Each set of queries is delimited by ??? and takes
-        the form [&AND/OR]PROPERTY___SEARCH_TYPE___[SEARCH_KEYWORDS]??? This search method will 
-        return inaccurate results if someone searches ??? as a keyword
-        '''
-        queryset, use_distinct = super(SubjectAdmin, self).get_search_results(request, queryset, search_term)
+    # advanced search form based on https://djangosnippets.org/snippets/2322/ and http://stackoverflow.com/questions/8494200/django-admin-custom-change-list-arguments-override-e-1 
 
-        queryset = self.model.objects.all()
+    def get_changelist(self, request, **kwargs):
+        adv_search_fields = {}
+        asf = self.advanced_search_form
+        for key in asf.fields.keys():
+            temp = self.other_search_fields.get(key, None)
+            if temp:
+                adv_search_fields[key] = temp[0]
+            else:
+                adv_search_fields[key] = ''
         
-        query_rows = search_term.split('???') #list of queries from search_term
-
-        # make sure we received list of queries
-        if len(query_rows) > 0:
-                   
-            for i, row in enumerate(query_rows):
+        class AdvChangeList(ChangeList):
             
-                negate = False # whether the query will be negated
-                connector = '' # AND/OR/NOTHING
-                kwargs = {}
-                current_query = Q()
-                terms = row.split('___')                
-
-                if row.startswith('pub='):
-                    pub_filter = row[4:]
-                    if pub_filter == '':
-                        continue
-                    elif pub_filter == '0':
-                        current_query = Q(mediasubjectrelations__relation_type=2)
-                    else:
-                        current_query = Q(mediasubjectrelations__media=pub_filter)
-
-                elif row.startswith('img=true'):
-                    current_query = Q(mediasubjectrelations__relation_type=3)
-                        
-                elif len(terms) >= 3:
-                    # we got at least the number of terms we need
-
-                    # CURRENT TERMS FORMAT: ([&AND/OR,] PROPERTY, [not_]SEARCH_TYPE, [SEARCH_KEYWORDS])
+            def get_query_string(self, new_params=None, remove=None):
+                """ Overriding get_query_string ensures that the admin still considers
+                the additional search fields as parameters, even tho they are popped from 
+                the request.GET """
                 
-                    # remove and save the operator, if present
-                    if terms[0].startswith('&'): 
-                        connector = terms[0][1:]
-                        terms = terms[1:]
-
-                    # CURRENT TERMS FORMAT: (PROPERTY, [not_]SEARCH_TYPE, [SEARCH_KEYWORDS])
-                        
-                    # remove and save the negation, if present
-                    if terms[1].startswith('not'):
-                        negate = True
-                        terms[1] = terms[1][4:]
-
-                    # CURRENT TERMS FORMAT: (PROPERTY, SEARCH_TYPE, [SEARCH_KEYWORDS])
-                    
-                    # if this row is blank, than skip
-                    if (terms[2] == '') and (terms[1] != 'blank'):
-                        continue
-                    
-                    ########### PROBLEM: THIS IS VERY DEPENDENT ON THE DATA AND UNUM REMAINING AT ID 23
-                    # if search is for U Number, remove any non-numbers at the beginning
-                    if terms[0] == '23':
-                        d = re.search("\d", terms[2])
-                        if d is not None:
-                            start_index = d.start()
-                            terms[2] = terms[2][start_index:]
-                    ###########
-                    
-                    # create current query
-                    if terms[1] == 'blank':
-                        #if property is Any, then return all b/c query asks for doc with 'any' blank properties
-                        if terms[0] == '0':
-                            continue
-                            
-                        # BLANK is a special case negation (essentially a double negative), so handle differently
-                        if negate:
-                            current_query = Q(subjectproperty__property = terms[0])
-                        else:
-                            current_query = ~Q(subjectproperty__property = terms[0])
-                        
+                if new_params is None:
+                    new_params = {}
+                if remove is None:
+                    remove = []
+                p = self.params.copy()
+                for r in remove:
+                    for k in list(p):
+                        if k.startswith(r):
+                            del p[k]
+                for k, v in new_params.items():
+                    if v is None:
+                        if k in p:
+                            del p[k]
                     else:
-                        kwargs = {str('subjectproperty__property_value__%s' % terms[1]) : str('%s' % terms[2])}
-
-                        # check if a property was selected and build the current query
-                        if terms[0] == '0':
-                            # if no property selected, than search thru ALL properties
-                            # use negation
-                            if negate:
-                                current_query = ~Q(**kwargs)
-                            else:
-                                current_query = Q(**kwargs)
-                        else:
-                            # use negation
-                            if negate:
-                                current_query = Q(Q(subjectproperty__property = terms[0]) & ~Q(**kwargs))
-                            else:
-                                current_query = Q(Q(subjectproperty__property = terms[0]) & Q(**kwargs))
+                        p[k] = v
+                
+                extra_params = ''
+                for field, val in adv_search_fields.items():
+                    extra_params += '&' + field + '=' + val
+                
+                return '?%s%s' % (urlencode(sorted(p.items())), extra_params)
+                
+        return AdvChangeList
+        
+    def lookup_allowed(self, lookup):
+        if lookup in self.advanced_search_form.fields.keys():
+            return True
+        return super(SubjectAdmin, self).lookup_allowed(lookup)
+        
+    def changelist_view(self, request, extra_context=None, **kwargs):
+        self.other_search_fields = {}
+        asf = self.advanced_search_form
+        extra_context = {'asf': asf}
+        
+        request.GET._mutable = True
+        
+        for key in asf.fields.keys():
+            try:
+                temp = request.GET.pop(key)
+            except KeyError:
+                pass
+            else:
+                if temp != ['']:
+                    self.other_search_fields[key] = temp
                     
-                # modify query set
-                if connector == 'AND':
-                    queryset = queryset.filter(current_query)
-                elif connector == 'OR':
-                    queryset = queryset | self.model.objects.filter(current_query)
-                else:
-                    if i == 0:
-                        # in this case, current query should be the first query, so no connector
-                        queryset = self.model.objects.filter(current_query)
-                    else:
-                        # if connector wasn't set, use &
-                        queryset = queryset.filter(current_query)
+        request.GET._mutable = False
+        return super(SubjectAdmin, self).changelist_view(request, extra_context = extra_context)
+        
+    def get_search_results(self, request, queryset, search_term):
+        """ Performs either a simple search using the search_term or an 
+        advanced search using values taken from the AdvancedSearchForm """
+        
+        queryset, use_distinct = super(SubjectAdmin, self).get_search_results(request, queryset, search_term)
+        
+        # get all the fields from the adv search form
+        adv_fields = {}
+        asf = self.advanced_search_form
+        for key in asf.fields.keys():
+            temp = self.other_search_fields.get(key, None)
+            if temp:
+                adv_fields[key] = temp[0]
+            else:
+                adv_fields[key] = ''
+        
+        # NOTE: simple search has already been applied
+        
+        # CONTROL PROPERTY FILTER
+        for i in range(1, 3):
+            cp = adv_fields['cp' + str(i)]
+            cst = adv_fields['cst' + str(i)]
+            cv = adv_fields['cv' + str(i)]
             
-        return queryset.order_by('id').distinct(), use_distinct
+            if cp != '' and cv != 'default':
+                cf = ControlField.objects.filter(pk = cv)
+                cf_desc = cf[0].get_descendants(include_self=True)
+                ccq = Q()
+                for field in cf_desc:
+                    if cst == 'exact':
+                        ccq |= Q(subjectcontrolproperty__control_property_value = field.id)
+                    else:
+                        ccq |= ~Q(subjectcontrolproperty__control_property_value = field.id)
+                        
+                queryset = queryset.filter(ccq)
+                
+        # FREE FORM PROPERTY FILTER
+        for i in range (1, 4):
+            if i != 1:
+                op = adv_fields['op' + str(i - 1)]
+            else:
+                op = ''
+            fp = adv_fields['fp' + str(i)]
+            fst = adv_fields['fst' + str(i)]
+            fv = adv_fields['fv' + str(i)]
+
+            negate = False # whether or not the query will be negated
+            kwargs = {}
+            cq = Q()
+            
+            # remove and save negation, if present
+            if fst.startswith('not'):
+                negate = True
+                fst = fst[4:]
+            
+            if not(fv == '' and fst != 'blank'):
+                
+                if fst == 'blank':
+                    #if property is Any, then skip all b/c query asks for doc with 'any' blank properties
+                    if fp == '':
+                        continue
+                
+                    # BLANK is a special case negation (essentially a double negative), so handle differently
+                    if negate:
+                        cq = Q(subjectproperty__property = fp)
+                    else:
+                        cq = ~Q(subjectproperty__property = fp)
+                        
+                else:
+                    kwargs = {str('subjectproperty__property_value__%s' % fst) : str('%s' % fv)}
+                    
+                    # check if a property was selected and build the current query
+                    if fp == '':
+                        # if no property selected, than search thru ALL properties
+                        if negate:
+                            cq = ~Q(**kwargs)
+                        else:
+                            cq = Q(**kwargs)
+                    else:
+                        if negate:
+                            cq = Q(Q(subjectproperty__property = fp) & ~Q(**kwargs))
+                        else:
+                            cq = Q(Q(subjectproperty__property = fp) & Q(**kwargs))
+                            
+            # modify query set
+            if op == 'or':
+                queryset = queryset | self.model.objects.filter(cq)
+            else:
+                # if connector wasn't set, use &
+                queryset = queryset.filter(cq)
+        
+        if queryset.ordered:
+            return queryset.distinct(), use_distinct
+        else:
+            return queryset.order_by('-modified').distinct(), use_distinct
 
 admin.site.register(Subject, SubjectAdmin)
 
@@ -411,7 +597,51 @@ class PersonOrgAdmin(admin.ModelAdmin):
 
 admin.site.register(PersonOrg, PersonOrgAdmin)
 
-admin.site.register(GlobalVars)
+class GlobalVarsAdmin(admin.ModelAdmin):
+    readonly_fields = ('human_title', 'variable')
+    list_display = ['human_title', 'val']
+    search_fields = ['human_title']
+    fields = ['human_title', 'val']
+    
+admin.site.register(GlobalVars, GlobalVarsAdmin)
+
+class SiteContentForm(ModelForm):
+    class Meta:
+  
+        _ck_editor_toolbar = [
+            {'name': 'basicstyles', 'groups': ['basicstyles', 'cleanup']},
+            {'name': 'paragraph',
+             'groups': ['list', 'indent', 'blocks', 'align']},
+            {'name': 'document', 'groups': ['mode']}, '/',
+            {'name': 'styles'}, {'name': 'colors'},
+            {'name': 'insert_custom',
+             'items': ['Image', 'Flash', 'Table', 'HorizontalRule']},
+            {'name': 'links'},
+            {'name': 'about'}]
+
+        _ck_editor_config = {'autoGrow_onStartup': True,
+                             'autoGrow_minHeight': 100,
+                             'autoGrow_maxHeight': 250,
+                             'extraPlugins': 'autogrow',
+                             'toolbarGroups': _ck_editor_toolbar}            
+  
+        widgets = {
+            'val': CKEditorWidget(editor_options=_ck_editor_config),
+        }
+
+class SiteContentAdmin(admin.ModelAdmin):
+    readonly_fields = ('human_title', 'variable')
+    list_display = ['human_title', 'val']
+    search_fields = ['human_title']
+    form = SiteContentForm
+    fieldsets = [
+        ('Edit Text', {
+            'classes': ('full-width',),
+            'fields': ['val']})        
+    ]
+    
+admin.site.register(SiteContent, SiteContentAdmin)
+
 admin.site.register(MediaType)
 
 class DescriptivePropertyAdmin(admin.ModelAdmin):
@@ -567,8 +797,6 @@ class LocationAdmin(MPTTModelAdmin):
 
 admin.site.register(Location, LocationAdmin)
 
-admin.site.register(ControlField, MPTTModelAdmin)
-
 class PostAdmin(admin.ModelAdmin):
     list_display = ['title']
     list_filter = ['published', 'created']
@@ -603,32 +831,28 @@ class LinkedDataAdmin(admin.ModelAdmin):
 
 admin.site.register(ControlFieldLinkedData, LinkedDataAdmin)
 
-class LinkedDataInline(admin.TabularInline):
-    model = ControlFieldLinkedData
-    fields = ['control_field', 'source', 'link']    
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
-
-class ArtifactTypeAdmin(MPTTModelAdmin):
-    readonly_fields = ('last_mod_by', 'type')    
-    inlines = [LinkedDataInline]
-    search_fields = ['title']
-    list_display = ('title', 'notes')
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
+'''class PublicationSubjectRelationFilter(admin.SimpleListFilter):
+    """ Allows filtering of subjects by related Publications """
     
-    def save_model(self, request, obj, form, change):
-        obj.last_mod_by = request.user
-        obj.save()
+    title = _('publication')
+    
+    parameter_name = 'pub'
+    
+    def lookups(self, request, model_admin):
+        pubs = Media.objects.filter(type=2) # select media with type = 'publication'
+        publist = []
         
-    def save_formset(self, request, form, formset, change):
-        instances = formset.save(commit=False)
-
-        for instance in instances:
-            if isinstance(instance, ControlFieldLinkedData): #Check if it is the correct type of inline
-                instance.last_mod_by = request.user            
-                instance.save()
-
-admin.site.register(ArtifactType, ArtifactTypeAdmin)
+        # create list of lookups; url coded value is ID of media item, displayed name is media title
+        for pub in pubs:
+            item = (pub.id, _(pub.title))
+            publist.append(item)
+        
+        return publist
+        
+    def queryset(self, request, queryset):
+        mediaid = self.value() # id of publication in media table
+        
+        # get all subjects with a relation to the given publication
+        if mediaid:
+            return queryset.filter(mediasubjectrelations__media_id = mediaid)
+        return queryset'''

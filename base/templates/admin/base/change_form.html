@@ -115,6 +115,13 @@
                     </a></li>
                   {# {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}</a>#}
                 {% endif %}
+                
+                <li>
+                  <a href="mailto:?subject=[From UrOnline Admin] {{ request.user.first_name }} {{ request.user.last_name }} shared {{ original.title }}&amp;body=You can view this object at http://www.ur-online.org{% url opts|admin_urlname:'change' original.pk|admin_urlquote %}" target="_blank">
+                    <i class="icon-envelope icon-alpha75"></i>
+                    Email
+                  </a>
+                </li>
 
                 {% if request|has_prev:object_id %}
                 <li>
