@@ -24,7 +24,7 @@
                     <ul>
                         {% for locus in loci %}
                             <li>
-                                <a href="{% url 'locationdetail' locus.location_id %}"><h4>{{ locus.location.title }}</h4></a>
+                                <h4><a href="{% url 'locationdetail' locus.location_id %}">{{ locus.location.title }}</a></h4>
                             </li>
                         {% endfor %}                    
                     </ul>
@@ -33,7 +33,7 @@
             {% if other_maps %}
                 <div class="row">
                     <div class="col-lg-12">
-                        <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">More Maps of {{ location.title }}</h3>
+                        <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">Continue Exploring...</h3>
                     </div>
                     <div class="col-lg-12">
                         <ul class="enlarge">

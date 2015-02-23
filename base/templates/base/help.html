@@ -26,11 +26,11 @@
 
 {% block js %}
     {{ block.super }}
-    <link src="{% static 'jinvertscroll/js/jquery.jInvertScroll.js' %}">
+    <script src="{% static 'jinvertscroll/js/jquery.jInvertScroll.js' %}"></script>
     
     <script type="text/javascript">
-        $(document).ready(function(){
+        (function($){
            $.jInvertScroll(['.scroll']);   
-        });
+        }(jQuery));
     </script>
 {% endblock %}

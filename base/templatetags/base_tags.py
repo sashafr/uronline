@@ -564,3 +564,7 @@ def img_id_from_rsref(rsref):
     if id and id[0]:
         return id[0].media_id
     return None
+    
+@register.assignment_tag
+def get_facet_values(property):
+    return ControlField.objects.filter(type_id = property)

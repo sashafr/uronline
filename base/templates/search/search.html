@@ -95,6 +95,26 @@
                                 <div id="ot_facetname">
                                     <h4>By Object Type</h4>
                                 </div>
+                                
+                                <ul style="list-style-type: none;">
+                                    {% get_facet_values 19 as facet_values %}
+                                    {% recursetree facet_values %}
+                                        <li>
+                                            <a href="{% url 'haystack_search' %}?property={{ property.id }}&search_type=exact&q={{ node.title }}" data-toggle="popover" data-html="true" data-content="{{ node.notes }}"><span style="font-size: 18px; font-weight: 500; margin-top: 10px; margin-bottom: 10px; ">{{ node.title }} ({{ node.count_subj_instances }})</span></a>
+                                            {% if not node.is_leaf_node %}
+                                                <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse" style="color: #555;">  + Expand</a>
+                                                <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
+                                                    <ul>
+                                                        {{ children }}
+                                                    </ul>
+                                                </div>
+                                            {% endif %}
+                                        </li>
+                                    {% endrecursetree %}
+                                </ul>
+                                
+                                
+                                
                                 <dl id="ot_facetvalues">
                                     {% if facets.fields.facet_prop_19 %}
                                         {% for prop in facets.fields.facet_prop_19 %}

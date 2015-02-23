@@ -224,6 +224,35 @@ def mapdetail(request, location_id):
         raise Http404("Could not find map image")
     
     return render(request, 'base/mapdetail.html', {'location': location, 'current_map': current_map, 'other_maps': other_maps, 'loci': loci, 'rsid': rsid})
+    
+'''def collectiondetail(request, collection_id):
+    
+    current_item_id = request.GET.get('item', '')
+    collection = get_object_or_404(Collection, pk = collection_id)
+    subj_items = SubjectCollection.objects.filter(collection__id = collection.id)
+    
+    if current_item_id == '':
+        current_item = get_object_or_404(Subject, pk = subj_items[0].subject_id)
+        subj_items = subj_items[1:]
+    else:
+        subj_items = subj_items.exclude(subject_id = current_item_id)
+        current_item = get_object_or_404(Subject, pk = current_item_id)
+    
+    other_items = []
+    for m in maps:
+        try:
+            id_pair = (m.media_id, m.media.notes, MediaProperty.objects.filter(media_id = m.media_id, property_id = 94)[0])
+            other_maps.append(id_pair)
+        except IndexError:
+            continue
+    
+    loci = MediaLocationRelations.objects.filter(media_id = current_map.id, relation_type = 10).order_by('location__title')
+    try:
+        rsid = MediaProperty.objects.filter(media_id = current_map.id, property_id = 94)[0]
+    except IndexError:
+        raise Http404("Could not find map image")
+    
+    return render(request, 'base/mapdetail.html', {'location': location, 'current_map': current_map, 'other_maps': other_maps, 'loci': loci, 'rsid': rsid})'''
         
 def export_property_details(request, prop_id):
     order = request.GET.get('o', '')

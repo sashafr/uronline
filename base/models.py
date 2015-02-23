@@ -126,6 +126,9 @@ class ControlField(MPTTModel):
     ancestors.short_description = 'Parent Categories'
     
     def count_subj_instances(self):
+        """ Returns the total of all instances of this Control Field as a value in the SubjectControlProperty table.
+        
+        The count is cumulative, so all descendants are included in the total. """
         tree = self.get_descendants(include_self=True)
         
         total = 0
@@ -735,3 +738,25 @@ class MediaLocationRelations(models.Model):
     class Meta:
         verbose_name = 'Media-Location Relation'
         verbose_name_plural = 'Media-Location Relations'
+
+class Collection(models.Model):
+    title = models.CharField(max_length=60)
+    notes = models.TextField(blank = True)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)    
+    owner = models.ForeignKey(User)
+    
+    def __unicode__(self):
+        return self.title
+        
+class SubjectCollection(models.Model):
+    subject = models.ForeignKey(Subject)
+    collection = models.ForeignKey(Collection)
+    notes = models.TextField(blank = True)
+    
+    def __unicode__(self):
+        return self.subject.title + " [Collection: " + self.collection.title + "]"
+        
+    class Meta:
+        verbose_name = 'Collection Item (Object)'
+        verbose_name_plural = 'Collection Items (Object)'    

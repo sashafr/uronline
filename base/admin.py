@@ -117,7 +117,16 @@ class SubjectControlPropertyInline(admin.TabularInline):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'control_property':
             kwargs["queryset"] = DescriptiveProperty.objects.filter(control_field = True)
-        return super(SubjectControlPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)    
+        return super(SubjectControlPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+""" COLLECTION INLINES """
+
+class SubjectCollectionInline(admin.TabularInline):
+    model = SubjectCollection 
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    extra = 1         
 
 """ ADMINS """
 
@@ -197,6 +206,19 @@ class ArtifactTypeAdmin(MPTTModelAdmin):
                 instance.save()
 
 admin.site.register(ArtifactType, ArtifactTypeAdmin)
+
+""" COLLECTION ADMIN """    
+    
+class CollectionAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'modified')    
+    inlines = [SubjectCollectionInline]
+    search_fields = ['title', 'notes']
+    list_display = ('title', 'notes', 'owner')
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+
+admin.site.register(Collection, CollectionAdmin)
 
 class StatusFilter(admin.SimpleListFilter):
 
@@ -332,10 +354,42 @@ class SubjectAdmin(admin.ModelAdmin):
         instances = formset.save(commit=False)
 
         for instance in instances:
-            if isinstance(instance, SubjectProperty) or isinstance(instance, MediaSubjectRelations) or isinstance (instance, SubjectControlProperty): #Check if it is the correct type of inline
+            if isinstance(instance, SubjectProperty):
+            
+                # automatically adding museum control field value if museum number is entered
+                prop_id = instance.property_id
+                if prop_id == 31 or prop_id == 33 or prop_id == 45 or prop_id == 43:
+                    m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=401), last_mod_by = request.user)
+                    m.save()
+                elif prop_id == 32:
+                    m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=402), last_mod_by = request.user)
+                    m.save()
+                elif prop_id == 34 or prop_id == 36 or prop_id == 44:
+                    m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=398), last_mod_by = request.user)
+                    m.save()
+                elif prop_id == 35:
+                    m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=403), last_mod_by = request.user)
+                    m.save()
+                elif prop_id == 38:
+                    m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=404), last_mod_by = request.user)
+                    m.save()
+                elif prop_id == 40:
+                    m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=405), last_mod_by = request.user)
+                    m.save()
+                elif prop_id == 42:
+                    m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=406), last_mod_by = request.user)
+                    m.save()
+                elif prop_id == 73:
+                    m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=407), last_mod_by = request.user)
+                    m.save()                    
+                
                 instance.last_mod_by = request.user            
                 instance.save()
-                update_display_fields(instance.subject_id, 'subj')
+                update_display_fields(instance.subject_id, 'subj')            
+
+            if isinstance(instance, MediaSubjectRelations) or isinstance (instance, SubjectControlProperty): #Check if it is the correct type of inline
+                instance.last_mod_by = request.user            
+                instance.save()
 
             if isinstance (instance, LocationSubjectRelations):
                 instance.relation_type = Relations.objects.get(pk=4)

@@ -17,7 +17,7 @@
                             {% for property in properties|slice:"1:" %}
                                 <tr>
                                     <td>
-                                        <a href="{% url 'propertydetail' property.property.id %}?type=l" data-toggle="popover" data-html="true" data-content="{{ property.property.notes }}">{{ property.property }}:</a>
+                                        <span data-toggle="popover" data-html="true" data-content="{{ property.property.notes }}">{{ property.property }}:</span>
                                     </td>
                                     <td>
                                         {{ property.property_value }}
