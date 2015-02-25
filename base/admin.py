@@ -13,6 +13,7 @@ from mptt.forms import TreeNodeChoiceField
 from django import forms
 from django.contrib.admin.views.main import ChangeList
 from django.utils.http import urlencode
+from django.contrib import messages
 
 OPERATOR = (
     ('and', 'AND'),
@@ -358,30 +359,43 @@ class SubjectAdmin(admin.ModelAdmin):
             
                 # automatically adding museum control field value if museum number is entered
                 prop_id = instance.property_id
-                if prop_id == 31 or prop_id == 33 or prop_id == 45 or prop_id == 43:
+                existing_museum = SubjectControlProperty.objects.filter(subject_id = instance.subject_id, control_property_id = 59)
+                nums = []
+                if existing_museum:
+                    for item in existing_museum:
+                        nums.append(item.control_property_value_id)
+                if (prop_id == 31 or prop_id == 33 or prop_id == 45 or prop_id == 43) and (401 not in nums):
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=401), last_mod_by = request.user)
                     m.save()
-                elif prop_id == 32:
+                    messages.add_message(request, messages.WARNING, 'You have added/updated/deleted a Museum Number. If a new type of museum number was added, the system has automatically updated the controlled Museum field. HOWEVER, the system does NOT delete existing Museum fields. If you are concerned, please double check that the Museum field for this object is correct.')
+                elif prop_id == 32 and 402 not in nums:
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=402), last_mod_by = request.user)
                     m.save()
-                elif prop_id == 34 or prop_id == 36 or prop_id == 44:
+                    messages.add_message(request, messages.WARNING, 'You have added/updated/deleted a Museum Number. If a new type of museum number was added, the system has automatically updated the controlled Museum field. HOWEVER, the system does NOT delete existing Museum fields. If you are concerned, please double check that the Museum field for this object is correct.')                    
+                elif (prop_id == 34 or prop_id == 36 or prop_id == 44) and (398 not in nums):
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=398), last_mod_by = request.user)
                     m.save()
-                elif prop_id == 35:
+                    messages.add_message(request, messages.WARNING, 'You have added/updated/deleted a Museum Number. If a new type of museum number was added, the system has automatically updated the controlled Museum field. HOWEVER, the system does NOT delete existing Museum fields. If you are concerned, please double check that the Museum field for this object is correct.')                    
+                elif prop_id == 35 and 403 not in nums:
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=403), last_mod_by = request.user)
                     m.save()
-                elif prop_id == 38:
+                    messages.add_message(request, messages.WARNING, 'You have added/updated/deleted a Museum Number. If a new type of museum number was added, the system has automatically updated the controlled Museum field. HOWEVER, the system does NOT delete existing Museum fields. If you are concerned, please double check that the Museum field for this object is correct.')                    
+                elif prop_id == 38 and 404 not in nums:
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=404), last_mod_by = request.user)
                     m.save()
-                elif prop_id == 40:
+                    messages.add_message(request, messages.WARNING, 'You have added/updated/deleted a Museum Number. If a new type of museum number was added, the system has automatically updated the controlled Museum field. HOWEVER, the system does NOT delete existing Museum fields. If you are concerned, please double check that the Museum field for this object is correct.')                    
+                elif prop_id == 40 and 405 not in nums:
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=405), last_mod_by = request.user)
                     m.save()
-                elif prop_id == 42:
+                    messages.add_message(request, messages.WARNING, 'You have added/updated/deleted a Museum Number. If a new type of museum number was added, the system has automatically updated the controlled Museum field. HOWEVER, the system does NOT delete existing Museum fields. If you are concerned, please double check that the Museum field for this object is correct.')                    
+                elif prop_id == 42 and 406 not in nums:
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=406), last_mod_by = request.user)
                     m.save()
-                elif prop_id == 73:
+                    messages.add_message(request, messages.WARNING, 'You have added/updated/deleted a Museum Number. If a new type of museum number was added, the system has automatically updated the controlled Museum field. HOWEVER, the system does NOT delete existing Museum fields. If you are concerned, please double check that the Museum field for this object is correct.')                    
+                elif prop_id == 73 and 407 not in nums:
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=407), last_mod_by = request.user)
-                    m.save()                    
+                    m.save()
+                    messages.add_message(request, messages.WARNING, 'You have added/updated/deleted a Museum Number. If a new type of museum number was added, the system has automatically updated the controlled Museum field. HOWEVER, the system does NOT delete existing Museum fields. If you are concerned, please double check that the Museum field for this object is correct.')                    
                 
                 instance.last_mod_by = request.user            
                 instance.save()

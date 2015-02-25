@@ -2,7 +2,7 @@ from django import template
 from django.core.urlresolvers import reverse
 from base.models import *
 from django.contrib.admin.templatetags.admin_list import result_list
-from django.db.models import Q
+from django.db.models import Q, Count
 import re, urllib
 from django.contrib.admin.views.main import (ALL_VAR, EMPTY_CHANGELIST_VALUE,
     ORDER_VAR, PAGE_VAR, SEARCH_VAR)
@@ -520,11 +520,19 @@ def get_loc_ancestors(location):
     
 @register.assignment_tag
 def get_loc_siblings(location):
-    return location.get_siblings(include_self = False)
+    types = location.get_siblings().values('type').annotate(count=Count('type'))
+    siblings = []
+    for type in types:
+        siblings.append((ObjectType.objects.get(pk=type['type']), location.get_siblings().filter(type_id=type['type'])))
+    return siblings
 
 @register.assignment_tag
 def get_loc_children(location):
-    return location.get_children()
+    types = location.get_children().values('type').annotate(count=Count('type'))
+    children = []
+    for type in types:
+        children.append((ObjectType.objects.get(pk=type['type']), location.get_children().filter(type_id=type['type'])))
+    return children
     
 @register.assignment_tag
 def has_spec_context(location_tree):

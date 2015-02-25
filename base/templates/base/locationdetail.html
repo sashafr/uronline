@@ -80,24 +80,31 @@
                                     {% if forloop.counter0 > 0 %} >> {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
                                 {% endfor %}
                                 </p>
+                                <hr />
                                 <h4>Locations within {{ location.title }}</h4>
-                                <p>{% get_loc_children location as location_children %}
+                                {% get_loc_children location as location_children %}
                                 {% if location_children %}
-                                {% for loc in location_children %}
-                                    {% if forloop.counter0 > 0 %} - {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
-                                {% endfor %}
+                                    {% for loc_pair in location_children %}
+                                        <h5><span data-toggle="popover" data-html="true" data-content="{{ loc_pair.0.notes }}">{{ loc_pair.0.type }}:</span></h5>
+                                        <p>{% for loc in loc_pair.1 %}
+                                            {% if forloop.counter0 > 0 %} - {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
+                                        {% endfor %}</p>
+                                    {% endfor %}
                                 {% else %}
-                                    There are no other locations within {{ location.title }}.
+                                    <p>There are no other locations within {{ location.title }}.</p>
                                 {% endif %}
-                                </p>                                 
+                                <hr />                                
                                 <h4>Other Locations {% if location.parent %}within {{ location.parent.title }}{% else %}near Ur{% endif %}</h4>
                                 <p>{% get_loc_siblings location as location_sibs %}
                                 {% if location_sibs %}
-                                {% for loc in location_sibs %}
-                                    {% if forloop.counter0 > 0 %} - {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
-                                {% endfor %}
+                                    {% for loc_pair in location_sibs %}
+                                        <h5><span data-toggle="popover" data-html="true" data-content="{{ loc_pair.0.notes }}">{{ loc_pair.0.type }}:</span></h5>
+                                        <p>{% for loc in loc_pair.1 %}
+                                            {% if forloop.counter0 > 0 %} - {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
+                                        {% endfor %}</p>
+                                    {% endfor %}                                
                                 {% else %}
-                                    There are no other locations {% if location.parent %}within {{ location.parent.title }}{% else %}near Ur{% endif %}.
+                                    <p>There are no other locations {% if location.parent %}within {{ location.parent.title }}{% else %}near Ur{% endif %}.</p>
                                 {% endif %}
                                 </p>
                                 <p style="text-align: right;"><a href="{% url 'mapdetail' 2 %}" target="_blank">Click here for site map</a></p>
