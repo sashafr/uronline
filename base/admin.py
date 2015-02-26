@@ -85,6 +85,9 @@ class AdminAdvSearchForm(forms.Form):
     fp3 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.all())
     fst3 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
     fv3 = forms.CharField(label='', required=False)
+    
+    # filters
+    loc = TreeNodeChoiceField(label='Context', required=False, queryset=Location.objects.all())
 
 """ TABULAR INLINES """
 
@@ -361,41 +364,42 @@ class SubjectAdmin(admin.ModelAdmin):
                 prop_id = instance.property_id
                 existing_museum = SubjectControlProperty.objects.filter(subject_id = instance.subject_id, control_property_id = 59)
                 nums = []
+                warning = 'You have added/updated/deleted a Museum Number. If a new type of museum number was added, the system has automatically updated the controlled Museum field. HOWEVER, the system does NOT delete existing Museum fields. If you are concerned, please double check that the Museum field for this object is correct.'
                 if existing_museum:
                     for item in existing_museum:
                         nums.append(item.control_property_value_id)
                 if (prop_id == 31 or prop_id == 33 or prop_id == 45 or prop_id == 43) and (401 not in nums):
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=401), last_mod_by = request.user)
                     m.save()
-                    messages.add_message(request, messages.WARNING, 'You have added/updated/deleted a Museum Number. If a new type of museum number was added, the system has automatically updated the controlled Museum field. HOWEVER, the system does NOT delete existing Museum fields. If you are concerned, please double check that the Museum field for this object is correct.')
+                    messages.add_message(request, messages.WARNING, warning)
                 elif prop_id == 32 and 402 not in nums:
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=402), last_mod_by = request.user)
                     m.save()
-                    messages.add_message(request, messages.WARNING, 'You have added/updated/deleted a Museum Number. If a new type of museum number was added, the system has automatically updated the controlled Museum field. HOWEVER, the system does NOT delete existing Museum fields. If you are concerned, please double check that the Museum field for this object is correct.')                    
+                    messages.add_message(request, messages.WARNING, warning)                    
                 elif (prop_id == 34 or prop_id == 36 or prop_id == 44) and (398 not in nums):
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=398), last_mod_by = request.user)
                     m.save()
-                    messages.add_message(request, messages.WARNING, 'You have added/updated/deleted a Museum Number. If a new type of museum number was added, the system has automatically updated the controlled Museum field. HOWEVER, the system does NOT delete existing Museum fields. If you are concerned, please double check that the Museum field for this object is correct.')                    
+                    messages.add_message(request, messages.WARNING, warning)                    
                 elif prop_id == 35 and 403 not in nums:
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=403), last_mod_by = request.user)
                     m.save()
-                    messages.add_message(request, messages.WARNING, 'You have added/updated/deleted a Museum Number. If a new type of museum number was added, the system has automatically updated the controlled Museum field. HOWEVER, the system does NOT delete existing Museum fields. If you are concerned, please double check that the Museum field for this object is correct.')                    
+                    messages.add_message(request, messages.WARNING, warning)                    
                 elif prop_id == 38 and 404 not in nums:
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=404), last_mod_by = request.user)
                     m.save()
-                    messages.add_message(request, messages.WARNING, 'You have added/updated/deleted a Museum Number. If a new type of museum number was added, the system has automatically updated the controlled Museum field. HOWEVER, the system does NOT delete existing Museum fields. If you are concerned, please double check that the Museum field for this object is correct.')                    
+                    messages.add_message(request, messages.WARNING, warning)                    
                 elif prop_id == 40 and 405 not in nums:
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=405), last_mod_by = request.user)
                     m.save()
-                    messages.add_message(request, messages.WARNING, 'You have added/updated/deleted a Museum Number. If a new type of museum number was added, the system has automatically updated the controlled Museum field. HOWEVER, the system does NOT delete existing Museum fields. If you are concerned, please double check that the Museum field for this object is correct.')                    
+                    messages.add_message(request, messages.WARNING, warning)                    
                 elif prop_id == 42 and 406 not in nums:
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=406), last_mod_by = request.user)
                     m.save()
-                    messages.add_message(request, messages.WARNING, 'You have added/updated/deleted a Museum Number. If a new type of museum number was added, the system has automatically updated the controlled Museum field. HOWEVER, the system does NOT delete existing Museum fields. If you are concerned, please double check that the Museum field for this object is correct.')                    
+                    messages.add_message(request, messages.WARNING, warning)                    
                 elif prop_id == 73 and 407 not in nums:
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=407), last_mod_by = request.user)
                     m.save()
-                    messages.add_message(request, messages.WARNING, 'You have added/updated/deleted a Museum Number. If a new type of museum number was added, the system has automatically updated the controlled Museum field. HOWEVER, the system does NOT delete existing Museum fields. If you are concerned, please double check that the Museum field for this object is correct.')                    
+                    messages.add_message(request, messages.WARNING, warning)                    
                 
                 instance.last_mod_by = request.user            
                 instance.save()
@@ -494,6 +498,11 @@ class SubjectAdmin(admin.ModelAdmin):
                 adv_fields[key] = ''
         
         # NOTE: simple search has already been applied
+        
+        # RELATED TABLES FILTER
+        loc = adv_fields['loc']
+        if loc != '':
+            queryset = queryset.filter(locationsubjectrelations__location_id=loc)
         
         # CONTROL PROPERTY FILTER
         for i in range(1, 3):

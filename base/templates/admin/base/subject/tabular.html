@@ -164,6 +164,7 @@
         
         // build the dictionary to store all possible control field values
         var control_field_options = {};
+        control_field_options['0'] = '<option value="">---------</option>'
         {% get_control_fields as control_fields %}
         {% for field in control_fields %}
             control_field_options['{{field.id}}'] = "{% get_control_prop_vals field.id '0' %}";
@@ -172,6 +173,9 @@
         // on change of control property select box, update values in control property value
         $(".field-control_property select").on('change',function(){
             var selectedControlField = $(this).val();
+            if (selectedControlField == "") {
+                selectedControlField = "0";
+            }
             var sibling = $(this).parent().next();
             var listItems = control_field_options[selectedControlField];
             $('select', sibling).html(listItems);

@@ -73,8 +73,19 @@
               <div class="span2">
                 {{ asf.fv3 }}
               </div>
+            </div>
+            <hr>
+            <div class="row-fluid">
+              <div class="span1">
+                <h3>{{ asf.loc.label }}: </h3>
+              </div>
+              <div class="span2">
+                {{ asf.loc }}
+              </div>              
+              
             </div>             
           </div>
+          <hr>
         {% endif %}
         {% spaceless %}
           {% if cl.has_filters %}
