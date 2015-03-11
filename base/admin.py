@@ -399,6 +399,10 @@ class SubjectAdmin(admin.ModelAdmin):
                 elif prop_id == 73 and 407 not in nums:
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=407), last_mod_by = request.user)
                     m.save()
+                    messages.add_message(request, messages.WARNING, warning)
+                elif prop_id == 128 and 435 not in nums:
+                    m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=435), last_mod_by = request.user)
+                    m.save()
                     messages.add_message(request, messages.WARNING, warning)                    
                 
                 instance.last_mod_by = request.user            

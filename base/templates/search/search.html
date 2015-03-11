@@ -1,4 +1,6 @@
 {% extends '_layouts/base.html' %}
+{% load base_tags %}
+{% load mptt_tags %}
 
 <!-- Metadata -->
 {% block page_title %}Search{% endblock %}
@@ -98,9 +100,12 @@
                                 
                                 <ul style="list-style-type: none;">
                                     {% get_facet_values 19 as facet_values %}
+                                    {% build_facet_counts facets.fields.facet_prop_19 as facet_counts %}
                                     {% recursetree facet_values %}
+                                        {% get_node_facet_count facet_counts node as current_total %}
+                                        {% if current_total > 0 %}
                                         <li>
-                                            <a href="{% url 'haystack_search' %}?property={{ property.id }}&search_type=exact&q={{ node.title }}" data-toggle="popover" data-html="true" data-content="{{ node.notes }}"><span style="font-size: 18px; font-weight: 500; margin-top: 10px; margin-bottom: 10px; ">{{ node.title }} ({{ node.count_subj_instances }})</span></a>
+                                            <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_19:{{ node.id|urlencode }}" data-toggle="popover" data-html="true" data-content="{{ node.notes }}">{{ node.title }} ({{ current_total }})</a>
                                             {% if not node.is_leaf_node %}
                                                 <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse" style="color: #555;">  + Expand</a>
                                                 <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
@@ -110,23 +115,10 @@
                                                 </div>
                                             {% endif %}
                                         </li>
+                                        {% endif %}
                                     {% endrecursetree %}
-                                </ul>
-                                
-                                
-                                
-                                <dl id="ot_facetvalues">
-                                    {% if facets.fields.facet_prop_19 %}
-                                        {% for prop in facets.fields.facet_prop_19 %}
-                                            {% if prop.1 > 0 %}
-                                                <dd><a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_19:{{ prop.0|urlencode }}">{{ prop.0 }}</a> ({{ prop.1 }})</dd>
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% else %}
-                                        <p>No object type facets.</p>
-                                    {% endif %}
-                                </dl>
-                                <div id="ot_slidermenu"></div>
+                                </ul>                                
+
                             </div>  
                         </div>
                         <!-- End Facets Column -->

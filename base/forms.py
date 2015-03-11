@@ -1,6 +1,6 @@
 from django import forms
 from haystack.forms import SearchForm, model_choices
-from base.models import DescriptiveProperty, ResultProperty
+from base.models import DescriptiveProperty, ResultProperty, ControlField
 from haystack.inputs import Raw
 from haystack.query import SearchQuerySet, SQ
 from django.db import models
@@ -223,7 +223,17 @@ class AdvFacetedSearchForm(AdvancedSearchForm):
             field, value = facet.split(":", 1)
 
             if value:
-                sqs = sqs.narrow(u'%s:"%s"' % (field, sqs.query.clean(value)))
+                control_value = ControlField.objects.filter(pk=sqs.query.clean(value))
+                if control_value:
+                    value_tree = control_value[0].get_descendants(include_self=True)
+                    sq = SQ()
+                    for index, node in enumerate(value_tree):
+                        kwargs = {str("%s" % (field)) : str("%s" % (node.id))}
+                        if index == 0:
+                            sq = SQ(**kwargs)
+                        else:
+                            sq = sq | SQ(**kwargs)
+                    sqs = sqs.filter(sq)
 
         return sqs
         

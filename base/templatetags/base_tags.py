@@ -576,3 +576,22 @@ def img_id_from_rsref(rsref):
 @register.assignment_tag
 def get_facet_values(property):
     return ControlField.objects.filter(type_id = property)
+        
+@register.assignment_tag
+def build_facet_counts(facets):
+    totals = {}
+    for facet in facets:
+        node = ControlField.objects.get(pk=int(facet[0]))
+        ancs = node.get_ancestors(include_self=True)
+        for anc in ancs:
+            if anc.id in totals:
+                totals[anc.id] += facet[1]
+            else:
+                totals[anc.id] = facet[1]
+    return totals
+        
+@register.assignment_tag
+def get_node_facet_count(totals, node):
+    if node.id in totals:
+        return totals[node.id]
+    return 0
