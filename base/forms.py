@@ -5,6 +5,7 @@ from haystack.inputs import Raw
 from haystack.query import SearchQuerySet, SQ
 from django.db import models
 import re
+from mptt.forms import TreeNodeChoiceField
 
 OPERATOR = (
     ('and', 'AND'),
@@ -36,17 +37,26 @@ class AdvancedSearchForm(SearchForm):
     This allows the user to specify the property, type of search and
     AND/OR methods for combining searches"""
     
-    property = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(visible=True), empty_label="Any")
-    search_type = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
-    q = forms.CharField(label='', required=False)
-    op = forms.ChoiceField(label='', required=False, choices=OPERATOR)
-    property2 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(visible=True), empty_label="Any")
-    search_type2 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
-    q2 = forms.CharField(label='', required=False)
-    op2 = forms.ChoiceField(label='', required=False, choices=OPERATOR)
-    property3 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(visible=True), empty_label="Any")
-    search_type3 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
-    q3 = forms.CharField(label='', required=False)
+    # Selected Search Fields
+    object_type = TreeNodeChoiceField(label='Object Type', required=False, queryset=ControlField.objects.filter(type_id = 19), empty_label='Any')
+    material = TreeNodeChoiceField(label='Material', required=False, queryset=ControlField.objects.filter(type_id = 12), empty_label='Any')
+    museum = TreeNodeChoiceField(label='Current Museum', required=False, queryset=ControlField.objects.filter(type_id = 59), empty_label='Any')
+    season = TreeNodeChoiceField(label='Excavation Season', required=False, queryset=ControlField.objects.filter(type_id = 46), empty_label='Any')
+    museum_num = forms.CharField(label='Museum Number', required=False)
+    unum = forms.CharField(label='U Number', required=False)
+    
+    # Advanced Search Fields
+    property = forms.ModelChoiceField(label='Field', required=False, queryset=DescriptiveProperty.objects.filter(visible=True, facet=False), empty_label="Any")
+    search_type = forms.ChoiceField(label='Search Type', required=False, choices=SEARCH_TYPE)
+    q = forms.CharField(label='Search Terms', required=False)
+    op = forms.ChoiceField(label='And/Or', required=False, choices=OPERATOR)
+    property2 = forms.ModelChoiceField(label='Field', required=False, queryset=DescriptiveProperty.objects.filter(visible=True, facet=False), empty_label="Any")
+    search_type2 = forms.ChoiceField(label='Search Type', required=False, choices=SEARCH_TYPE)
+    q2 = forms.CharField(label='Search Terms', required=False)
+    op2 = forms.ChoiceField(label='And/Or', required=False, choices=OPERATOR)
+    property3 = forms.ModelChoiceField(label='Field', required=False, queryset=DescriptiveProperty.objects.filter(visible=True, facet=False), empty_label="Any")
+    search_type3 = forms.ChoiceField(label='Search Type', required=False, choices=SEARCH_TYPE)
+    q3 = forms.CharField(label='Search Terms', required=False)
     order = forms.ModelChoiceField(label='', required=False, queryset=ResultProperty.objects.filter(display_field__startswith='subj_title'))
     
     def __init__(self, *args, **kwargs):
@@ -70,8 +80,47 @@ class AdvancedSearchForm(SearchForm):
         query_list = [self.cleaned_data['q'], self.cleaned_data['q2'], self.cleaned_data['q3']]
         op_list = [self.cleaned_data['op'], self.cleaned_data['op2']]
         
+        # SELECTED FIELDS SEARCH
+        if self.cleaned_data['object_type']:
+            value_tree = self.cleaned_data['object_type'].get_descendants(include_self=True)
+            tsq = SQ()
+            for index, node in enumerate(value_tree):
+                if index == 0:
+                    tsq = SQ(facet_prop_19 = node.id)
+                else:
+                    tsq = tsq | SQ(facet_prop_19 = node.id)
+            sqs = sqs.filter(tsq)
+        if self.cleaned_data['material']:
+            value_tree = self.cleaned_data['material'].get_descendants(include_self=True)
+            tsq = SQ()
+            for index, node in enumerate(value_tree):
+                if index == 0:
+                    tsq = SQ(facet_prop_12 = node.id)
+                else:
+                    tsq = tsq | SQ(facet_prop_12 = node.id)
+            sqs = sqs.filter(tsq)
+        if self.cleaned_data['museum']:
+            sqs = sqs.filter(facet_prop_59 = self.cleaned_data['museum'].id)
+        if self.cleaned_data['season']:
+            sqs = sqs.filter(facet_prop_46 = self.cleaned_data['season'].id)
+        if self.cleaned_data['museum_num']:
+            mus_sq = SQ()
+            mus_nums = ['31', '32', '33', '34', '35', '36', '38', '40', '41', '42', '43', '44', '45', '73', '128']
+            for index, num in enumerate(mus_nums):
+                kwargs = {str('prop_%s' % (num)) : self.cleaned_data['museum_num']}
+                if index == 0:
+                    mus_sq = SQ(**kwargs)
+                else:
+                    mus_sq = mus_sq | SQ(**kwargs)
+            sqs = sqs.filter(mus_sq)
+        if self.cleaned_data['unum']:
+            sqs = sqs.filter(prop_23 = self.cleaned_data['unum']) 
+        
+        # ADVANCED SEARCH
+        
         # query object for building full advanced query
         sq = SQ()
+        modified = False
 
         for j in range(0, len(prop_list)):
         
@@ -94,12 +143,14 @@ class AdvancedSearchForm(SearchForm):
             # if this row of query builder is blank, skip
             if (query == '') and (type != 'blank'):
                 continue
+            else:
+                modified = True
                 
             # check if a property was selected
             if prop_list[j] != None:
-                if prop_list[j].solr_type != '_t':
-                    prop = 'sprop_' + str(prop_list[j].id) + prop_list[j].solr_type
-                else:
+                if prop_list[j].facet:
+                    prop = 'facet_prop_'+ str(prop_list[j].id)
+                else:   
                     prop = 'prop_'+ str(prop_list[j].id)
 
             # check if search type was selected
@@ -198,7 +249,8 @@ class AdvancedSearchForm(SearchForm):
                 else:
                     sq = SQ(**kwargs)                
 
-        sqs = sqs.filter(sq)                
+        if modified:
+            sqs = sqs.filter(sq)                
         
         if self.cleaned_data['order']:
             prop_order = self.cleaned_data['order'].display_field[5:]

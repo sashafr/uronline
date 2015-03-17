@@ -56,7 +56,7 @@ INSTALLED_APPS = (
 
     # Third-party apps, patches, fixes
     'djcelery',
-    #'debug_toolbar', # comment out in production
+    'debug_toolbar', # comment out in production
     'compressor',
     'haystack',
 
@@ -146,7 +146,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    #'debug_toolbar.middleware.DebugToolbarMiddleware', # comment out in production
+    'debug_toolbar.middleware.DebugToolbarMiddleware', # comment out in production
 ]
 
 TEMPLATE_CONTEXT_PROCESSORS = [
@@ -243,11 +243,11 @@ MANAGERS = ADMINS
 # SECURITY WARNING: don't run with debug turned on in production!
 # Debugging displays nice error messages, but leaks memory. Set this to False
 # on all server instances and True only for development.
-DEBUG = TEMPLATE_DEBUG = False
+DEBUG = TEMPLATE_DEBUG = True
 
 # Is this a development instance? Set this to True on development/master
 # instances and False on stage/prod.
-DEV = False
+DEV = True
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # Hardcoded values can leak through source control.

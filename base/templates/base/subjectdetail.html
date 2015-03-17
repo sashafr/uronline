@@ -28,7 +28,12 @@
                                                     <a href="{% url 'propertydetail' cp.control_property.id %}?type=s" data-toggle="popover" data-html="true" data-content="{{ cp.control_property.notes }}">{{ cp.control_property }}:</a>
                                                 </td>
                                                 <td>
-                                                    <a href="{% url 'haystack_search' %}?property={{ cp.control_property.id }}&search_type=exact&q={{ cp.control_property_value.title }}&op=and&property2=&search_type2=contains&q2=&op2=and&property3=&search_type3=contains&q3=&order=" data-toggle="popover" data-html="true" data-content="{{ cp.control_property_value.notes }}">{{ cp.control_property_value.title }}</a>
+                                                    {% if cp.control_property_value.get_ancestors %}
+                                                        {% for anc in cp.control_property_value.get_ancestors %}
+                                                            <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_19:{{ anc.id }}">{{ anc.title }}</a> >>
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                    <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_19:{{ cp.control_property_value.id }}" data-toggle="popover" data-html="true" data-content="{{ cp.control_property_value.notes }}">{{ cp.control_property_value.title }}</a>
                                                     {% get_linked_data_url cp.control_property_value as linked_data %}
                                                     {% if linked_data %}
                                                         {% for link_url in linked_data %}
