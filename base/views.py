@@ -7,7 +7,7 @@ from base.forms import AdvancedSearchForm
 from django.forms.formsets import formset_factory
 from base import tasks
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
-from base.utils import get_img_ids, search_for_export, get_img_ids_spec
+from base.utils import get_img_ids, search_for_export, get_img_ids_spec, single_context_in_ah
 from django.db.models import Count
 import djqscsv
 from django.core import serializers
@@ -353,3 +353,7 @@ def export_search_results(request):
                 row.append('')
         writer.writerow(row)
     return response
+    
+def kyra_special_ah(request):
+    ids = single_context_in_ah()
+    return render(request, '/base/single_loc_in_ah.html', {'ids':ids})

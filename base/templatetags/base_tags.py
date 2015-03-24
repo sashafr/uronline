@@ -546,23 +546,56 @@ def has_spec_context(location_tree):
 @register.simple_tag
 def get_bib_ref(media):
     ref = ""
-    author = MediaProperty.objects.filter(media_id = media.id, property_id = 77)
-    if author:
-        ref += author[0].property_value + '. '
-    year = MediaProperty.objects.filter(media_id = media.id, property_id = 78)
-    if year:
-        ref += '(' + year[0].property_value + ') '
-    title = MediaProperty.objects.filter(media_id = media.id, property_id = 79)
-    if title:
-        ref += '<em>' + title[0].property_value + '</em>, '
+    if media.bib_type_id == 4:
+        author = MediaProperty.objects.filter(media_id = media.id, property_id = 77)
+        if author:
+            ref += author[0].property_value
+            if not ref.endswith('.'):
+                ref += '. '
+            else:
+                ref += ' '
+        art_title = MediaProperty.objects.filter(media_id = media.id, property_id = 88)
+        if art_title:
+            ref += '"' + art_title[0].property_value + '." '                
+        jtitle = MediaProperty.objects.filter(media_id = media.id, property_id = 80)
+        if jtitle:
+            ref += '<em>' + jtitle[0].property_value + '</em> '
+        vol = MediaProperty.objects.filter(media_id = media.id, property_id = 81)
+        if vol:
+            ref += vol[0].property_value
+        issue = MediaProperty.objects.filter(media_id = media.id, property_id = 87)
+        if issue:
+            ref += ':' + issue[0].property_value
+        ref += ' '
+        year = MediaProperty.objects.filter(media_id = media.id, property_id = 78)
+        if year:
+            ref += '(' + year[0].property_value + '): '
+        pages = MediaProperty.objects.filter(media_id = media.id, property_id = 95)
+        if pages:
+            ref += pages[0].property_value
+
     else:
-        ref += '[title missing], '
-    place = MediaProperty.objects.filter(media_id = media.id, property_id = 86)
-    if place:
-        ref += place[0].property_value + ': '
-    pub = MediaProperty.objects.filter(media_id = media.id, property_id = 85)
-    if pub:
-        ref += pub[0].property_value
+        author = MediaProperty.objects.filter(media_id = media.id, property_id = 77)
+        if author:
+            ref += author[0].property_value
+            if not ref.endswith('.'):
+                ref += '. '
+            else:
+                ref += ' '            
+        year = MediaProperty.objects.filter(media_id = media.id, property_id = 78)
+        if year:
+            ref += '(' + year[0].property_value + ') '
+        title = MediaProperty.objects.filter(media_id = media.id, property_id = 79)
+        if title:
+            ref += '<em>' + title[0].property_value + '</em>, '
+        else:
+            ref += '[title missing], '
+        place = MediaProperty.objects.filter(media_id = media.id, property_id = 86)
+        if place:
+            ref += place[0].property_value + ': '
+        pub = MediaProperty.objects.filter(media_id = media.id, property_id = 85)
+        if pub:
+            ref += pub[0].property_value
         
     return ref
     

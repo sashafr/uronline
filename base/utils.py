@@ -400,3 +400,25 @@ def search_for_export (p1, st1, q1, op1, p2, st2, q2, op2, p3, st3, q3, order):
         return sqs.order_by(prop_order)
     else:
         return sqs
+        
+def single_context_in_ah():
+    ''' Currently not available on website, used internally by project team. 
+    
+    Checks for objects in AH that have only one location relation (looking for 
+    objects that do not have both a publication & excavation context). Returns a list of ids.'''
+    
+    ids = []
+    
+    #get all locations within AH
+    ah = Location.objects.get(pk = 5)
+    ah_tree = ah.get_descendants(include_self = True)
+    
+    # iterate through locations, get all related subjects, and check if those subjects have only a single relation to locations
+    for loc_node in ah_tree:
+        subs_related_to_node = LocationSubjectRelations.objects.filter(location_id = loc_node.id)
+        for sub in subs_related_to_node:
+            relation_count = sub.subject.locationsubjectrelations_set.all().count()
+            if relation_count < 2 and sub.id not in ids:
+                ids.append(sub.id)       
+                
+    return ids

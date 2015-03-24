@@ -263,6 +263,7 @@ class Media(models.Model):
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
     last_mod_by = models.ForeignKey(User)
     type = models.ForeignKey(MediaType, blank = True, null = True)
+    bib_type = models.ForeignKey(MediaType, blank = True, null = True)
 
     class Meta:
         verbose_name_plural = 'media'
