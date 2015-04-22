@@ -147,7 +147,7 @@
             {% if original.get_siblings %}
               <h4 class="italic-title">Siblings</h4>
               <ul class="box menu-box">
-                {% for sibling in original.get_siblings %}
+                {% for sibling in original.get_siblings_same_type %}
                   <li>
                     <a href="{% url opts|admin_urlname:'change' sibling.pk|admin_urlquote %}">{{ sibling|truncatewords:"18" }}</a>
                   </li>
@@ -157,7 +157,7 @@
             {% if original.get_children %}
               <h4 class="italic-title">Children</h4>
               <ul class="box menu-box">
-                {% for child in original.get_children %}
+                {% for child in original.get_children_same_type %}
                   <li>
                     <a href="{% url opts|admin_urlname:'change' child.pk|admin_urlquote %}">{{ child|truncatewords:"18" }}</a>
                   </li>
@@ -196,7 +196,9 @@
 
           {% block field_sets %}
             {% for fieldset in adminform %}
-              {% include "admin/includes/fieldset.html" %}
+              <!-- Modifications to original Django Suit template begin here -->
+              {% include "admin/base/fieldset_tree_models.html" %}
+              <!-- End modifications -->
             {% endfor %}
           {% endblock %}
 

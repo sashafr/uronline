@@ -33,4 +33,6 @@ urlpatterns = patterns('base.views',
     url(r'^control_property_export/(?P<prop_id>\d+)/$', 'export_control_property_details', name='export_control_property_details'),    
     url(r'^result_export/', 'export_search_results', name='export_search_results'),
     url(r'^single_loc_in_ah/', 'kyra_special_ah', name='kyra_special_ah'),
+    url(r'^search_export/(?P<selected_facets>\S+)/$', 'search_export', name='search_export'),
+    url(r'^penn_metal_subdiv/', 'kyra_special_penn_metal_subdiv', name='kyra_special_penn_metal_subdiv'),    
 )

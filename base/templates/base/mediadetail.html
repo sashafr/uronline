@@ -12,9 +12,8 @@
             <div class="row">
                 <div class="col-md-9">
                     <div class="row">
-                        <h3>{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}</h3>
                         <table class="table table-striped">
-                            {% for property in properties|slice:"1:" %}
+                            {% for property in properties %}
                                 <tr>
                                     <td>
                                         <a href="{% url 'propertydetail' property.property.id %}?type=m" data-toggle="popover" data-html="true" data-content="{{ property.property.notes }}">{{ property.property }}:</a>

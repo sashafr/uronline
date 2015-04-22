@@ -88,6 +88,34 @@ class AdminAdvSearchForm(forms.Form):
     
     # filters
     loc = TreeNodeChoiceField(label='Context', required=False, queryset=Location.objects.all())
+    img = forms.ChoiceField(label='Has Image', required=False, choices=(('default', '---'), ('yes', 'Yes'), ('no', 'No')))
+    pub = forms.ModelChoiceField(label='Published', required=False, queryset=Media.objects.filter(type_id=2).order_by('title'))
+    
+class ControlFieldForm(ModelForm):
+    """ Used on Control Field Change Form page to edit what is displayed on Control Field value public pages """
+    
+    class Meta:
+  
+        _ck_editor_toolbar = [
+            {'name': 'basicstyles', 'groups': ['basicstyles', 'cleanup']},
+            {'name': 'paragraph',
+             'groups': ['list', 'indent', 'blocks', 'align']},
+            {'name': 'document', 'groups': ['mode']}, '/',
+            {'name': 'styles'}, {'name': 'colors'},
+            {'name': 'insert_custom',
+             'items': ['Image', 'Flash', 'Table', 'HorizontalRule']},
+            {'name': 'links'},
+            {'name': 'about'}]
+
+        _ck_editor_config = {'autoGrow_onStartup': True,
+                             'autoGrow_minHeight': 100,
+                             'autoGrow_maxHeight': 250,
+                             'extraPlugins': 'autogrow',
+                             'toolbarGroups': _ck_editor_toolbar}            
+  
+        widgets = {
+            'notes': CKEditorWidget(editor_options=_ck_editor_config),
+        }   
 
 """ TABULAR INLINES """
 
@@ -161,6 +189,7 @@ class ControlFieldAdmin(MPTTModelAdmin):
     suit_form_includes = (
         ('admin/base/control_field_search.html', 'bottom'),
     )
+    form = ControlFieldForm   
     
     def save_model(self, request, obj, form, change):
         obj.last_mod_by = request.user
@@ -181,35 +210,6 @@ class ControlFieldAdmin(MPTTModelAdmin):
         return super(ControlFieldAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 admin.site.register(ControlField, ControlFieldAdmin)
-
-class ArtifactTypeAdmin(MPTTModelAdmin):
-    readonly_fields = ('created', 'modified', 'last_mod_by')
-    fields = ['title', 'notes', 'parent', 'created', 'modified', 'last_mod_by']    
-    inlines = [ControlFieldLinkedDataInline]
-    search_fields = ['title', 'notes']
-    list_display = ('ancestors', 'title', 'notes')
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
-    list_display_links = ('title',)
-    change_form_template = 'admin/base/change_form_tree_models.html'
-    suit_form_includes = (
-        ('admin/base/control_field_search.html', 'bottom'),
-    )    
-    
-    def save_model(self, request, obj, form, change):
-        obj.last_mod_by = request.user
-        obj.save()
-        
-    def save_formset(self, request, form, formset, change):
-        instances = formset.save(commit=False)
-
-        for instance in instances:
-            if isinstance(instance, ControlFieldLinkedData): #Check if it is the correct type of inline
-                instance.last_mod_by = request.user            
-                instance.save()
-
-admin.site.register(ArtifactType, ArtifactTypeAdmin)
 
 """ COLLECTION ADMIN """    
     
@@ -251,7 +251,7 @@ class SubjectPropertyInline(admin.TabularInline):
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'property':
-            kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='SO') | Q(primary_type='AL') | Q(primary_type='SL'))
+            kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='SO') | Q(primary_type='AL') | Q(primary_type='SL')).exclude(pk=19)
         return super(SubjectPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs) 
         
 class MediaSubjectRelationsInline(admin.TabularInline):
@@ -403,7 +403,27 @@ class SubjectAdmin(admin.ModelAdmin):
                 elif prop_id == 128 and 435 not in nums:
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=435), last_mod_by = request.user)
                     m.save()
-                    messages.add_message(request, messages.WARNING, warning)                    
+                    messages.add_message(request, messages.WARNING, warning)
+                elif prop_id == 129 and 447 not in nums:
+                    m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=447), last_mod_by = request.user)
+                    m.save()
+                    messages.add_message(request, messages.WARNING, warning)   
+                elif prop_id == 130 and 448 not in nums:
+                    m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=448), last_mod_by = request.user)
+                    m.save()
+                    messages.add_message(request, messages.WARNING, warning)   
+                elif prop_id == 131 and 449 not in nums:
+                    m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=449), last_mod_by = request.user)
+                    m.save()
+                    messages.add_message(request, messages.WARNING, warning)   
+                elif prop_id == 132 and 450 not in nums:
+                    m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=450), last_mod_by = request.user)
+                    m.save()
+                    messages.add_message(request, messages.WARNING, warning)   
+                elif prop_id == 133 and 451 not in nums:
+                    m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=451), last_mod_by = request.user)
+                    m.save()
+                    messages.add_message(request, messages.WARNING, warning)                       
                 
                 instance.last_mod_by = request.user            
                 instance.save()
@@ -507,6 +527,17 @@ class SubjectAdmin(admin.ModelAdmin):
         loc = adv_fields['loc']
         if loc != '':
             queryset = queryset.filter(locationsubjectrelations__location_id=loc)
+            
+        img = adv_fields['img']
+        if img != 'default':
+            if img == 'yes':
+                queryset = queryset.filter(mediasubjectrelations__relation_type=3)
+            else:
+                queryset = queryset.exclude(mediasubjectrelations__relation_type=3)
+                
+        pub = adv_fields['pub']
+        if pub != '':
+            queryset = queryset.filter(mediasubjectrelations__media=pub)
         
         # CONTROL PROPERTY FILTER
         for i in range(1, 3):

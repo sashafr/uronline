@@ -91,13 +91,13 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="{% url 'home' %}">{% load_globals "site_title" %}</a>
+          <a class="navbar-brand" href="{% url 'home' %}">{% load_globals "site_title" %} Beta*</a>
         </div>
         <div class="navbar-collapse collapse">
           <form action="/search" method="get" class="navbar-form navbar-left" role="form">
               <div class="form-group">
                   <label class="sr-only" for="general_search">Search</label>
-                  <input type="text" name="q" class="form-control" id="general_search" placeholder="Search {% load_globals 'site_title' %}">
+                  <input type="text" name="keyword" class="form-control" id="general_search" placeholder="Search {% load_globals 'site_title' %}">
               </div>
           </form>          
           <ul class="nav navbar-nav navbar-right">
@@ -158,6 +158,7 @@
                     </li>                    
                 </ul>
                 <p class="copyright text-muted small">{% load_globals "footer_text" %}</p>
+                <p class="copyright text-muted small">* Please remember that UrOnline is a work in progress! We are still loading in data and updating the website. For updates on changes to the website, check out the <a href="{% url 'news' %}">dev blog</a>!</p>
             </div>
         </div>    
     </div>

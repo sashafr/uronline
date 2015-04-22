@@ -41,7 +41,7 @@ class AdvancedSearchForm(SearchForm):
     object_type = TreeNodeChoiceField(label='Object Type', required=False, queryset=ControlField.objects.filter(type_id = 19), empty_label='Any')
     material = TreeNodeChoiceField(label='Material', required=False, queryset=ControlField.objects.filter(type_id = 12), empty_label='Any')
     museum = TreeNodeChoiceField(label='Current Museum', required=False, queryset=ControlField.objects.filter(type_id = 59), empty_label='Any')
-    season = TreeNodeChoiceField(label='Excavation Season', required=False, queryset=ControlField.objects.filter(type_id = 46), empty_label='Any')
+    keyword = forms.CharField(label='Keywords', required=False)
     museum_num = forms.CharField(label='Museum Number', required=False)
     unum = forms.CharField(label='U Number', required=False)
     
@@ -101,8 +101,8 @@ class AdvancedSearchForm(SearchForm):
             sqs = sqs.filter(tsq)
         if self.cleaned_data['museum']:
             sqs = sqs.filter(facet_prop_59 = self.cleaned_data['museum'].id)
-        if self.cleaned_data['season']:
-            sqs = sqs.filter(facet_prop_46 = self.cleaned_data['season'].id)
+        if self.cleaned_data['keyword']:
+            sqs = sqs.filter(content = self.cleaned_data['keyword'])
         if self.cleaned_data['museum_num']:
             mus_sq = SQ()
             mus_nums = ['31', '32', '33', '34', '35', '36', '38', '40', '41', '42', '43', '44', '45', '73', '128']

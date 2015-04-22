@@ -418,7 +418,7 @@ def single_context_in_ah():
         subs_related_to_node = LocationSubjectRelations.objects.filter(location_id = loc_node.id)
         for sub in subs_related_to_node:
             relation_count = sub.subject.locationsubjectrelations_set.all().count()
-            if relation_count < 2 and sub.id not in ids:
-                ids.append(sub.id)       
+            if relation_count < 2 and sub.subject.id not in ids:
+                ids.append(sub.subject.id)       
                 
     return ids

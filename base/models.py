@@ -101,7 +101,7 @@ class ControlField(MPTTModel):
         verbose_name_plural = 'Control Fields'
         
     def next(self):
-        greaterpk = ControlField.objects.filter(id__gt=self.id).order_by('id')
+        greaterpk = ControlField.objects.filter(id__gt=self.id, type = self.type).order_by('id')
         if greaterpk:
             return greaterpk[0]
         else:
@@ -137,6 +137,16 @@ class ControlField(MPTTModel):
             total += SubjectControlProperty.objects.filter(control_property_value = node).count()
             
         return total
+        
+    def get_siblings_same_type(self):
+        """ Returns all the siblings of the current node which share the same "type" value """
+        
+        return self.get_siblings().filter(type = self.type)
+
+    def get_children_same_type(self):
+        """ Returns all the children of the current node which share the same "type" value """
+        
+        return self.get_children().filter(type = self.type)        
     
 class ArtifactTypeManager(models.Manager):
     """ Manager for Object Type Control Field Proxy

@@ -3,7 +3,7 @@
 from django.shortcuts import render, get_object_or_404, render_to_response
 from base.models import *
 from haystack.views import SearchView
-from base.forms import AdvancedSearchForm
+from base.forms import AdvancedSearchForm, AdvModelSearchForm
 from django.forms.formsets import formset_factory
 from base import tasks
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
@@ -14,6 +14,9 @@ from django.core import serializers
 import csv
 from django.http import HttpResponse
 from django.http import Http404
+from django.utils.encoding import smart_str
+from haystack.query import SQ
+from datetime import datetime
 
 def home(request):
     """ Default view for the root """
@@ -39,7 +42,9 @@ def subjectdetail(request, subject_id):
         gen_properties = subject.subjectproperty_set.filter(property__visible=True, property__data_source_type='gen')
         arc_properties = subject.subjectproperty_set.filter(property__visible=True, property__data_source_type='arc')
         con_properties = subject.subjectproperty_set.filter(property__visible=True, property__data_source_type='con')        
-        control_properties = subject.subjectcontrolproperty_set.all()
+        gen_control_properties = subject.subjectcontrolproperty_set.filter(control_property__data_source_type='gen').order_by('control_property__order')
+        arc_control_properties = subject.subjectcontrolproperty_set.filter(control_property__data_source_type='arc').order_by('control_property__order')
+        con_control_properties = subject.subjectcontrolproperty_set.filter(control_property__data_source_type='con').order_by('control_property__order')        
         related_media = subject.mediasubjectrelations_set.filter(relation_type_id=2)
         related_web = subject.subjectlinkeddata_set.all()
         property_count = subject.subjectproperty_set.filter(property__visible=True).count() + subject.subjectcontrolproperty_set.all().count()
@@ -50,11 +55,13 @@ def subjectdetail(request, subject_id):
         gen_properties = []
         arc_properties = []
         con_properties = []
-        control_properties = []
+        gen_control_properties = []
+        arc_control_properties = []
+        con_control_properties = []        
         related_media = []
         related_web = []
         property_count = 0
-    return render(request, 'base/subjectdetail.html', {'subject': subject, 'gen_images': gen_images, 'con_images': con_images, 'arc_images': arc_images, 'gen_properties': gen_properties, 'con_properties': con_properties, 'arc_properties': arc_properties, 'control_properties': control_properties, 'related_media': related_media, 'related_web': related_web, 'property_count': property_count})
+    return render(request, 'base/subjectdetail.html', {'subject': subject, 'gen_images': gen_images, 'con_images': con_images, 'arc_images': arc_images, 'gen_properties': gen_properties, 'con_properties': con_properties, 'arc_properties': arc_properties, 'control_properties': gen_control_properties, 'arc_control_properties': arc_control_properties, 'con_control_properties': con_control_properties, 'related_media': related_media, 'related_web': related_web, 'property_count': property_count})
     
 def mediadetail(request, media_id):
     """ Detailed view of a media record """
@@ -356,4 +363,85 @@ def export_search_results(request):
     
 def kyra_special_ah(request):
     ids = single_context_in_ah()
-    return render(request, '/base/single_loc_in_ah.html', {'ids':ids})
+    special_objects = Subject.objects.filter(id__in = ids)
+    subj_titles = ResultProperty.objects.filter(display_field__startswith = 'subj_title').order_by('display_field')
+    return render(request, 'base/single_loc_in_ah.html', {'special_objects':special_objects, 'titles':subj_titles})
+    
+def kyra_special_penn_metal_subdiv(request):
+    """ Generates special query: metal objects at penn that have a subdivided penn number (XX-XX-XXXA etc.)
+    
+    12 is Material, 389 is Metal, 59 is Museum, 398 is Penn Museum, 36 is UPM Date Reg Mus Num
+    34 is UPM B Mus Num 
+    """
+    metal = ControlField.objects.get(pk = 389)
+    all_metals = metal.get_descendants(include_self = True)
+    special_objects = Subject.objects.filter(Q(subjectproperty__property_id = 36, subjectproperty__property_value__iregex = r'^[^a-zA-Z]+[a-zA-Z][^a-zA-Z]*') | Q(subjectproperty__property_id = 34, subjectproperty__property_value__iregex = r'^B+[^a-zA-Z]+[a-zA-Z][^a-zA-Z]*')).filter(subjectcontrolproperty__control_property_id = 12, subjectcontrolproperty__control_property_value__in = all_metals).filter(subjectcontrolproperty__control_property_id = 59, subjectcontrolproperty__control_property_value_id = 398)
+    subj_titles = ResultProperty.objects.filter(display_field__startswith = 'subj_title').order_by('display_field')
+    return render(request, 'base/penn_metal_subdiv.html', {'special_objects':special_objects, 'titles':subj_titles})    
+    
+def search_export(request, selected_facets):
+    if request.method == 'GET':
+        form = AdvModelSearchForm(request.GET)
+        if form.is_valid():
+            qs = form.search()
+            
+            #deal with facets
+            facets = selected_facets.split("&")
+            
+            for facet in facets:
+                if ":" not in facet:
+                    continue
+
+                field, value = facet.split(":", 1)
+
+                if value:
+                    control_value = ControlField.objects.filter(pk=qs.query.clean(value))
+                    if control_value:
+                        value_tree = control_value[0].get_descendants(include_self=True)
+                        sq = SQ()
+                        for index, node in enumerate(value_tree):
+                            kwargs = {str("%s" % (field)) : str("%s" % (node.id))}
+                            if index == 0:
+                                sq = SQ(**kwargs)
+                            else:
+                                sq = sq | SQ(**kwargs)
+                        qs = qs.filter(sq)                
+            
+            response = HttpResponse(content_type='text/csv')
+            filename_str = '"search_results_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S") + '.csv"'
+            response['Content-Disposition'] = 'attachment; filename=' + filename_str
+
+            writer = csv.writer(response)
+            titles = []
+            rows = []
+            for result in qs:
+                row = []
+                row_dict = {}
+                properties = result.text
+                for each_prop in properties:
+                    prop_pair = each_prop.split(':', 1)
+                    if len(prop_pair) < 2:
+                        continue
+                    prop_name = smart_str(prop_pair[0].strip())
+                    prop_value = smart_str(prop_pair[1].strip())
+                    if not (prop_name in titles):
+                        column_index = len(titles)                        
+                        titles.append(prop_name)
+                    else:
+                        column_index = titles.index(prop_name)
+                        if column_index in row_dict:
+                            prop_value = row_dict[column_index] + '; ' + prop_value
+                    row_dict[column_index] = prop_value
+                for i in range(len(titles)):
+                    if i in row_dict:
+                        row.append(row_dict[i])
+                    else:
+                        row.append('')
+                rows.append(row)
+
+            writer.writerow(titles)
+            for each_row in rows:
+                writer.writerow(each_row)
+            return response
+    
+    return HttpResponseRedirect('/failed_export/')

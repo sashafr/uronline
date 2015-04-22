@@ -498,11 +498,14 @@ def get_control_fields():
 def get_control_prop_vals(control_prop, current_val):
 
     if control_prop == '':
-        return ""
+        return ""  
 
     # build the set of control property values for this control property
     results = ControlField.objects.filter(type__id = control_prop)
-    result_list = ""
+    result_list = '<option value'
+    if not current_val or current_val == '':
+        result_list += ' selected'
+    result_list += '>---------</option>'
     for result in results:
         # must build the indent because we aren't using a tree choice field
         indent = ""
@@ -628,3 +631,13 @@ def get_node_facet_count(totals, node):
     if node.id in totals:
         return totals[node.id]
     return 0
+    
+@register.assignment_tag
+def query_params_getlist(request, param):
+    params = request.GET.getlist(param)
+    if len(params) > 0:
+        query_string = ""
+        for p in params:
+            query_string += p + '&'
+        return query_string
+    return 'None'

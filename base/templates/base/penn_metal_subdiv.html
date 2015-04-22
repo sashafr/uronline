@@ -2,7 +2,7 @@
 {% load staticfiles %}
 
 <!-- Metadata -->
-{% block page_title %}Kyra Special | Single Location in AH{% endblock %}
+{% block page_title %}Kyra Special | Penn Metal with Subdivided Mus Nums{% endblock %}
 <!-- End Metadata -->
 
 {% block content %}
@@ -12,7 +12,7 @@
       <div class="container">
         <div class="row">
           <div class="col-lg-12">
-            <h2 class="text-center">Single Location in AH</h2>
+            <h2 class="text-center">Penn Metal with Subdivided Mus Nums</h2>
           </div>
         </div>
       </div>
@@ -30,7 +30,6 @@
                             {% for title in titles %}
                                 <th>{{ title.field_type.property }}</th>
                             {% endfor %}
-                            <th>Context</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -39,7 +38,6 @@
                                 <td><a href="{% url 'admin:index' %}base/subject/{{ sub.id }}" target="_blank">{{ sub.title1 }}</a></td>
                                 <td>{{ sub.title2 }}</td>
                                 <td>{{ sub.title3 }}</td>
-                                <td>{% for loc in sub.locationsubjectrelations_set.all %}{% if not forloop.counter0 == 0 %}, {% endif %}{{ loc.location.title }}{% endfor %}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
