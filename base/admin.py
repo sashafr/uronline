@@ -142,7 +142,7 @@ class SubjectControlPropertyInline(admin.TabularInline):
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
     suit_classes = 'suit-tab suit-tab-general'
-    extra = 1
+    extra = 3
     template = 'admin/base/subject/tabular.html'
     
     # for control property form dropdown, only show descriptive properties marked as control_field = true
@@ -338,8 +338,6 @@ class SubjectAdmin(admin.ModelAdmin):
     ]
     advanced_search_form = AdminAdvSearchForm()
     
-#    list_filter = (PublicationSubjectRelationFilter,)
-    
     change_list_template = 'admin/base/subject/change_list.html'
     change_form_template = 'admin/base/change_form.html'
     
@@ -481,10 +479,10 @@ class SubjectAdmin(admin.ModelAdmin):
                 
         return AdvChangeList
         
-    def lookup_allowed(self, lookup):
-        if lookup in self.advanced_search_form.fields.keys():
+    def lookup_allowed(self, key, value):
+        if key in self.advanced_search_form.fields.keys():
             return True
-        return super(SubjectAdmin, self).lookup_allowed(lookup)
+        return super(SubjectAdmin, self).lookup_allowed(key, value)
         
     def changelist_view(self, request, extra_context=None, **kwargs):
         self.other_search_fields = {}
