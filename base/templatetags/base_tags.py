@@ -495,17 +495,20 @@ def get_control_fields():
     return []
     
 @register.simple_tag
-def get_control_prop_vals(control_prop, current_val):
+def get_control_prop_vals(control_prop, current_val, include_blank = 1):
 
     if control_prop == '':
         return ""  
 
     # build the set of control property values for this control property
     results = ControlField.objects.filter(type__id = control_prop)
-    result_list = '<option value'
-    if not current_val or current_val == '':
-        result_list += ' selected'
-    result_list += '>---------</option>'
+    if include_blank:
+        result_list = '<option value'
+        if not current_val or current_val == '':
+            result_list += ' selected'
+        result_list += '>---------</option>'
+    else:
+        result_list = ''
     for result in results:
         # must build the indent because we aren't using a tree choice field
         indent = ""

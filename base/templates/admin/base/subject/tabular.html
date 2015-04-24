@@ -77,7 +77,7 @@
                     Currently: {{ inline_admin_form.original.control_property_value.ancestors }} >> {{ inline_admin_form.original.control_property_value.title }}<br />
                   {% endif %}
                   <select name="subjectcontrolproperty_set-{{ row_num }}-control_property_value" id="id_subjectcontrolproperty_set-{{ row_num }}-control_property_value">
-                    {% get_control_prop_vals field.field.value inline_admin_form.original.control_property_value.id %}
+                    {% get_control_prop_vals field.field.value inline_admin_form.original.control_property_value.id include_blank=0 %}
                   </select>
                 </td>
               {% endifequal %}
@@ -167,7 +167,7 @@
         control_field_options['0'] = '<option value="">---------</option>'
         {% get_control_fields as control_fields %}
         {% for field in control_fields %}
-            control_field_options['{{field.id}}'] = "{% get_control_prop_vals field.id '0' %}";
+            control_field_options['{{field.id}}'] = "{% get_control_prop_vals field.id '0'  include_blank=0 %}";
         {% endfor %}
         
         // on change of control property select box, update values in control property value
