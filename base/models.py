@@ -249,7 +249,10 @@ class ResultProperty(models.Model):
         verbose_name_plural = 'Result Properties'
 
     def __unicode__(self):
-        return self.field_type.property
+        if self.field_type:
+            return self.field_type.property
+        else:
+            return "None"
         
 """Types of relationships between objects"""
 class Relations(models.Model):
@@ -272,8 +275,8 @@ class Media(models.Model):
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
     last_mod_by = models.ForeignKey(User)
-    type = models.ForeignKey(MediaType, blank = True, null = True)
-    bib_type = models.ForeignKey(MediaType, blank = True, null = True)
+    type = models.ForeignKey(MediaType, blank = True, null = True, related_name = "MIME_type")
+    bib_type = models.ForeignKey(MediaType, blank = True, null = True, related_name = "citation_type")
 
     class Meta:
         verbose_name_plural = 'media'

@@ -224,6 +224,14 @@ class CollectionAdmin(admin.ModelAdmin):
 
 admin.site.register(Collection, CollectionAdmin)
 
+""" SITE SETTINGS ETC ADMIN """    
+    
+class ResultPropertyAdmin(admin.ModelAdmin):
+    search_fields = ['display_field', 'field_type']
+    list_display = ('display_field', 'field_type')
+    
+admin.site.register(ResultProperty)
+
 class StatusFilter(admin.SimpleListFilter):
 
     title = 'Status'
@@ -786,7 +794,6 @@ class SubjectPropertyAdmin(admin.ModelAdmin):
         obj.save()
 
 admin.site.register(SubjectProperty, SubjectPropertyAdmin)
-admin.site.register(ResultProperty)
 admin.site.register(Relations)
 
 class MediaSubjectRelationsAdmin(admin.ModelAdmin):

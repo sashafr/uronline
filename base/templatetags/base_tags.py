@@ -620,13 +620,17 @@ def get_facet_values(property):
 def build_facet_counts(facets):
     totals = {}
     for facet in facets:
-        node = ControlField.objects.get(pk=int(facet[0]))
-        ancs = node.get_ancestors(include_self=True)
-        for anc in ancs:
-            if anc.id in totals:
-                totals[anc.id] += facet[1]
-            else:
-                totals[anc.id] = facet[1]
+        try:
+            node = ControlField.objects.get(pk=int(facet[0]))
+            ancs = node.get_ancestors(include_self=True)
+            for anc in ancs:
+                if anc.id in totals:
+                    totals[anc.id] += facet[1]
+                else:
+                    totals[anc.id] = facet[1]
+        except ControlField.DoesNotExist:
+            # if index is not up to date and a ControlField has been deleted, this will catch the error
+            pass
     return totals
         
 @register.assignment_tag
