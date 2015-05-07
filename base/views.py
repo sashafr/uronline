@@ -367,17 +367,11 @@ def kyra_special_ah(request):
     subj_titles = ResultProperty.objects.filter(display_field__startswith = 'subj_title').order_by('display_field')
     return render(request, 'base/single_loc_in_ah.html', {'special_objects':special_objects, 'titles':subj_titles})
     
-def kyra_special_penn_metal_subdiv(request):
-    """ Generates special query: metal objects at penn that have a subdivided penn number (XX-XX-XXXA etc.)
-    
-    12 is Material, 389 is Metal, 59 is Museum, 398 is Penn Museum, 36 is UPM Date Reg Mus Num
-    34 is UPM B Mus Num 
-    """
-    metal = ControlField.objects.get(pk = 389)
-    all_metals = metal.get_descendants(include_self = True)
-    special_objects = Subject.objects.filter(Q(subjectproperty__property_id = 36, subjectproperty__property_value__iregex = r'^[^a-zA-Z]+[a-zA-Z][^a-zA-Z]*') | Q(subjectproperty__property_id = 34, subjectproperty__property_value__iregex = r'^B+[^a-zA-Z]+[a-zA-Z][^a-zA-Z]*')).filter(subjectcontrolproperty__control_property_id = 12, subjectcontrolproperty__control_property_value__in = all_metals).filter(subjectcontrolproperty__control_property_id = 59, subjectcontrolproperty__control_property_value_id = 398)
+def kyra_special_2(request):
+    """ List of weights from Brad """
+    special_objects = Subject.objects.filter(subjectproperty__notes = 'Data recorded by Dr. William B. Hafford.').distinct()
     subj_titles = ResultProperty.objects.filter(display_field__startswith = 'subj_title').order_by('display_field')
-    return render(request, 'base/penn_metal_subdiv.html', {'special_objects':special_objects, 'titles':subj_titles})    
+    return render(request, 'base/kyra_special_2.html', {'special_objects':special_objects, 'titles':subj_titles})    
     
 def search_export(request, selected_facets):
     if request.method == 'GET':

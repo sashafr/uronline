@@ -14,6 +14,7 @@ from django import forms
 from django.contrib.admin.views.main import ChangeList
 from django.utils.http import urlencode
 from django.contrib import messages
+from django.contrib.auth.models import User
 
 OPERATOR = (
     ('and', 'AND'),
@@ -90,6 +91,7 @@ class AdminAdvSearchForm(forms.Form):
     loc = TreeNodeChoiceField(label='Context', required=False, queryset=Location.objects.all())
     img = forms.ChoiceField(label='Has Image', required=False, choices=(('default', '---'), ('yes', 'Yes'), ('no', 'No')))
     pub = forms.ModelChoiceField(label='Published', required=False, queryset=Media.objects.filter(type_id=2).order_by('title'))
+    last_mod = forms.ModelChoiceField(label='Last Editor', required=False, queryset=User.objects.all())
     
 class ControlFieldForm(ModelForm):
     """ Used on Control Field Change Form page to edit what is displayed on Control Field value public pages """
@@ -544,6 +546,10 @@ class SubjectAdmin(admin.ModelAdmin):
         pub = adv_fields['pub']
         if pub != '':
             queryset = queryset.filter(mediasubjectrelations__media=pub)
+            
+        last_mod = adv_fields['last_mod']
+        if last_mod != '':
+            queryset = queryset.filter(last_mod_by = last_mod)
         
         # CONTROL PROPERTY FILTER
         for i in range(1, 3):
