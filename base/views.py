@@ -117,10 +117,11 @@ def locationdetail(request, location_id):
     
     location = get_object_or_404(Location, pk=location_id)
     if location:
+    
         images = get_img_ids(location, 'ml')
         properties = location.locationproperty_set.filter(property__visible=True)
         related_media = location.medialocationrelations_set.filter(relation_type_id=2)
-        related_objects = location.locationsubjectrelations_set.all()
+        related_objects = location.locationsubjectrelations_set.all().order_by('subject__title')
     else:
         images = []
         properties = []
@@ -302,12 +303,13 @@ def export_control_property_details(request, prop_id):
     response['Content-Disposition'] = 'attachment; filename="property_detail.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['Parent Category', 'Property Value', 'Specific Count', 'Cumulative Count'])
+    writer.writerow(['Parent Category', 'Property Value', 'Definition', 'Specific Count', 'Cumulative Count'])
     for obj in all_objs:
         ancs = obj.ancestors()
         spec_count = SubjectControlProperty.objects.filter(control_property_value_id = obj.id).count()
         cum_count = obj.count_subj_instances()
-        writer.writerow([ancs, obj.title, spec_count, cum_count])
+        desc = obj.notes.encode('ascii', 'ignore')
+        writer.writerow([ancs, obj.title, desc, spec_count, cum_count])
     return response
     
 def export_search_results(request):

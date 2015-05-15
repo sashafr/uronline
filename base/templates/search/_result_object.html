@@ -2,6 +2,7 @@
 {% load base_tags %}
 {% load staticfiles %}
 
+{% if obj.id %}
 <ul class="list-group" id="accordion">
   <li class="list-group-item">
   
@@ -102,5 +103,7 @@
     
   </li>
 </ul>
+
+{% endif %}
  
 {% endwith %}

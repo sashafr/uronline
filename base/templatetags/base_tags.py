@@ -450,9 +450,11 @@ def subject_search_form(context, cl):
     
 @register.simple_tag
 def custom_header_title(header):
-    field = 'subj_' + header
-    props = ResultProperty.objects.filter(display_field = field)
-    return props[0].field_type.property
+    if header.startswith('title') or header.startswith('desc'):
+        field = 'subj_' + header
+        props = ResultProperty.objects.filter(display_field = field)
+        return props[0].field_type.property
+    return header.title()
     
 @register.inclusion_tag("admin/base/subject/change_list_results.html", takes_context=True)
 def subject_result_list(context, cl):

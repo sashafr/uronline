@@ -15,6 +15,7 @@ from django.contrib.admin.views.main import ChangeList
 from django.utils.http import urlencode
 from django.contrib import messages
 from django.contrib.auth.models import User
+from suit.widgets import SuitSplitDateTimeWidget
 
 OPERATOR = (
     ('and', 'AND'),
@@ -92,7 +93,7 @@ class AdminAdvSearchForm(forms.Form):
     img = forms.ChoiceField(label='Has Image', required=False, choices=(('default', '---'), ('yes', 'Yes'), ('no', 'No')))
     pub = forms.ModelChoiceField(label='Published', required=False, queryset=Media.objects.filter(type_id=2).order_by('title'))
     last_mod = forms.ModelChoiceField(label='Last Editor', required=False, queryset=User.objects.all())
-    
+
 class ControlFieldForm(ModelForm):
     """ Used on Control Field Change Form page to edit what is displayed on Control Field value public pages """
     
@@ -229,10 +230,12 @@ admin.site.register(Collection, CollectionAdmin)
 """ SITE SETTINGS ETC ADMIN """    
     
 class ResultPropertyAdmin(admin.ModelAdmin):
+    readonly_fields = ('display_field',)
     search_fields = ['display_field', 'field_type']
-    list_display = ('display_field', 'field_type')
+    list_display = ('human_title', 'field_type')
+    list_editable = ('field_type',)    
     
-admin.site.register(ResultProperty)
+admin.site.register(ResultProperty, ResultPropertyAdmin)
 
 class StatusFilter(admin.SimpleListFilter):
 
@@ -261,7 +264,7 @@ class SubjectPropertyInline(admin.TabularInline):
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'property':
-            kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='SO') | Q(primary_type='AL') | Q(primary_type='SL')).exclude(pk=19)
+            kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='SO') | Q(primary_type='AL') | Q(primary_type='SL')).exclude(pk=19).exclude(pk=12)
         return super(SubjectPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs) 
         
 class MediaSubjectRelationsInline(admin.TabularInline):
@@ -332,10 +335,10 @@ class FileInline(admin.TabularInline):
     max_num = 0
         
 class SubjectAdmin(admin.ModelAdmin):
-    readonly_fields = ('last_mod_by',)    
+    readonly_fields = ('created', 'modified', 'last_mod_by')    
     inlines = [SubjectPropertyInline, SubjectControlPropertyInline, MediaSubjectRelationsInline, FileInline, LocationSubjectRelationsInline]
     search_fields = ['title', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3']
-    list_display = ('title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3')
+    list_display = ('title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3', 'created', 'modified')
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
@@ -343,7 +346,7 @@ class SubjectAdmin(admin.ModelAdmin):
     fieldsets = [
         (None, {
             'classes': ('suit-tab', 'suit-tab-general'),
-            'fields': ['title', 'notes', 'last_mod_by']
+            'fields': ['title', 'notes', 'created', 'modified', 'last_mod_by']
         }),
     ]
     advanced_search_form = AdminAdvSearchForm()
@@ -549,7 +552,7 @@ class SubjectAdmin(admin.ModelAdmin):
             
         last_mod = adv_fields['last_mod']
         if last_mod != '':
-            queryset = queryset.filter(last_mod_by = last_mod)
+            queryset = queryset.filter(last_mod_by = last_mod)            
         
         # CONTROL PROPERTY FILTER
         for i in range(1, 3):

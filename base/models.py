@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from mptt.models import MPTTModel, TreeForeignKey
 from django.core.urlresolvers import reverse
+import re
 
 """ DESCRIPTIVE PROPERTY & CONTROLLED PROPERTY MODELS """
 
@@ -247,6 +248,19 @@ class ResultProperty(models.Model):
     class Meta:
         verbose_name = 'Result Property'
         verbose_name_plural = 'Result Properties'
+        ordering = ['display_field']
+        
+    def human_title(self):
+        types = {'loc': 'Context', 'po': 'Person/Organization', 'subj': 'Object', 'med': 'Media'}
+        fields = {'desc': 'Descriptor', 'title': 'Title'}
+        
+        if self.display_field:
+            m = re.match(r"([a-z]+)_([a-z]+)(\d)", self.display_field)
+        
+            if m:
+                return types[m.group(1)] + ' ' + fields[m.group(2)] + ' ' + m.group(3)
+        return ''
+    human_title.admin_order_field = 'display_field'
 
     def __unicode__(self):
         if self.field_type:
@@ -644,10 +658,10 @@ class File(MediaSubjectRelations):
         rs_ids = MediaProperty.objects.filter(media = self.media_id, property__property = 'Resource Space ID')
         if rs_ids:
             rs_id = rs_ids[0].property_value
-            url = 'http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref=' + rs_id + '&size=thm'
+            url = 'http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref=' + rs_id
+            return u'<a href="{0}" target="_blank"><img src="{0}&size=thm" /></a>'.format(url)        
         else:
-            url = 'http://ur.iaas.upenn.edu/static/img/no_img.jpg'
-        return u'<img src="%s" />' % url        
+            return u'<img src="http://ur.iaas.upenn.edu/static/img/no_img.jpg" />'            
     get_thumbnail.short_description = 'Thumbnail'
     get_thumbnail.allow_tags = True
     

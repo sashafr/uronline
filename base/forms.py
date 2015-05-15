@@ -102,7 +102,8 @@ class AdvancedSearchForm(SearchForm):
         if self.cleaned_data['museum']:
             sqs = sqs.filter(facet_prop_59 = self.cleaned_data['museum'].id)
         if self.cleaned_data['keyword']:
-            sqs = sqs.filter(content = self.cleaned_data['keyword'])
+            pg_fix = re.sub(r'(\s*)([pPlL][gG]?)(\s*?[\./]?\s*)(\d+)', r'\1\2* *\4*', self.cleaned_data['keyword'])
+            sqs = sqs.filter(content = pg_fix)
         if self.cleaned_data['museum_num']:
             mus_sq = SQ()
             mus_nums = ['31', '32', '33', '34', '35', '36', '38', '40', '41', '42', '43', '44', '45', '73', '128']
