@@ -43,6 +43,7 @@ INSTALLED_APPS = (
     'suit_ckeditor',
     'import_export',
     'mptt',
+    'django_select2',
     
     # Django contrib apps
     'django.contrib.auth',

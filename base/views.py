@@ -121,7 +121,9 @@ def locationdetail(request, location_id):
         images = get_img_ids(location, 'ml')
         properties = location.locationproperty_set.filter(property__visible=True)
         related_media = location.medialocationrelations_set.filter(relation_type_id=2)
-        related_objects = location.locationsubjectrelations_set.all().order_by('subject__title')
+        
+        location_tree = location.get_descendants(include_self=True)
+        related_objects = LocationSubjectRelations.objects.filter(location__in = location_tree).order_by('subject__title')[:100]
     else:
         images = []
         properties = []

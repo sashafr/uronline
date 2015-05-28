@@ -37,7 +37,7 @@
                                                     {% get_linked_data_url cp.control_property_value as linked_data %}
                                                     {% if linked_data %}
                                                         {% for link_url in linked_data %}
-                                                            <a href="{{ link_url.link }}"><span class="glyphicon glyphicon-link"></span></a>                       
+                                                            <a href="{{ link_url.link }}"><span class="glyphicon glyphicon-link"></span></a>
                                                         {% endfor %}
                                                     {% endif %}
                                                 </td>
@@ -130,7 +130,7 @@
                                 {% endif %}
                             </div>  
                             <div id="conservation" class="tab-pane" style="margin-top: 20px;">
-                                {% if con_properties %}
+                                {% if con_properties or con_control_properties %}
                                     <table class="table table-striped">
                                         {% for cp in con_control_properties %}
                                             <tr>

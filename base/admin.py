@@ -16,6 +16,7 @@ from django.utils.http import urlencode
 from django.contrib import messages
 from django.contrib.auth.models import User
 from suit.widgets import SuitSplitDateTimeWidget
+from django_select2 import AutoModelSelect2Field, AutoHeavySelect2Widget
 
 OPERATOR = (
     ('and', 'AND'),
@@ -43,6 +44,11 @@ CONTROL_SEARCH_TYPE = (
     ('exact', 'equals'),
     ('not_exact', 'does not equal'),
 )
+
+""" SPECIAL FORM FIELDS """
+class LocationChoices(AutoModelSelect2Field):
+    queryset = Location.objects
+    search_fields = ['title__icontains',]
 
 """ LIST FILTERS """
 
@@ -118,7 +124,21 @@ class ControlFieldForm(ModelForm):
   
         widgets = {
             'notes': CKEditorWidget(editor_options=_ck_editor_config),
-        }   
+        } 
+
+class LocObjRelForm(ModelForm):
+    location = LocationChoices(
+        label = Location._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Location._meta.verbose_name
+            }
+        )
+    )
+
+    class Meta:
+        model = LocationSubjectRelations       
 
 """ TABULAR INLINES """
 
@@ -264,7 +284,7 @@ class SubjectPropertyInline(admin.TabularInline):
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'property':
-            kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='SO') | Q(primary_type='AL') | Q(primary_type='SL')).exclude(pk=19).exclude(pk=12)
+            kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='SO') | Q(primary_type='AL') | Q(primary_type='SL')).exclude(pk=19).exclude(pk=12).exclude(pk=121).exclude(pk=114)
         return super(SubjectPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs) 
         
 class MediaSubjectRelationsInline(admin.TabularInline):
@@ -298,7 +318,16 @@ class LocationTreeChoiceField(ModelChoiceField):
         return padding + obj.title
         
 class LocationRelationAdminForm(ModelForm):
-    location = LocationTreeChoiceField(queryset=Location.objects.all()) 
+    location = LocationChoices(
+        label = Location._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Location._meta.verbose_name
+            }
+        )
+    )
+    
     class Meta:
           model = LocationSubjectRelations
         

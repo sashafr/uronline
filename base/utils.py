@@ -6,6 +6,7 @@ from django.utils.encoding import smart_str
 from haystack.inputs import Raw
 from haystack.query import SearchQuerySet, SQ
 import re
+from django.contrib.auth.models import User
 
 def export_csv(results):
     response = HttpResponse(mimetype='text/csv')
@@ -422,3 +423,27 @@ def single_context_in_ah():
                 ids.append(sub.subject.id)       
                 
     return ids
+    
+def update_pgs(min, max, parent_id):
+    """ Used for fast updates from command line, not used anywhere on website """
+    
+    for i in range(min, max):
+        par = Location.objects.get(pk = 25)
+        loc = Location.objects.filter(title = ('PG/' + str(i)), parent = par)
+        if loc:
+            if len(loc) > 1:
+                print 'Multiple Locations labelled PG/' + str(i)
+                continue
+            loc[0].parent = Location.objects.get(pk=parent_id)
+            loc[0].save()
+        else:
+            new_title = 'PG/' + str(i)
+            new_notes = 'Added to complete full range of PG'
+            new_type = ObjectType.objects.get(pk=8)
+            new_parent = Location.objects.get(pk=parent_id)
+            last_mod = User.objects.get(pk=1)
+            new_loc = Location(title = new_title, notes = new_notes, type = new_type, parent = new_parent, last_mod_by = last_mod)
+            new_loc.save()
+            
+            loc_prop = LocationProperty(location = new_loc, property = DescriptiveProperty.objects.get(pk = 96), property_value = new_title, last_mod_by = last_mod)
+            loc_prop.save()
