@@ -30,10 +30,10 @@
                                                 <td>
                                                     {% if cp.control_property_value.get_ancestors %}
                                                         {% for anc in cp.control_property_value.get_ancestors %}
-                                                            <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ anc.type_id }}:{{ anc.id }}">{{ anc.title }}</a> >>
+                                                            <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ anc.type_id }}:{{ anc.id }}" data-toggle="popover" data-html="true" data-content="{{ anc.definition }}">{{ anc.title }}</a> >>
                                                         {% endfor %}
                                                     {% endif %}
-                                                    <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ cp.control_property_id }}:{{ cp.control_property_value.id }}" data-toggle="popover" data-html="true" data-content="{{ cp.control_property_value.notes }}">{{ cp.control_property_value.title }}</a>
+                                                    <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ cp.control_property_id }}:{{ cp.control_property_value.id }}" data-toggle="popover" data-html="true" data-content="{{ cp.control_property_value.definition }}">{{ cp.control_property_value.title }}</a>
                                                     {% get_linked_data_url cp.control_property_value as linked_data %}
                                                     {% if linked_data %}
                                                         {% for link_url in linked_data %}
@@ -85,10 +85,10 @@
                                                 <td>
                                                     {% if cp.control_property_value.get_ancestors %}
                                                         {% for anc in cp.control_property_value.get_ancestors %}
-                                                            <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ anc.type_id }}:{{ anc.id }}">{{ anc.title }}</a> >>
+                                                            <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ anc.type_id }}:{{ anc.id }}" data-toggle="popover" data-html="true" data-content="{{ anc.definition }}">{{ anc.title }}</a> >>
                                                         {% endfor %}
                                                     {% endif %}
-                                                    <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ cp.control_property_id }}:{{ cp.control_property_value.id }}" data-toggle="popover" data-html="true" data-content="{{ cp.control_property_value.notes }}">{{ cp.control_property_value.title }}</a>
+                                                    <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ cp.control_property_id }}:{{ cp.control_property_value.id }}" data-toggle="popover" data-html="true" data-content="{{ cp.control_property_value.definition }}">{{ cp.control_property_value.title }}</a>
                                                     {% get_linked_data_url cp.control_property_value as linked_data %}
                                                     {% if linked_data %}
                                                         {% for link_url in linked_data %}
@@ -140,10 +140,10 @@
                                                 <td>
                                                     {% if cp.control_property_value.get_ancestors %}
                                                         {% for anc in cp.control_property_value.get_ancestors %}
-                                                            <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ anc.type_id }}:{{ anc.id }}">{{ anc.title }}</a> >>
+                                                            <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ anc.type_id }}:{{ anc.id }}" data-toggle="popover" data-html="true" data-content="{{ anc.definition }}">{{ anc.title }}</a> >>
                                                         {% endfor %}
                                                     {% endif %}
-                                                    <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ cp.control_property_id }}:{{ cp.control_property_value.id }}" data-toggle="popover" data-html="true" data-content="{{ cp.control_property_value.notes }}">{{ cp.control_property_value.title }}</a>
+                                                    <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ cp.control_property_id }}:{{ cp.control_property_value.id }}" data-toggle="popover" data-html="true" data-content="{{ cp.control_property_value.definition }}">{{ cp.control_property_value.title }}</a>
                                                     {% get_linked_data_url cp.control_property_value as linked_data %}
                                                     {% if linked_data %}
                                                         {% for link_url in linked_data %}

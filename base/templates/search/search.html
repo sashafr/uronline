@@ -138,7 +138,7 @@
                                         {% get_node_facet_count facet_counts node as current_total %}
                                         {% if current_total > 0 %}
                                         <li>
-                                            <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_19:{{ node.id|urlencode }}" data-toggle="popover" data-html="true" data-content="{{ node.notes }}">{{ node.title }} ({{ current_total }})</a>
+                                            <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_19:{{ node.id|urlencode }}">{{ node.title }} ({{ current_total }})</a>
                                             {% if not node.is_leaf_node %}
                                                 <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse" style="color: #555;">  + Expand</a>
                                                 <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
@@ -163,7 +163,7 @@
                                         {% get_node_facet_count facet_counts node as current_total %}
                                         {% if current_total > 0 %}
                                         <li>
-                                            <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_12:{{ node.id|urlencode }}" data-toggle="popover" data-html="true" data-content="{{ node.notes }}">{{ node.title }} ({{ current_total }})</a>
+                                            <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_12:{{ node.id|urlencode }}">{{ node.title }} ({{ current_total }})</a>
                                             {% if not node.is_leaf_node %}
                                                 <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse" style="color: #555;">  + Expand</a>
                                                 <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
@@ -188,7 +188,7 @@
                                         {% get_node_facet_count facet_counts node as current_total %}
                                         {% if current_total > 0 %}
                                         <li>
-                                            <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_59:{{ node.id|urlencode }}" data-toggle="popover" data-html="true" data-content="{{ node.notes }}">{{ node.title }} ({{ current_total }})</a>
+                                            <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_59:{{ node.id|urlencode }}">{{ node.title }} ({{ current_total }})</a>
                                             {% if not node.is_leaf_node %}
                                                 <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse" style="color: #555;">  + Expand</a>
                                                 <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
@@ -287,7 +287,7 @@
         
         $("#search").click(function() {
           $(this).closest("form").attr('action', ".");
-        });        
+        });       
 
     });
   </script>

@@ -482,3 +482,13 @@ def fix_bm_nums():
             bmnum.save()
         else:
             print "BAD MATCH: " + num + "; ID: " + str(bmnum.subject_id)
+            
+def quickfix():
+    cfs = ControlField.objects.all()
+    
+    for cf in cfs:
+        defi = cf.definition
+        new_def = re.sub(r"&#39;", "'", defi)
+        cf.definition = new_def
+        cf.save()
+        

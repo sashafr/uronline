@@ -308,7 +308,7 @@ def export_control_property_details(request, prop_id):
         all_objs = ControlField.objects.filter(type_id = prop_id)
 
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="property_detail.csv"'
+    response['Content-Disposition'] = 'attachment; filename="' + prop.property + '_property_detail.csv"'
 
     writer = csv.writer(response)
     writer.writerow(['Parent Category', 'Property Value', 'Definition', 'Specific Count', 'Cumulative Count'])
@@ -316,7 +316,7 @@ def export_control_property_details(request, prop_id):
         ancs = obj.ancestors()
         spec_count = SubjectControlProperty.objects.filter(control_property_value_id = obj.id).count()
         cum_count = obj.count_subj_instances()
-        desc = obj.notes.encode('ascii', 'ignore')
+        desc = obj.definition.encode('ascii', 'ignore')
         writer.writerow([ancs, obj.title, desc, spec_count, cum_count])
     return response
     

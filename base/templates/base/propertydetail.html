@@ -45,7 +45,7 @@
                             <ul style="list-style-type: none;">
                                 {% recursetree all_objs %}
                                     <li>
-                                        <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ property.id }}:{{ node.id }}" data-toggle="popover" data-html="true" data-content="{{ node.notes }}"><span style="font-size: 18px; font-weight: 500; margin-top: 10px; margin-bottom: 10px; ">{{ node.title }} ({{ node.count_subj_instances }})</span></a>
+                                        <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ property.id }}:{{ node.id }}" data-toggle="popover" data-html="true" data-content="{{ node.definition }}"><span style="font-size: 18px; font-weight: 500; margin-top: 10px; margin-bottom: 10px; ">{{ node.title }} ({{ node.count_subj_instances }})</span></a>
                                         {% if not node.is_leaf_node %}
                                             <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse" style="color: #555;">  + Expand</a>
                                             <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
