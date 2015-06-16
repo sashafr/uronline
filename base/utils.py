@@ -447,3 +447,38 @@ def update_pgs(min, max, parent_id):
             
             loc_prop = LocationProperty(location = new_loc, property = DescriptiveProperty.objects.get(pk = 96), property_value = new_title, last_mod_by = last_mod)
             loc_prop.save()
+            
+def clean_dups():
+    """ Used for fast updates from command line, not used anywhere on website """
+
+    props = ControlField.objects.exclude(level = 0)
+    
+    for prop in props:
+        ancs = prop.get_ancestors()
+        for anc in ancs:
+            prob_subj = Subject.objects.filter(subjectcontrolproperty__control_property_value = anc).filter(subjectcontrolproperty__control_property_value = prop)
+            for prob in prob_subj:
+                dups = SubjectControlProperty.objects.filter(subject = prob, control_property_value = anc)
+                for dup in dups:
+                    print "Removing " + dup.subject.title + ": " + dup.control_property_value.title
+                    dup.delete()
+                    
+def fix_bm_nums():
+    """ Used for fast updates from command line, not used anywhere on website """
+    
+    bmnums = SubjectProperty.objects.filter(property_id = 33)
+    
+    for bmnum in bmnums:
+        num = bmnum.property_value
+        match = re.match(r"[^\d]*(\d+)[^\d]+(\d+)[^\d]+(\d+)[^\d]*", num)
+        if match:
+            regyr = match.group(1)
+            regcol = match.group(2)
+            regnum = match.group(3)
+            for i in range (0, (4-len(regcol))):
+                regcol = '0' + regcol
+            fixed_num = regyr + ',' + regcol + '.' + regnum
+            bmnum.property_value = fixed_num
+            bmnum.save()
+        else:
+            print "BAD MATCH: " + num + "; ID: " + str(bmnum.subject_id)

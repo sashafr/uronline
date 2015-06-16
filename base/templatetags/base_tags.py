@@ -650,3 +650,9 @@ def query_params_getlist(request, param):
             query_string += p + '&'
         return query_string
     return 'None'
+    
+@register.simple_tag
+def get_loci_details(loci_details, index):
+    if index in loci_details:
+        return loci_details[index]
+    return ""

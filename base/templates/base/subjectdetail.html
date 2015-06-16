@@ -195,9 +195,6 @@
                                     <ul class="enlarge">
                                         <li>
                                             <a href="{% get_img_thumb subject 'ms' '' %}"><img class="img-responsive" src="{% get_img_thumb subject 'ms' 'thm' %}" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'></a>
-                                            <span>
-                                                <img src="{% get_img_thumb subject 'ms' 'scr' %}" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'/>
-                                            </span>
                                         </li>
                                     </ul>
                                 </div>

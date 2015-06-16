@@ -228,12 +228,18 @@ def mapdetail(request, location_id):
             continue
     
     loci = MediaLocationRelations.objects.filter(media_id = current_map.id, relation_type = 10).order_by('location__title')
+    
+    loci_details = {}
+    for locus in loci:
+        context = LocationProperty.objects.filter(Q(property_id = 96) | Q(property_id = 117), location = locus.location)
+        if context:
+            loci_details[locus.location.id] = context[0].property_value
     try:
         rsid = MediaProperty.objects.filter(media_id = current_map.id, property_id = 94)[0]
     except IndexError:
         raise Http404("Could not find map image")
     
-    return render(request, 'base/mapdetail.html', {'location': location, 'current_map': current_map, 'other_maps': other_maps, 'loci': loci, 'rsid': rsid})
+    return render(request, 'base/mapdetail.html', {'location': location, 'current_map': current_map, 'other_maps': other_maps, 'loci': loci, 'rsid': rsid, 'loci_details': loci_details})
     
 '''def collectiondetail(request, collection_id):
     

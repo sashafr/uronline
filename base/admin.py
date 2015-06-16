@@ -15,7 +15,7 @@ from django.contrib.admin.views.main import ChangeList
 from django.utils.http import urlencode
 from django.contrib import messages
 from django.contrib.auth.models import User
-from suit.widgets import SuitSplitDateTimeWidget
+from suit.widgets import SuitSplitDateTimeWidget, LinkedSelect
 from django_select2 import AutoModelSelect2Field, AutoHeavySelect2Widget
 
 OPERATOR = (
@@ -79,7 +79,10 @@ class AdminAdvSearchForm(forms.Form):
     cv1 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))
     cp2 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(control_field = True))
     cst2 = forms.ChoiceField(label='', required=False, choices=CONTROL_SEARCH_TYPE)
-    cv2 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))    
+    cv2 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))
+    cp3 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(control_field = True))
+    cst3 = forms.ChoiceField(label='', required=False, choices=CONTROL_SEARCH_TYPE)
+    cv3 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))     
     
     # free-form properties
     fp1 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.all())
@@ -167,6 +170,7 @@ class SubjectControlPropertyInline(admin.TabularInline):
     suit_classes = 'suit-tab suit-tab-general'
     extra = 3
     template = 'admin/base/subject/tabular.html'
+    ordering = ('control_property__order',)
     
     # for control property form dropdown, only show descriptive properties marked as control_field = true
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -284,7 +288,7 @@ class SubjectPropertyInline(admin.TabularInline):
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'property':
-            kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='SO') | Q(primary_type='AL') | Q(primary_type='SL')).exclude(pk=19).exclude(pk=12).exclude(pk=121).exclude(pk=114)
+            kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='SO') | Q(primary_type='AL') | Q(primary_type='SL')).exclude(control_field = True)
         return super(SubjectPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs) 
         
 class MediaSubjectRelationsInline(admin.TabularInline):
@@ -463,7 +467,11 @@ class SubjectAdmin(admin.ModelAdmin):
                 elif prop_id == 133 and 451 not in nums:
                     m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=451), last_mod_by = request.user)
                     m.save()
-                    messages.add_message(request, messages.WARNING, warning)                       
+                    messages.add_message(request, messages.WARNING, warning)
+                elif prop_id == 146 and 771 not in nums:
+                    m = SubjectControlProperty(subject = instance.subject, control_property = DescriptiveProperty.objects.get(pk=59), control_property_value = ControlField.objects.get(pk=771), last_mod_by = request.user)
+                    m.save()
+                    messages.add_message(request, messages.WARNING, warning)                     
                 
                 instance.last_mod_by = request.user            
                 instance.save()
@@ -584,7 +592,7 @@ class SubjectAdmin(admin.ModelAdmin):
             queryset = queryset.filter(last_mod_by = last_mod)            
         
         # CONTROL PROPERTY FILTER
-        for i in range(1, 3):
+        for i in range(1, 4):
             cp = adv_fields['cp' + str(i)]
             cst = adv_fields['cst' + str(i)]
             cv = adv_fields['cv' + str(i)]
@@ -834,13 +842,21 @@ class SubjectPropertyAdmin(admin.ModelAdmin):
 admin.site.register(SubjectProperty, SubjectPropertyAdmin)
 admin.site.register(Relations)
 
+# class MediaSubjectRelationsForm(ModelForm):
+    # class Meta:
+        # widgets = {
+            # 'subject': LinkedSelect
+        # }
+
 class MediaSubjectRelationsAdmin(admin.ModelAdmin):
-    readonly_fields = ('created', 'modified', 'last_mod_by')
+    readonly_fields = ('subject', 'created', 'modified', 'last_mod_by')
     fields = ['media', 'subject', 'relation_type', 'notes', 'created', 'modified', 'last_mod_by']
     list_display = ['media', 'subject', 'relation_type', 'notes', 'created', 'modified', 'last_mod_by']
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2})},
     }
+    search_fields = ['notes']
+#    form = MediaSubjectRelationsForm
     
     def save_model(self, request, obj, form, change):
         obj.last_mod_by = request.user

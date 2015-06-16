@@ -18,9 +18,4 @@ def precomp_object_fields():
     updated_subjects = Subject.objects.filter(modified__gt=time_threshold)
     
     for subject in updated_subjects:
-        object_type = ''
-        if subject.type.type == 'object':
-            object_type = 'subj'
-        elif subject.type.type == 'location':
-            object_type = 'loc'
-        update_display_fields(subject.id, object_type)
+        update_display_fields(subject.id, 'subj')

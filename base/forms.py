@@ -70,7 +70,7 @@ class AdvancedSearchForm(SearchForm):
         is called, such as faceting the SearchQuerySet."""
         
         # faceting must be done here manually b/c we are creating a new SearchQuerySet
-        sqs = SearchQuerySet().facet('facet_prop_19')   
+        sqs = SearchQuerySet().facet('facet_prop_19').facet('facet_prop_12').facet('facet_prop_59')
         
         if not self.is_valid():
             return self.no_query_found()

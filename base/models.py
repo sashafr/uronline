@@ -84,7 +84,8 @@ class ControlField(MPTTModel):
     in proxy models. Mptt is used to allow for parent-child relationships
     in the values."""
     title = models.CharField(max_length = 60, blank = True)
-    notes = models.TextField(blank = True, help_text = "This field will be used to generate 'Additional Information' section of this property's Details page. Please define the property and add any other useful information here.")
+    notes = models.TextField('Addtional Details Page (HTML)', blank = True, help_text = "This field will be used to generate 'Additional Information' section of this property's Details page. Please define the property and add any other useful information here.")
+    definition = models.TextField(blank = True, help_text = "Please use this field to provide a short definition of the meaning of this term.")
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
     last_mod_by = models.ForeignKey(User, blank = True)
@@ -98,8 +99,8 @@ class ControlField(MPTTModel):
         return self.title
         
     class Meta:
-        verbose_name = 'Control Field'    
-        verbose_name_plural = 'Control Fields'
+        verbose_name = 'Controlled Term'    
+        verbose_name_plural = 'Controlled Terms'
         
     def next(self):
         greaterpk = ControlField.objects.filter(id__gt=self.id, type = self.type).order_by('id')
@@ -635,7 +636,7 @@ class SubjectControlProperty(models.Model):
         verbose_name_plural = 'Controlled Object Properties'    
 
     def __unicode__(self):
-        return self.control_property_value
+        return self.control_property_value.title
 
 class PublicationManager(models.Manager):
     def get_query_set(self):

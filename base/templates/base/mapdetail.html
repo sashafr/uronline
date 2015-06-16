@@ -24,7 +24,7 @@
                     <ul>
                         {% for locus in loci %}
                             <li>
-                                <h4><a href="{% url 'locationdetail' locus.location_id %}">{{ locus.location.title }}</a></h4>
+                                <h4><a href="{% url 'locationdetail' locus.location_id %}" data-toggle="popover" data-html="true" data-content="{% get_loci_details loci_details locus.location_id %}" >{{ locus.location.title }}</a></h4>
                             </li>
                         {% endfor %}                    
                     </ul>
@@ -48,4 +48,18 @@
             {% endif %}
         </div>
     </div>
+{% endblock %}
+
+{% block js %}
+
+{{ block.super }}
+
+  <script type="text/javascript">
+    $(document).ready(function(){
+        $("[data-toggle=popover]").popover({
+            trigger : 'hover'
+        });   
+    });
+  </script>
+
 {% endblock %}
