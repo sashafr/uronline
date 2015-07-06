@@ -18,6 +18,20 @@ from django.utils.encoding import smart_str
 from haystack.query import SQ
 from datetime import datetime
 
+def create_footnotes(start_index, properties, gen_notes):
+    """ Helper to create footnotes """
+
+    gen_fn_count = start_index
+    for gprop in properties:
+        if gprop.notes != "":
+            if gprop.notes in gen_notes:
+                gprop.fn = gen_notes.index(gprop.notes) + 1
+            else:
+                gprop.fn = gen_fn_count
+                gen_notes.append(gprop.notes)
+                gen_fn_count += 1
+    return gen_fn_count
+
 def home(request):
     """ Default view for the root """
 	
@@ -61,7 +75,20 @@ def subjectdetail(request, subject_id):
         related_media = []
         related_web = []
         property_count = 0
-    return render(request, 'base/subjectdetail.html', {'subject': subject, 'gen_images': gen_images, 'con_images': con_images, 'arc_images': arc_images, 'gen_properties': gen_properties, 'con_properties': con_properties, 'arc_properties': arc_properties, 'control_properties': gen_control_properties, 'arc_control_properties': arc_control_properties, 'con_control_properties': con_control_properties, 'related_media': related_media, 'related_web': related_web, 'property_count': property_count})
+        
+    gen_notes = []
+    gen_index = create_footnotes(1, gen_control_properties, gen_notes)
+    create_footnotes(gen_index, gen_properties, gen_notes)
+    
+    arc_notes = []
+    arc_index = create_footnotes(1, arc_control_properties, arc_notes)
+    create_footnotes(arc_index, arc_properties, arc_notes)
+
+    con_notes = []
+    con_index = create_footnotes(1, con_control_properties, con_notes)
+    create_footnotes(con_index, con_properties, con_notes) 
+    
+    return render(request, 'base/subjectdetail.html', {'subject': subject, 'gen_images': gen_images, 'con_images': con_images, 'arc_images': arc_images, 'gen_properties': gen_properties, 'con_properties': con_properties, 'arc_properties': arc_properties, 'control_properties': gen_control_properties, 'arc_control_properties': arc_control_properties, 'con_control_properties': con_control_properties, 'related_media': related_media, 'related_web': related_web, 'property_count': property_count, 'gen_footnotes': gen_notes, 'arc_footnotes': arc_notes, 'con_footnotes': con_notes})
     
 def mediadetail(request, media_id):
     """ Detailed view of a media record """

@@ -484,11 +484,17 @@ def fix_bm_nums():
             print "BAD MATCH: " + num + "; ID: " + str(bmnum.subject_id)
             
 def quickfix():
-    cfs = ControlField.objects.all()
+    measures = SubjectProperty.objects.exclude(notes__startswith='Data collected by British Museum research team.').filter(notes__endswith='Data collected by British Museum research team.').exclude(property_id=23)
     
-    for cf in cfs:
-        defi = cf.definition
-        new_def = re.sub(r"&#39;", "'", defi)
-        cf.definition = new_def
-        cf.save()
-        
+    for measure in measures:
+        note = measure.notes
+        match = re.match(r"([^;]+);(.+)", note)
+        if match:
+            innote = match.group(1)
+            new_note = match.group(2)
+            measure.inline_notes = innote
+            measure.notes = new_note
+            measure.last_mod_by_id = 1
+            measure.save()
+        else:
+            print "regex failed: " + note

@@ -127,7 +127,33 @@ class ControlFieldForm(ModelForm):
   
         widgets = {
             'notes': CKEditorWidget(editor_options=_ck_editor_config),
-        } 
+        }
+
+class BlogPostForm(ModelForm):
+    """ Used on Blog Post Change Form page to edit blog posts """
+    
+    class Meta:
+  
+        _ck_editor_toolbar = [
+            {'name': 'basicstyles', 'groups': ['basicstyles', 'cleanup']},
+            {'name': 'paragraph',
+             'groups': ['list', 'indent', 'blocks', 'align']},
+            {'name': 'document', 'groups': ['mode']}, '/',
+            {'name': 'styles'}, {'name': 'colors'},
+            {'name': 'insert_custom',
+             'items': ['Image', 'Flash', 'Table', 'HorizontalRule']},
+            {'name': 'links'},
+            {'name': 'about'}]
+
+        _ck_editor_config = {'autoGrow_onStartup': True,
+                             'autoGrow_minHeight': 100,
+                             'autoGrow_maxHeight': 250,
+                             'extraPlugins': 'autogrow',
+                             'toolbarGroups': _ck_editor_toolbar}            
+  
+        widgets = {
+            'body': CKEditorWidget(editor_options=_ck_editor_config),
+        }      
 
 class LocObjRelForm(ModelForm):
     location = LocationChoices(
@@ -154,6 +180,14 @@ class ControlFieldLinkedDataInline(admin.TabularInline):
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
     extra = 1
+    
+class PersonOrgLinkedDataInline(admin.TabularInline):
+    model = PersonOrgLinkedData
+    fields = ['source', 'link']    
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    extra = 1    
 
 """ DESCRIPTIVE PROPERTY & CONTROLLED PROPERTY INLINES """
 
@@ -205,8 +239,8 @@ admin.site.register(LinkedDataSource, LinkedDataSourceAdmin)
 class ControlFieldAdmin(MPTTModelAdmin):
     readonly_fields = ('created', 'modified', 'last_mod_by')    
     inlines = [ControlFieldLinkedDataInline]
-    search_fields = ['title', 'notes']
-    list_display = ('ancestors', 'title', 'notes', 'type')
+    search_fields = ['title', 'definition']
+    list_display = ('ancestors', 'title', 'definition', 'type')
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
@@ -216,7 +250,8 @@ class ControlFieldAdmin(MPTTModelAdmin):
     suit_form_includes = (
         ('admin/base/control_field_search.html', 'bottom'),
     )
-    form = ControlFieldForm   
+    form = ControlFieldForm
+    fields = ('title', 'definition', 'notes', 'type', 'parent', 'created', 'modified', 'last_mod_by')
     
     def save_model(self, request, obj, form, change):
         obj.last_mod_by = request.user
@@ -278,7 +313,7 @@ class StatusFilter(admin.SimpleListFilter):
 
 class SubjectPropertyInline(admin.TabularInline):
     model = SubjectProperty
-    fields = ['property', 'property_value', 'notes', 'last_mod_by']
+    fields = ['property', 'property_value', 'notes', 'inline_notes', 'last_mod_by']
     readonly_fields = ('last_mod_by',)    
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
@@ -605,7 +640,7 @@ class SubjectAdmin(admin.ModelAdmin):
                     if cst == 'exact':
                         ccq |= Q(subjectcontrolproperty__control_property_value = field.id)
                     else:
-                        ccq |= ~Q(subjectcontrolproperty__control_property_value = field.id)
+                        ccq &= ~Q(subjectcontrolproperty__control_property_value = field.id)
                         
                 queryset = queryset.filter(ccq)
                 
@@ -741,7 +776,7 @@ class PersonOrgAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'modified', 'last_mod_by')
     fields = ['title', 'notes', 'created', 'modified', 'last_mod_by']
     list_display = ['title', 'notes', 'created', 'modified', 'last_mod_by']
-    inlines = [PersonOrgPropertyInline, MediaPersonOrgRelationsInline]
+    inlines = [PersonOrgPropertyInline, MediaPersonOrgRelationsInline, PersonOrgLinkedDataInline]
     search_fields = ['title']
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2})},
@@ -755,7 +790,7 @@ class PersonOrgAdmin(admin.ModelAdmin):
         instances = formset.save(commit=False)
 
         for instance in instances:
-            if isinstance(instance, PersonOrgProperty) or isinstance(instance, MediaPersonOrgRelations) : #Check if it is the correct type of inline
+            if isinstance(instance, PersonOrgProperty) or isinstance(instance, MediaPersonOrgRelations) or isinstance(instance, PersonOrgLinkedData) : #Check if it is the correct type of inline
                 instance.last_mod_by = request.user            
                 instance.save()    
 
@@ -969,6 +1004,7 @@ class LocationAdmin(MPTTModelAdmin):
 admin.site.register(Location, LocationAdmin)
 
 class PostAdmin(admin.ModelAdmin):
+    form = BlogPostForm
     list_display = ['title']
     list_filter = ['published', 'created']
     search_fields = ['title', 'body']
