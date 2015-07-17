@@ -483,18 +483,12 @@ def fix_bm_nums():
         else:
             print "BAD MATCH: " + num + "; ID: " + str(bmnum.subject_id)
             
-def quickfix():
-    measures = SubjectProperty.objects.exclude(notes__startswith='Data collected by British Museum research team.').filter(notes__endswith='Data collected by British Museum research team.').exclude(property_id=23)
-    
-    for measure in measures:
-        note = measure.notes
-        match = re.match(r"([^;]+);(.+)", note)
-        if match:
-            innote = match.group(1)
-            new_note = match.group(2)
-            measure.inline_notes = innote
-            measure.notes = new_note
-            measure.last_mod_by_id = 1
-            measure.save()
-        else:
-            print "regex failed: " + note
+def quickfix(letter, length):
+    for i in range (1, length + 1):
+        check = Location.objects.filter(title = 'Room ' + letter + '.' + str(i))
+        if not check:
+            new_loc = Location(title = 'Room ' + letter + '.' + str(i), last_mod_by_id = 1, type_id = 7, parent_id = 3504)
+            new_loc.save()
+            print('Created Room ' + letter + str(i))
+            lprop = LocationProperty(location = new_loc, property_id = 96, property_value = 'Giparu Room ' + letter + str(i), last_mod_by_id = 1)
+            lprop.save()

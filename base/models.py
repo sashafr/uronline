@@ -4,6 +4,8 @@ from django.db.models import Q
 from mptt.models import MPTTModel, TreeForeignKey
 from django.core.urlresolvers import reverse
 import re
+from filer.fields.image import FilerImageField
+from filer.fields.file import FilerFileField
 
 """ DESCRIPTIVE PROPERTY & CONTROLLED PROPERTY MODELS """
 
@@ -746,6 +748,8 @@ class Post(models.Model):
         
     class Meta:
         ordering = ['-created']
+        verbose_name = 'Public Blog Post'
+        verbose_name_plural = 'Public Blog Posts'          
             
     def __unicode__(self):
         return self.title
@@ -789,4 +793,39 @@ class SubjectCollection(models.Model):
         
     class Meta:
         verbose_name = 'Collection Item (Object)'
-        verbose_name_plural = 'Collection Items (Object)'    
+        verbose_name_plural = 'Collection Items (Object)'
+        
+class FileUpload(models.Model):
+    title = models.CharField(max_length = 255)
+    file = FilerImageField(blank = True)
+    attribution = models.TextField(blank = True)
+    
+class AdminPost(models.Model):
+    title = models.CharField(max_length=255)
+    body = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    published = models.BooleanField(default=True)
+    author = models.ForeignKey(User)
+        
+    class Meta:
+        ordering = ['-created']
+        verbose_name = 'Admin Forum Post'
+        verbose_name_plural = 'Admin Forum Posts'          
+            
+    def __unicode__(self):
+        return self.title
+        
+class AdminComment(models.Model):
+    post = models.ForeignKey(AdminPost)
+    body = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    published = models.BooleanField(default=True)
+    author = models.ForeignKey(User)
+        
+    class Meta:
+        ordering = ['-created']
+        verbose_name = 'Comment'
+        verbose_name_plural = 'Comments'          
+            
+    def __unicode__(self):
+        return 'Comment on ' + self.post.title + ' by ' + self.author.username

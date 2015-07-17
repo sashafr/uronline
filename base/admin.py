@@ -153,7 +153,7 @@ class BlogPostForm(ModelForm):
   
         widgets = {
             'body': CKEditorWidget(editor_options=_ck_editor_config),
-        }      
+        }
 
 class LocObjRelForm(ModelForm):
     location = LocationChoices(
@@ -292,7 +292,12 @@ class ResultPropertyAdmin(admin.ModelAdmin):
     readonly_fields = ('display_field',)
     search_fields = ['display_field', 'field_type']
     list_display = ('human_title', 'field_type')
-    list_editable = ('field_type',)    
+    list_editable = ('field_type',)
+
+    def save_model(self, request, obj, form, change):
+        subjects = Subject.objects.all()
+        for subj in subjects:
+            update_display_fields(subj.id, 'subj')    
     
 admin.site.register(ResultProperty, ResultPropertyAdmin)
 
@@ -1014,6 +1019,42 @@ class PostAdmin(admin.ModelAdmin):
 
 admin.site.register(Post, PostAdmin)
 
+class AdminCommentInline(admin.StackedInline):
+    model = AdminComment
+    extra = 0
+    readonly_fields = ('author', 'created')
+    template = 'admin/edit_inline/stacked_adminpost.html'
+
+class AdminPostAdmin(admin.ModelAdmin):
+    form = BlogPostForm
+    readonly_fields = ('author', 'created')
+    inlines = [AdminCommentInline]
+    list_display = ['title', 'author', 'created', 'published']
+    list_filter = ['published', 'created']
+    search_fields = ['title', 'body']
+    date_hierarchy = 'created'
+    save_on_top = True
+    change_form_template = 'admin/base/adminpost/change_form_adminpost.html'
+    
+    def save_model(self, request, obj, form, change):
+        if not obj.author:
+            obj.author = request.user
+            obj.save()
+
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
+        for instance in instances:
+            if isinstance(instance, AdminComment): #Check if it is the correct type of inline
+                instance.author = request.user            
+                instance.save()        
+        
+    def queryset(self, request):
+        qs = super(AdminPostAdmin, self).queryset(request)
+        return qs.filter(Q(published = True) | Q(published = False, author = request.user))
+
+admin.site.register(AdminPost, AdminPostAdmin)
+
 class ObjectTypeAdmin(admin.ModelAdmin):
     readonly_fields = ('last_mod_by',)
     list_display = ('type', 'notes', 'control_field')
@@ -1063,3 +1104,4 @@ admin.site.register(ControlFieldLinkedData, LinkedDataAdmin)
         if mediaid:
             return queryset.filter(mediasubjectrelations__media_id = mediaid)
         return queryset'''
+    

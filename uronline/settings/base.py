@@ -44,6 +44,9 @@ INSTALLED_APPS = (
     'import_export',
     'mptt',
     'django_select2',
+    'filer',
+    'easy_thumbnails',
+    'clippy',
     
     # Django contrib apps
     'django.contrib.auth',
@@ -295,3 +298,9 @@ DEV = False
 #CEF_DEVICE_VERSION = '0'
 
 MPTT_ADMIN_LEVEL_INDENT = 20
+
+THUMBNAIL_HIGH_RESOLUTION = True
+
+SOUTH_MIGRATION_MODULES = {
+    'easy_thumbnails': 'easy_thumbnails.south_migrations',
+}

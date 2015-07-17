@@ -44,7 +44,6 @@
 
 {% block extrastyle %}
   {{ block.super }}
-  <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}suit/css/filer.css">
 {% endblock %}
 
 {% block content_title_value %}
@@ -73,16 +72,6 @@
           {{ opts.verbose_name_plural|capfirst }}{% endif %}
         <span class="divider">&raquo;</span>
       </li>
-      <!-- Modifications to original Django Suit template begin here -->
-      {% for parent in original.get_ancestors %}
-        <li>
-          <a href="{% url opts|admin_urlname:'change' parent.pk|admin_urlquote %}">
-            {{ parent|truncatewords:"18" }}
-          </a>
-          <span class="divider">&raquo;</span>
-        </li>
-      {% endfor %}
-      <!-- End modifications -->
       <li class="active">
         {% if add %}{% trans 'Add' %} {{ opts.verbose_name }}{% else %}{{ original|truncatewords:"18" }}{% endif %}
       </li>
@@ -102,10 +91,6 @@
 
           {% block submit_buttons_bottom %}{% submit_row %}{% endblock %}
 
-        </div>
-        
-        <div class="filebrowser">
-            {% include "admin/filer/tools/clipboard/clipboard_special.html" %}
         </div>
 
         {% block object-tools %}
@@ -129,52 +114,9 @@
                     </a></li>
                   {# {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}</a>#}
                 {% endif %}
-                
-                <!-- Modifications to original Django Suit template begin here -->
-                <li>
-                  <a href="/admin/filer/folder/" onclick='return showAddAnotherPopup(this);'>
-                    <i class="icon-picture icon-alpha75"></i>Add Image to Clipboard
-                  </a>
-                </li>                
-                {% if original.next %}
-                  <li>
-                    <a href="{% url opts|admin_urlname:'change' original.next.pk|admin_urlquote %}">
-                      <i class="icon-chevron-right icon-alpha75"></i>Next
-                    </a>
-                  </li>
-                {% endif %}
-                {% if original.previous %}
-                  <li>
-                    <a href="{% url opts|admin_urlname:'change' original.previous.pk|admin_urlquote %}">
-                      <i class="icon-chevron-left icon-alpha75"></i>Previous
-                    </a>
-                  </li>
-                {% endif %}
-                <!-- End modifications -->                 
+
               {% endblock %}
             </ul>
-            <!-- Modifications to original Django Suit template begin here -->
-            {% if original.get_siblings %}
-              <h4 class="italic-title">Siblings</h4>
-              <ul class="box menu-box">
-                {% for sibling in original.get_siblings_same_type %}
-                  <li>
-                    <a href="{% url opts|admin_urlname:'change' sibling.pk|admin_urlquote %}">{{ sibling|truncatewords:"18" }}</a>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-            {% if original.get_children %}
-              <h4 class="italic-title">Children</h4>
-              <ul class="box menu-box">
-                {% for child in original.get_children_same_type %}
-                  <li>
-                    <a href="{% url opts|admin_urlname:'change' child.pk|admin_urlquote %}">{{ child|truncatewords:"18" }}</a>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% endif %}            
-            <!-- End modifications -->            
           {% endif %}{% endif %}
         {% endblock %}
 
@@ -206,9 +148,7 @@
 
           {% block field_sets %}
             {% for fieldset in adminform %}
-              <!-- Modifications to original Django Suit template begin here -->
-              {% include "admin/base/fieldset_tree_models.html" %}
-              <!-- End modifications -->
+              {% include "admin/base/adminpost/fieldset_adminpost.html" %}
             {% endfor %}
           {% endblock %}
 
