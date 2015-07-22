@@ -657,10 +657,3 @@ def get_loci_details(loci_details, index):
     if index in loci_details:
         return loci_details[index]
     return ""
-    
-@register.simple_tag
-def is_post_author(user, form):
-    author = "dang"
-    for line in fieldset:
-        for field in line:
-            author = field.field.form.__getitem))

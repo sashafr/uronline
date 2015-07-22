@@ -119,6 +119,13 @@
             </ul>
           {% endif %}{% endif %}
         {% endblock %}
+        
+        <h4 class="italic-title">{% trans 'attachment'|capfirst %}</h4>
+        <ul class="box menu-box">
+            <li>
+                <a href="{% url 'admin_forum_attachment' %}" onclick='return showAddAnotherPopup(this);'><i class="icon-plus-sign icon-alpha75"></i>Add Attachment</a>
+            </li>
+        </ul>
 
       {% block sidebar %}{% endblock %}
 

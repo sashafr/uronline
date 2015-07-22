@@ -1024,6 +1024,10 @@ class AdminCommentInline(admin.StackedInline):
     extra = 0
     readonly_fields = ('author', 'created')
     template = 'admin/edit_inline/stacked_adminpost.html'
+    
+    def queryset(self, request):
+        qs = super(AdminCommentInline, self).queryset(request)
+        return qs.filter(Q(published = True) | Q(published = False, author = request.user))       
 
 class AdminPostAdmin(admin.ModelAdmin):
     form = BlogPostForm
@@ -1052,6 +1056,12 @@ class AdminPostAdmin(admin.ModelAdmin):
     def queryset(self, request):
         qs = super(AdminPostAdmin, self).queryset(request)
         return qs.filter(Q(published = True) | Q(published = False, author = request.user))
+        
+    def has_delete_permission(self, request, obj = None):
+        if obj is not None:
+            if request.user == obj.author:
+                return True
+        return False
 
 admin.site.register(AdminPost, AdminPostAdmin)
 

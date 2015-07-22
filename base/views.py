@@ -476,3 +476,6 @@ def search_export(request, selected_facets):
             return response
     
     return HttpResponseRedirect('/failed_export/')
+    
+def admin_forum_attachment(request):
+    return render(request, 'admin/base/admin_forum_attachment_form.html')    

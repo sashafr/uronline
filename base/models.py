@@ -829,3 +829,9 @@ class AdminComment(models.Model):
             
     def __unicode__(self):
         return 'Comment on ' + self.post.title + ' by ' + self.author.username
+        
+class AdminPostAttachment(models.Model):
+    post = models.ForeignKey(AdminPost)
+    attachment = models.URLField()
+    author = models.ForeignKey(User)
+    created = models.DateTimeField(auto_now_add = True)
