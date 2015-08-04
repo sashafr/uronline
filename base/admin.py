@@ -17,6 +17,8 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from suit.widgets import SuitSplitDateTimeWidget, LinkedSelect
 from django_select2 import AutoModelSelect2Field, AutoHeavySelect2Widget
+from django.utils.encoding import force_unicode
+from django.http import HttpResponseRedirect
 
 OPERATOR = (
     ('and', 'AND'),
@@ -67,6 +69,39 @@ class ControlFieldTypeListFilter(admin.SimpleListFilter):
         if self.value():
             prop_id = self.value()
             return queryset.filter(type__id = prop_id)
+            
+class MediaCollectionListFilter(admin.SimpleListFilter):
+    """ Many to many filter to filter based on collections """
+    
+    title = _('collection')
+    parameter_name = 'collection'
+    
+    def lookups(self, request, model_admin):
+        return tuple((col.id, col.title) for col in Collection.objects.all())
+        
+    def queryset(self, request, queryset):
+        if self.value():
+            coll_id = self.value()
+            return queryset.filter(mediacollection__collection_id = coll_id)
+            
+class LegrainDoneListFilter(admin.SimpleListFilter):
+    """ Checking if Legrain media is done TOO BE DELETED"""
+    
+    title = _('done')
+    parameter_name = 'done'
+    
+    def lookups(self, request, model_admin):
+        return (('yes', 'Yes'), ('no', 'No'))
+        
+    def queryset(self, request, queryset):
+        if self.value():
+            done = self.value()
+            if done == 'yes':
+                return queryset.filter(Q(legrainnotecards__done = True) | Q(legrainimages__done = True))
+            elif done == 'no':
+                return queryset.filter(~Q(legrainnotecards__done = True) & ~Q(legrainimages__done = True))
+            else:
+                return queryset            
             
 """ FORMS """
         
@@ -719,10 +754,54 @@ class MediaPropertyInline(admin.TabularInline):
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
     
+    def queryset(self, request):
+        qs = super(MediaPropertyInline, self).queryset(request)
+        return qs.filter(Q(property__primary_type='MP') | Q(property__primary_type='AL'))    
+    
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "property":
             kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='MP') | Q(primary_type='AL'))
-        return super(MediaPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)    
+        return super(MediaPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+class MediaCollectionInline(admin.TabularInline):
+    model = MediaCollection
+    fields = ['collection', 'notes', 'order']
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    extra = 1
+    
+class LegrainImagesInline(admin.StackedInline):
+    model = LegrainImages
+    fields = ['image_category', 'image_sub_category', 'image_description', 'done', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    extra = 1
+    max_num = 1
+    
+class LegrainNoteCardsInline(admin.StackedInline):
+    model = LegrainNoteCards
+    fields = ['field_number', 'context', 'catalogue_number', 'museum_number', 'field_photo_number', 'measurements', 'transcription', 'category', 'photo', 'drawing', 'done', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    extra = 1
+    max_num = 1
+        
+class LegrainImageTagAdminForm(ModelForm):
+    tag = TreeNodeChoiceField(queryset=ControlField.objects.filter(type_id = 154))   
+
+class LegrainImageTagsInline(admin.TabularInline):
+    model = LegrainImageTags
+    fields = ['tag', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    form = LegrainImageTagAdminForm
 
 class MediaAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'modified', 'last_mod_by')
@@ -731,8 +810,13 @@ class MediaAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2})},
     }
-    inlines = [MediaPropertyInline]
+    inlines = [LegrainNoteCardsInline, LegrainImagesInline, LegrainImageTagsInline, MediaPropertyInline, MediaCollectionInline]
     search_fields = ['title', 'notes']
+    change_form_template = 'admin/base/media/change_form_media.html'
+    suit_form_includes = (
+        ('admin/base/media_img_display.html', 'middle'),
+    )
+    list_filter = (MediaCollectionListFilter, LegrainDoneListFilter,)
     
     def save_model(self, request, obj, form, change):
         obj.last_mod_by = request.user
@@ -742,11 +826,197 @@ class MediaAdmin(admin.ModelAdmin):
         instances = formset.save(commit=False)
 
         for instance in instances:
-            if isinstance(instance, MediaProperty) : #Check if it is the correct type of inline
+            if isinstance(instance, MediaProperty) or isinstance(instance, LegrainImages) or isinstance(instance, LegrainNoteCards) or isinstance(instance, LegrainImageTags):
                 instance.last_mod_by = request.user            
                 instance.save()
+            elif isinstance(instance, MediaCollection):
+                instance.save()
+                
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['rs_refs'] = MediaProperty.objects.filter(property_id = 94, media_id = object_id)
+        collections = MediaCollection.objects.filter(media_id = object_id)
+        collection_list = []
+        for coll in collections:
+            coll_info = {}
+            current_order = coll.order
+            lt = MediaCollection.objects.filter(collection = coll.collection, order__lt = current_order).order_by('-order')
+            if lt:
+                coll_info['prev'] = lt[0].media_id
+            gt = MediaCollection.objects.filter(collection = coll.collection, order__gt = current_order).order_by('order')
+            if gt:
+                coll_info['next'] = gt[0].media_id
+            if lt or gt:
+                coll_info['name'] = coll.collection.title
+            collection_list.append(coll_info)
+        extra_context['collections'] = collection_list
+        return super(MediaAdmin, self).change_view(request, object_id, form_url, extra_context = extra_context)
+        
+    def response_change(self, request, obj):
+        """
+        Determines the HttpResponse for the change_view stage.
+        """
+        if request.POST.has_key("_viewnext"):
+            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
+                   {'name': force_unicode(obj._meta.verbose_name),
+                    'obj': force_unicode(obj)})
+            next = request.POST.get("next_id")
+            if next:
+                self.message_user(request, msg)
+                return HttpResponseRedirect("../%s/" % next)
+        if request.POST.has_key("_viewprev"):
+            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
+                   {'name': force_unicode(obj._meta.verbose_name),
+                    'obj': force_unicode(obj)})
+            prev = request.POST.get("prev_id")
+            if prev:
+                self.message_user(request, msg)
+                return HttpResponseRedirect("../%s/" % prev)
+        return super(MediaAdmin, self).response_change(request, obj)         
     
 admin.site.register(Media, MediaAdmin)
+
+class LegrainImageAdmin(admin.ModelAdmin):
+    readonly_fields = ('title', 'type', 'notes', 'created', 'modified', 'last_mod_by')
+    fields = ['title', 'type', 'notes', 'created', 'modified', 'last_mod_by']
+    list_display = ['title', 'type', 'notes', 'created', 'modified', 'last_mod_by']
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2})},
+    }
+    inlines = [LegrainImagesInline, LegrainImageTagsInline]
+    search_fields = ['title', 'notes']
+    change_form_template = 'admin/base/media/change_form_media.html'
+    suit_form_includes = (
+        ('admin/base/media_img_display.html', 'middle'),
+    )
+    list_filter = (LegrainDoneListFilter,)
+    
+    def save_model(self, request, obj, form, change):
+        obj.last_mod_by = request.user
+        obj.save()
+        
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
+        for instance in instances:
+            if isinstance(instance, LegrainImages) or isinstance(instance, LegrainImageTags):
+                instance.last_mod_by = request.user            
+                instance.save()
+                
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['rs_refs'] = MediaProperty.objects.filter(property_id = 94, media_id = object_id)
+        collections = MediaCollection.objects.filter(media_id = object_id)
+        collection_list = []
+        for coll in collections:
+            coll_info = {}
+            current_order = coll.order
+            lt = MediaCollection.objects.filter(collection = coll.collection, order__lt = current_order).order_by('-order')
+            if lt:
+                coll_info['prev'] = lt[0].media_id
+            gt = MediaCollection.objects.filter(collection = coll.collection, order__gt = current_order).order_by('order')
+            if gt:
+                coll_info['next'] = gt[0].media_id
+            if lt or gt:
+                coll_info['name'] = coll.collection.title
+            collection_list.append(coll_info)
+        extra_context['collections'] = collection_list
+        return super(LegrainImageAdmin, self).change_view(request, object_id, form_url, extra_context = extra_context)
+        
+    def response_change(self, request, obj):
+        """
+        Determines the HttpResponse for the change_view stage.
+        """
+        if request.POST.has_key("_viewnext"):
+            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
+                   {'name': force_unicode(obj._meta.verbose_name),
+                    'obj': force_unicode(obj)})
+            next = request.POST.get("next_id")
+            if next:
+                self.message_user(request, msg)
+                return HttpResponseRedirect("../%s/" % next)
+        if request.POST.has_key("_viewprev"):
+            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
+                   {'name': force_unicode(obj._meta.verbose_name),
+                    'obj': force_unicode(obj)})
+            prev = request.POST.get("prev_id")
+            if prev:
+                self.message_user(request, msg)
+                return HttpResponseRedirect("../%s/" % prev)                
+        return super(LegrainImageAdmin, self).response_change(request, obj)         
+    
+admin.site.register(LegrainImage, LegrainImageAdmin)
+
+class LegrainNotesAdmin(admin.ModelAdmin):
+    readonly_fields = ('title', 'type', 'notes', 'created', 'modified', 'last_mod_by')
+    fields = ['title', 'type', 'notes', 'created', 'modified', 'last_mod_by']
+    list_display = ['title', 'type', 'notes', 'created', 'modified', 'last_mod_by']
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2})},
+    }
+    inlines = [LegrainNoteCardsInline]
+    search_fields = ['title', 'notes']
+    change_form_template = 'admin/base/media/change_form_media.html'
+    suit_form_includes = (
+        ('admin/base/media_img_display.html', 'middle'),
+    )
+    list_filter = (LegrainDoneListFilter,)
+    
+    def save_model(self, request, obj, form, change):
+        obj.last_mod_by = request.user
+        obj.save()
+        
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
+        for instance in instances:
+            if isinstance(instance, LegrainNoteCards):
+                instance.last_mod_by = request.user            
+                instance.save()
+                
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['rs_refs'] = MediaProperty.objects.filter(property_id = 94, media_id = object_id)
+        collections = MediaCollection.objects.filter(media_id = object_id)
+        collection_list = []
+        for coll in collections:
+            coll_info = {}
+            current_order = coll.order
+            lt = MediaCollection.objects.filter(collection = coll.collection, order__lt = current_order).order_by('-order')
+            if lt:
+                coll_info['prev'] = lt[0].media_id
+            gt = MediaCollection.objects.filter(collection = coll.collection, order__gt = current_order).order_by('order')
+            if gt:
+                coll_info['next'] = gt[0].media_id
+            if lt or gt:
+                coll_info['name'] = coll.collection.title
+            collection_list.append(coll_info)
+        extra_context['collections'] = collection_list
+        return super(LegrainNotesAdmin, self).change_view(request, object_id, form_url, extra_context = extra_context)
+        
+    def response_change(self, request, obj):
+        """
+        Determines the HttpResponse for the change_view stage.
+        """
+        if request.POST.has_key("_viewnext"):
+            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
+                   {'name': force_unicode(obj._meta.verbose_name),
+                    'obj': force_unicode(obj)})
+            next = request.POST.get("next_id")
+            if next:
+                self.message_user(request, msg)
+                return HttpResponseRedirect("../%s/" % next)
+        if request.POST.has_key("_viewprev"):
+            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
+                   {'name': force_unicode(obj._meta.verbose_name),
+                    'obj': force_unicode(obj)})
+            prev = request.POST.get("prev_id")
+            if prev:
+                self.message_user(request, msg)
+                return HttpResponseRedirect("../%s/" % prev)               
+        return super(LegrainNotesAdmin, self).response_change(request, obj)        
+    
+admin.site.register(LegrainNotes, LegrainNotesAdmin)
 
 class MediaPersonOrgRelationsInline(admin.TabularInline):
     model = MediaPersonOrgRelations
@@ -1041,7 +1311,7 @@ class AdminPostAdmin(admin.ModelAdmin):
     change_form_template = 'admin/base/adminpost/change_form_adminpost.html'
     
     def save_model(self, request, obj, form, change):
-        if not obj.author:
+        if obj.pk is None:
             obj.author = request.user
             obj.save()
 

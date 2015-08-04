@@ -795,6 +795,19 @@ class SubjectCollection(models.Model):
         verbose_name = 'Collection Item (Object)'
         verbose_name_plural = 'Collection Items (Object)'
         
+class MediaCollection(models.Model):
+    media = models.ForeignKey(Media)
+    collection = models.ForeignKey(Collection)
+    notes = models.TextField(blank = True)
+    order = models.IntegerField(blank = True, default = 0)
+    
+    def __unicode__(self):
+        return self.media.title + " [Collection: " + self.collection.title + "]"
+        
+    class Meta:
+        verbose_name = 'Collection Item (Media)'
+        verbose_name_plural = 'Collection Items (Media)'        
+        
 class FileUpload(models.Model):
     title = models.CharField(max_length = 255)
     file = FilerImageField(blank = True)
@@ -835,3 +848,99 @@ class AdminPostAttachment(models.Model):
     attachment = models.URLField()
     author = models.ForeignKey(User)
     created = models.DateTimeField(auto_now_add = True)
+    
+class LegrainNoteCards(models.Model):
+    media = models.ForeignKey(Media)
+    field_number = models.TextField(blank = True)
+    context = models.TextField(blank = True)
+    catalogue_number = models.TextField(blank = True)
+    museum_number = models.TextField(blank = True)
+    field_photo_number = models.TextField(blank = True)
+    measurements = models.TextField(blank = True)
+    transcription = models.TextField(blank = True)
+    category = models.TextField(blank = True)
+    photo = models.BooleanField(default = False)
+    drawing = models.BooleanField(default = False)
+    done = models.BooleanField(default = False)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User)
+    
+    class Meta:
+        verbose_name = 'Legrain NoteCard Form'
+        verbose_name_plural = 'Legrain NoteCard Form'     
+    
+class LegrainImages(models.Model):
+
+    class Meta:
+        verbose_name = 'Legrain Image Form'
+        verbose_name_plural = 'Legrain Image Form'   
+
+    UR = 'ur'
+    TRAVEL = 'travel'
+    CAT = (
+        (UR, 'Ur'),
+        (TRAVEL, 'Travel'),
+    )
+    
+    LS = 'ls'
+    PEOPLE = 'people'
+    ARCH = 'arch'
+    EX = 'ex'
+    ILL = 'ill'
+    CITY = 'city'
+    SUB_CAT = (
+        (LS, 'Landscape'),
+        (PEOPLE, 'People'),
+        (ARCH, 'Archaeology'),
+        (EX, 'Excavation'),
+        (ILL, 'Illustration'),
+        (CITY, 'City-scape'),
+    )
+    
+    media = models.ForeignKey(Media)
+    image_category = models.CharField(max_length=6, choices=CAT, default = TRAVEL, blank = True)
+    image_sub_category = models.CharField(max_length=6, choices=SUB_CAT, default = LS, blank = True)
+    image_description = models.TextField(blank = True)
+    done = models.BooleanField(default = False)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User)    
+    
+class LegrainImageTags(models.Model):
+
+    class Meta:
+        verbose_name = 'Legrain Image Tag'
+        verbose_name_plural = 'Legrain Image Tags' 
+
+    media = models.ForeignKey(Media)
+    tag = models.ForeignKey(ControlField)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User)
+    
+class LegrainImageManager(models.Manager):
+    def get_query_set(self):
+        return super(LegrainImageManager, self).get_query_set().filter(mediacollection__collection_id = 3)
+        
+class LegrainImage(Media):
+    objects = LegrainImageManager()
+    
+    class Meta:
+        proxy = True
+        verbose_name = 'Legrain Image'
+        verbose_name_plural = 'Legrain Images'
+        ordering = ['title']
+        
+class LegrainNotesManager(models.Manager):
+    def get_query_set(self):
+        return super(LegrainNotesManager, self).get_query_set().filter(mediacollection__collection_id = 4)
+        
+class LegrainNotes(Media):
+    objects = LegrainNotesManager()
+    
+    class Meta:
+        proxy = True
+        verbose_name = 'Legrain Note Card'
+        verbose_name_plural = 'Legrain Note Cards'
+        ordering = ['title']        
