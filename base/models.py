@@ -192,7 +192,7 @@ class Subject(models.Model):
     desc3 = models.TextField(blank = True)    
     
     def __unicode__(self):
-        return self.title
+        return self.title1 + ' | ' + self.title2 + ' | ' + self.title3
         
     def get_type(self):
         return 'subject';
