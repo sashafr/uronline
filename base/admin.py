@@ -15,9 +15,10 @@ from django.utils.http import urlencode
 from django.contrib import messages
 from django.contrib.auth.models import User
 from suit.widgets import SuitSplitDateTimeWidget, LinkedSelect
-from django_select2 import AutoModelSelect2Field, AutoHeavySelect2Widget
+from django_select2 import AutoModelSelect2Field, AutoHeavySelect2Widget,AutoModelSelect2MultipleField, AutoHeavySelect2MultipleWidget
 from django.utils.encoding import force_unicode
 from django.http import HttpResponseRedirect
+from django.utils.safestring import mark_safe
 
 OPERATOR = (
     ('and', 'AND'),
@@ -47,6 +48,10 @@ CONTROL_SEARCH_TYPE = (
 )
 
 """ SPECIAL FORM FIELDS """
+
+class SubjectChoices(AutoModelSelect2MultipleField):
+    queryset = Subject.objects
+    search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',]
 
 class LocationChoices(AutoModelSelect2Field):
     queryset = Location.objects
@@ -189,6 +194,34 @@ class BlogPostForm(ModelForm):
         widgets = {
             'body': CKEditorWidget(editor_options=_ck_editor_config),
         }
+        
+class AdminForumPostForm(ModelForm):
+    """ Used on Admin Post Change Form page to edit admin forum posts """
+    
+    subject = SubjectChoices()
+    
+    class Meta:
+  
+        _ck_editor_toolbar = [
+            {'name': 'basicstyles', 'groups': ['basicstyles', 'cleanup']},
+            {'name': 'paragraph',
+             'groups': ['list', 'indent', 'blocks', 'align']},
+            {'name': 'document', 'groups': ['mode']}, '/',
+            {'name': 'styles'}, {'name': 'colors'},
+            {'name': 'insert_custom',
+             'items': ['Image', 'Flash', 'Table', 'HorizontalRule']},
+            {'name': 'links'},
+            {'name': 'about'}]
+
+        _ck_editor_config = {'autoGrow_onStartup': True,
+                             'autoGrow_minHeight': 100,
+                             'autoGrow_maxHeight': 250,
+                             'extraPlugins': 'autogrow',
+                             'toolbarGroups': _ck_editor_toolbar}            
+  
+        widgets = {
+            'body': CKEditorWidget(editor_options=_ck_editor_config),
+        }     
 
 class LocObjRelForm(ModelForm):
     location = LocationChoices(
@@ -202,9 +235,9 @@ class LocObjRelForm(ModelForm):
     )
 
     class Meta:
-        model = LocationSubjectRelations       
+        model = LocationSubjectRelations
 
-""" TABULAR INLINES """
+""" INLINES """
 
 """ LINKED DATA INLINES """
 
@@ -268,12 +301,7 @@ class AdminCommentInline(admin.StackedInline):
         """ Returns only comments checked as published or written by the author (even if unpublished) """
         
         qs = super(AdminCommentInline, self).queryset(request)
-        return qs.filter(Q(published = True) | Q(published = False, author = request.user))
-
-class AdminPostAttachmentInline(admin.TabularInline):
-    model = AdminPostAttachment
-    extra = 0
-    readonly_fields = ('attachment', 'author', 'created')    
+        return qs.filter(Q(published = True) | Q(published = False, author = request.user))    
 
 """ ADMINS """
 
@@ -356,16 +384,21 @@ class ResultPropertyAdmin(admin.ModelAdmin):
 admin.site.register(ResultProperty, ResultPropertyAdmin)
 
 class AdminPostAdmin(admin.ModelAdmin):
-    form = BlogPostForm
+    form = AdminForumPostForm
     readonly_fields = ('author', 'created')
-    inlines = [AdminCommentInline, AdminPostAttachmentInline]
+    inlines = [AdminCommentInline]
     list_display = ['title', 'author', 'created', 'published']
     list_filter = ['published', 'created']
     search_fields = ['title', 'body']
     date_hierarchy = 'created'
     save_on_top = True
     change_form_template = 'admin/base/adminpost/change_form_adminpost.html'
-    filter_horizontal = ('subject',)
+    
+    class Media:
+        # the django-select2 styles have to be added manually for some reason, otherwise they don't work
+        css = {
+            "all": ("django_select2/css/select2.min.css",)
+        }
     
     def save_model(self, request, obj, form, change):
         if obj.pk is None:

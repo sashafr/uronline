@@ -199,7 +199,44 @@ class Subject(models.Model):
         
     class Meta:
         verbose_name = 'Object'    
-        verbose_name_plural = 'Objects'    
+        verbose_name_plural = 'Objects' 
+
+""" SITE SETTINGS ETC MODELS """
+
+class AdminPost(models.Model):
+    """ Admin forum posts. """
+
+    title = models.CharField(max_length=255)
+    body = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    published = models.BooleanField(default=True)
+    author = models.ForeignKey(User)
+    subject = models.ManyToManyField(Subject)
+        
+    class Meta:
+        ordering = ['-created']
+        verbose_name = 'Admin Forum Post'
+        verbose_name_plural = 'Admin Forum Posts'          
+            
+    def __unicode__(self):
+        return self.title
+        
+class AdminComment(models.Model):
+    """ Comments on admin forum posts """
+    
+    post = models.ForeignKey(AdminPost)
+    body = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    published = models.BooleanField(default=True)
+    author = models.ForeignKey(User)
+        
+    class Meta:
+        ordering = ['-created']
+        verbose_name = 'Comment'
+        verbose_name_plural = 'Comments'          
+            
+    def __unicode__(self):
+        return 'Comment on ' + self.post.title + ' by ' + self.author.username
 
 """Variables used by pages throughout the site"""
 class GlobalVars(models.Model):
@@ -726,43 +763,6 @@ class FileUpload(models.Model):
     title = models.CharField(max_length = 255)
     file = FilerImageField(blank = True)
     attribution = models.TextField(blank = True)
-    
-class AdminPost(models.Model):
-    title = models.CharField(max_length=255)
-    body = models.TextField()
-    created = models.DateTimeField(auto_now_add=True)
-    published = models.BooleanField(default=True)
-    author = models.ForeignKey(User)
-    subject = models.ManyToManyField(Subject)
-        
-    class Meta:
-        ordering = ['-created']
-        verbose_name = 'Admin Forum Post'
-        verbose_name_plural = 'Admin Forum Posts'          
-            
-    def __unicode__(self):
-        return self.title
-        
-class AdminComment(models.Model):
-    post = models.ForeignKey(AdminPost)
-    body = models.TextField()
-    created = models.DateTimeField(auto_now_add=True)
-    published = models.BooleanField(default=True)
-    author = models.ForeignKey(User)
-        
-    class Meta:
-        ordering = ['-created']
-        verbose_name = 'Comment'
-        verbose_name_plural = 'Comments'          
-            
-    def __unicode__(self):
-        return 'Comment on ' + self.post.title + ' by ' + self.author.username
-        
-class AdminPostAttachment(models.Model):
-    post = models.ForeignKey(AdminPost)
-    attachment = models.URLField(blank = True)
-    author = models.ForeignKey(User)
-    created = models.DateTimeField(auto_now_add = True)
     
 class LegrainNoteCards(models.Model):
     media = models.ForeignKey(Media)
