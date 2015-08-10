@@ -123,10 +123,10 @@
                 <h4 class="italic-title">Collection: {{ coll.name }}</h4>
                 <div class="box save-box">
                     {% if coll.prev %}
-                        <input type="hidden" name="prev_id" value="{{ coll.prev }}"></input><button class="btn btn-high btn-success" type="submit" name="_viewprev"><< Save and View Prev</button></button></a></button>
+                        <input type="hidden" name="prev_id" value="{{ coll.prev }}"></input><button class="btn btn-high btn-success" type="submit" name="_viewprev"><< Save and View Prev</button>
                     {% endif %}
                     {% if coll.next %}
-                        <input type="hidden" name="next_id" value="{{ coll.next }}"></input><button class="btn btn-high btn-success" type="submit" name="_viewnext">Save and View Next >></button></button></a></button>
+                        <input type="hidden" name="next_id" value="{{ coll.next }}"></input><button class="btn btn-high btn-success" type="submit" name="_viewnext">Save and View Next >></button>
                     {% endif %}                    
                 </div>
             {% endfor %}

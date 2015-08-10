@@ -31,44 +31,6 @@ def load_globals():
         global_dict[global_var.variable] = global_var.val
 		
     return global_dict
-    
-    
-def admin_column(obj, column):
-    """ Gets the values for an admin change_list column based on which column is requested 
-    
-    Returns empty string if object does not have values for requested column
-    """
-
-    id_str = ''    
-    
-    fields = ResultProperty.objects.filter(display_field = column)
-
-    if fields and fields[0]:
-    
-        field = fields[0]
-    
-        # get all the property values of a subject that are of the specified property
-        ids = obj.subjectproperty_set.filter(property=field.field_type_id)
-        
-        # iterate through property values to make them a single, comma separated string
-        if ids:
-            for i, id in enumerate(ids):
-                if i > 0:
-                    id_str += ', '
-                id_str += id.property_value
-
-    return id_str     
-    
-def admin_column_name(column):
-    """ Get the name for the admin change_list column based on which column is requested 
-    
-    Returns an empty string if column does not exist in Result Properties table
-    """
-
-    fields = ResultProperty.objects.filter(display_field = column)
-    if fields:
-        return field.field_type # this is the name of the requested descriptive property
-    return ''
 
 def advanced_search(search_term, model):
     queryset = model.objects.all()

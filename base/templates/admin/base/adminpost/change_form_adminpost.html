@@ -120,10 +120,10 @@
           {% endif %}{% endif %}
         {% endblock %}
         
-        <h4 class="italic-title">{% trans 'attachment'|capfirst %}</h4>
+        <h4 class="italic-title">{% trans 'attachments'|capfirst %}</h4>
         <ul class="box menu-box">
             <li>
-                <a href="{% url 'admin_forum_attachment' %}" onclick='return showAddAnotherPopup(this);'><i class="icon-plus-sign icon-alpha75"></i>Add Attachment</a>
+                <a href="{% url 'admin:base_subject_changelist' %}/?attach_type=forum" onclick='return showAddAnotherPopup(this);'><i class="icon-plus-sign icon-alpha75"></i>Add Object</a>
             </li>
         </ul>
 

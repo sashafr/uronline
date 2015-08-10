@@ -7,10 +7,30 @@ import re
 from filer.fields.image import FilerImageField
 from filer.fields.file import FilerFileField
 
+""" HELPER MODELS """
+
+class ObjectType(models.Model):
+    """ Sub-groupings of Entities """
+    
+    type = models.CharField(max_length = 40)
+    notes = models.TextField(blank = True)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User) 
+    control_field = models.BooleanField(default = False)    
+
+    def __unicode__(self):
+        return self.type
+        
+    class Meta:
+        verbose_name = 'Entity Type'
+        verbose_name_plural = 'Entity Types'   
+
 """ DESCRIPTIVE PROPERTY & CONTROLLED PROPERTY MODELS """
 
-"""Types of descriptive properties (or variables to describe objects)"""
 class DescriptiveProperty(models.Model):
+    """ Types of descriptive properties (or variables to describe objects) """
+    
     SUBJECT_OBJECT = 'SO'
     SUBJECT_LOC = 'SL'
     MEDIA_PUB = 'MP'
@@ -82,8 +102,7 @@ class DescriptiveProperty(models.Model):
 class ControlField(MPTTModel):
     """Controlled values for descriptive properties
 
-    Values are subdivided into their associated descriptive properties
-    in proxy models. Mptt is used to allow for parent-child relationships
+    Mptt is used to allow for parent-child relationships
     in the values."""
     title = models.CharField(max_length = 60, blank = True)
     notes = models.TextField('Addtional Details Page (HTML)', blank = True, help_text = "This field will be used to generate 'Additional Information' section of this property's Details page. Please define the property and add any other useful information here.")
@@ -150,36 +169,37 @@ class ControlField(MPTTModel):
     def get_children_same_type(self):
         """ Returns all the children of the current node which share the same "type" value """
         
-        return self.get_children().filter(type = self.type)        
-    
-class ArtifactTypeManager(models.Manager):
-    """ Manager for Object Type Control Field Proxy
-    
-    Had to rename to Artifact Type instead of Object Type because
-    Object Type was already being used to mean something else in the system """
-    
-    def get_query_set(self):
-        return super(ArtifactTypeManager, self).get_query_set().filter(type=19)
+        return self.get_children().filter(type = self.type)     
         
-class ArtifactType(ControlField):
-    """ Proxy for Object Type Control Field
-    
-    Had to rename to Artifact Type instead of Object Type because
-    Object Type was already being used to mean something else in the system """
+""" ARCHAEOLOGICAL ENTITY MODELS """
+       
+class Subject(models.Model):
+    """ Primary subjects of observation for a project, usually objects or locations. """ 
 
-    objects = ArtifactTypeManager()
+    title = models.CharField(max_length = 100)
+    notes = models.TextField(blank = True, help_text = "This field is used INTERALLY ONLY for general notes on this object meant for project team members only.")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+    type = models.ForeignKey(ObjectType, blank = True, null = True)
+    
+    # the following fields are populated by an auto task and is set using the Result Properties values
+    title1 = models.TextField(blank = True)
+    title2 = models.TextField(blank = True)
+    title3 = models.TextField(blank = True)
+    desc1 = models.TextField(blank = True)
+    desc2 = models.TextField(blank = True)
+    desc3 = models.TextField(blank = True)    
     
     def __unicode__(self):
         return self.title
         
-    def __init__(self, *args, **kwargs):
-        self._meta.get_field('type').default = 19
-        super(ArtifactType, self).__init__(*args, **kwargs)
-    
+    def get_type(self):
+        return 'subject';
+        
     class Meta:
-        proxy = True
-        verbose_name = 'Object Type'
-        verbose_name_plural = 'Object Types'    
+        verbose_name = 'Object'    
+        verbose_name_plural = 'Objects'    
 
 """Variables used by pages throughout the site"""
 class GlobalVars(models.Model):
@@ -226,22 +246,6 @@ class MediaType(models.Model):
 
     def __unicode__(self):
         return self.type
-        
-"""Used to be more specific about an object type, such as location (type of subject)"""
-class ObjectType(models.Model):
-    type = models.CharField(max_length = 40)
-    notes = models.TextField(blank = True)
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User) 
-    control_field = models.BooleanField(default = False)    
-
-    def __unicode__(self):
-        return self.type
-        
-    class Meta:
-        verbose_name = 'Entity Type'
-        verbose_name_plural = 'Entity Types'
 
 """Descriptive properties used for displaying search results"""
 class ResultProperty(models.Model):
@@ -325,94 +329,7 @@ class MediaProperty(models.Model):
 
     class Meta:
         verbose_name = 'Media Property'
-        verbose_name_plural = 'Media Properties'
-        
-"""Primary subjects of observation for a project, usually objects or locations"""        
-class Subject(models.Model):
-    title = models.CharField(max_length = 100)
-    notes = models.TextField(blank = True, help_text = "This field is used INTERALLY ONLY for general notes on this object meant for project team members only.")
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User, blank = True)
-    type = models.ForeignKey(ObjectType, blank = True, null = True)
-    title1 = models.TextField(blank = True)
-    title2 = models.TextField(blank = True)
-    title3 = models.TextField(blank = True)
-    desc1 = models.TextField(blank = True)
-    desc2 = models.TextField(blank = True)
-    desc3 = models.TextField(blank = True)    
-    
-    def __unicode__(self):
-        return self.title
-        
-    def get_properties(self):
-        return self.subjectproperty_set.all()
-        
-    def get_type(self):
-        return 'subject';
-        
-    def admin_column(self, column):
-        field = ResultProperty.objects.get(display_field = column)
-        
-        id_str = ''
-        
-        ids = self.subjectproperty_set.filter(property=field.field_type_id)
-        if ids:
-            for i, id in enumerate(ids):
-                if i > 0:
-                    id_str += ', '
-                id_str += id.property_value
-        return id_str     
-        
-    def admin_column_name(column):
-        field = ResultProperty.objects.get(display_field = column)
-        if field:
-            return field.field_type
-        return ''
-    
-    def id1(self):
-        vals = self.admin_column('subj_title1')
-        if vals == '':
-            return '(none)'
-        return vals
-    id1.short_description = admin_column_name('subj_title1')
-    def id2(self):
-        return self.admin_column('subj_title2')
-    id2.short_description = admin_column_name('subj_title2')
-    def id3(self):
-        return self.admin_column('subj_title3')
-    id3.short_description = admin_column_name('subj_title3')
-    
-    def identifiers(self):
-        field1 = ResultProperty.objects.get(display_field = 'subj_title1')
-        field2 = ResultProperty.objects.get(display_field = 'subj_title2')
-        field3 = ResultProperty.objects.get(display_field = 'subj_title3')
-
-        id_str = ''
-        
-        ids = self.subjectproperty_set.filter(Q(property=field1.field_type_id) | Q(property=field2.field_type_id) | Q(property=field3.field_type_id))
-        for i, id in enumerate(ids):
-            if i > 0:
-                id_str += ', '
-            id_str += id.property_value
-        return id_str
-
-    def descriptors(self):
-        field1 = ResultProperty.objects.get(display_field = 'subj_desc1')
-
-        desc_str = ''
-        
-        descs = self.subjectproperty_set.filter(property=field1.field_type_id)
-        for i, desc in enumerate(descs):
-            if i > 0:
-                desc_str += '; '
-            desc_str += desc.property_value
-        return desc_str
-
-        
-    class Meta:
-        verbose_name = 'Object'    
-        verbose_name_plural = 'Objects' 
+        verbose_name_plural = 'Media Properties' 
         
 """Descriptive Properties of Subjects"""        
 class SubjectProperty(models.Model):
@@ -432,9 +349,6 @@ class SubjectProperty(models.Model):
 
     def __unicode__(self):
         return self.property_value
-        
-    def get_properties(self):
-        return self.subject.get_properties()
                 
 """The people and institutions that participated in a project"""        
 class PersonOrg(models.Model):
@@ -819,6 +733,7 @@ class AdminPost(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     published = models.BooleanField(default=True)
     author = models.ForeignKey(User)
+    subject = models.ManyToManyField(Subject)
         
     class Meta:
         ordering = ['-created']
@@ -845,7 +760,7 @@ class AdminComment(models.Model):
         
 class AdminPostAttachment(models.Model):
     post = models.ForeignKey(AdminPost)
-    attachment = models.URLField()
+    attachment = models.URLField(blank = True)
     author = models.ForeignKey(User)
     created = models.DateTimeField(auto_now_add = True)
     

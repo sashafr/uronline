@@ -1,6 +1,5 @@
 from django.contrib import admin
 from base.models import *
-from base.forms import AdvancedSearchForm
 from django.forms.formsets import formset_factory
 from django.db.models import Q
 import re
@@ -48,6 +47,7 @@ CONTROL_SEARCH_TYPE = (
 )
 
 """ SPECIAL FORM FIELDS """
+
 class LocationChoices(AutoModelSelect2Field):
     queryset = Location.objects
     search_fields = ['title__icontains',]
@@ -254,7 +254,26 @@ class SubjectCollectionInline(admin.TabularInline):
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
-    extra = 1         
+    extra = 1
+    
+""" SITE SETTINGS ETC INLINES """
+
+class AdminCommentInline(admin.StackedInline):
+    model = AdminComment
+    extra = 0
+    readonly_fields = ('author', 'created')
+    template = 'admin/edit_inline/stacked_adminpost.html'
+    
+    def queryset(self, request):
+        """ Returns only comments checked as published or written by the author (even if unpublished) """
+        
+        qs = super(AdminCommentInline, self).queryset(request)
+        return qs.filter(Q(published = True) | Q(published = False, author = request.user))
+
+class AdminPostAttachmentInline(admin.TabularInline):
+    model = AdminPostAttachment
+    extra = 0
+    readonly_fields = ('attachment', 'author', 'created')    
 
 """ ADMINS """
 
@@ -335,6 +354,43 @@ class ResultPropertyAdmin(admin.ModelAdmin):
             update_display_fields(subj.id, 'subj')    
     
 admin.site.register(ResultProperty, ResultPropertyAdmin)
+
+class AdminPostAdmin(admin.ModelAdmin):
+    form = BlogPostForm
+    readonly_fields = ('author', 'created')
+    inlines = [AdminCommentInline, AdminPostAttachmentInline]
+    list_display = ['title', 'author', 'created', 'published']
+    list_filter = ['published', 'created']
+    search_fields = ['title', 'body']
+    date_hierarchy = 'created'
+    save_on_top = True
+    change_form_template = 'admin/base/adminpost/change_form_adminpost.html'
+    filter_horizontal = ('subject',)
+    
+    def save_model(self, request, obj, form, change):
+        if obj.pk is None:
+            obj.author = request.user
+            obj.save()
+
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
+        for instance in instances:
+            if isinstance(instance, AdminComment): #Check if it is the correct type of inline
+                instance.author = request.user            
+                instance.save()        
+        
+    def queryset(self, request):
+        qs = super(AdminPostAdmin, self).queryset(request)
+        return qs.filter(Q(published = True) | Q(published = False, author = request.user))
+        
+    def has_delete_permission(self, request, obj = None):
+        if obj is not None:
+            if request.user == obj.author:
+                return True
+        return False
+
+admin.site.register(AdminPost, AdminPostAdmin)
 
 class StatusFilter(admin.SimpleListFilter):
 
@@ -607,6 +663,8 @@ class SubjectAdmin(admin.ModelAdmin):
     def lookup_allowed(self, key, value):
         if key in self.advanced_search_form.fields.keys():
             return True
+        if key == 'attach_type':
+            return True
         return super(SubjectAdmin, self).lookup_allowed(key, value)
         
     def changelist_view(self, request, extra_context=None, **kwargs):
@@ -810,13 +868,13 @@ class MediaAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2})},
     }
-    inlines = [LegrainNoteCardsInline, LegrainImagesInline, LegrainImageTagsInline, MediaPropertyInline, MediaCollectionInline]
+    inlines = [MediaPropertyInline, MediaCollectionInline]
     search_fields = ['title', 'notes']
     change_form_template = 'admin/base/media/change_form_media.html'
     suit_form_includes = (
         ('admin/base/media_img_display.html', 'middle'),
     )
-    list_filter = (MediaCollectionListFilter, LegrainDoneListFilter,)
+    list_filter = (MediaCollectionListFilter,)
     
     def save_model(self, request, obj, form, change):
         obj.last_mod_by = request.user
@@ -826,7 +884,7 @@ class MediaAdmin(admin.ModelAdmin):
         instances = formset.save(commit=False)
 
         for instance in instances:
-            if isinstance(instance, MediaProperty) or isinstance(instance, LegrainImages) or isinstance(instance, LegrainNoteCards) or isinstance(instance, LegrainImageTags):
+            if isinstance(instance, MediaProperty):
                 instance.last_mod_by = request.user            
                 instance.save()
             elif isinstance(instance, MediaCollection):
@@ -1289,52 +1347,6 @@ class PostAdmin(admin.ModelAdmin):
 
 admin.site.register(Post, PostAdmin)
 
-class AdminCommentInline(admin.StackedInline):
-    model = AdminComment
-    extra = 0
-    readonly_fields = ('author', 'created')
-    template = 'admin/edit_inline/stacked_adminpost.html'
-    
-    def queryset(self, request):
-        qs = super(AdminCommentInline, self).queryset(request)
-        return qs.filter(Q(published = True) | Q(published = False, author = request.user))       
-
-class AdminPostAdmin(admin.ModelAdmin):
-    form = BlogPostForm
-    readonly_fields = ('author', 'created')
-    inlines = [AdminCommentInline]
-    list_display = ['title', 'author', 'created', 'published']
-    list_filter = ['published', 'created']
-    search_fields = ['title', 'body']
-    date_hierarchy = 'created'
-    save_on_top = True
-    change_form_template = 'admin/base/adminpost/change_form_adminpost.html'
-    
-    def save_model(self, request, obj, form, change):
-        if obj.pk is None:
-            obj.author = request.user
-            obj.save()
-
-    def save_formset(self, request, form, formset, change):
-        instances = formset.save(commit=False)
-
-        for instance in instances:
-            if isinstance(instance, AdminComment): #Check if it is the correct type of inline
-                instance.author = request.user            
-                instance.save()        
-        
-    def queryset(self, request):
-        qs = super(AdminPostAdmin, self).queryset(request)
-        return qs.filter(Q(published = True) | Q(published = False, author = request.user))
-        
-    def has_delete_permission(self, request, obj = None):
-        if obj is not None:
-            if request.user == obj.author:
-                return True
-        return False
-
-admin.site.register(AdminPost, AdminPostAdmin)
-
 class ObjectTypeAdmin(admin.ModelAdmin):
     readonly_fields = ('last_mod_by',)
     list_display = ('type', 'notes', 'control_field')
@@ -1358,30 +1370,3 @@ class LinkedDataAdmin(admin.ModelAdmin):
     show_url.short_description = "Link"
 
 admin.site.register(ControlFieldLinkedData, LinkedDataAdmin)
-
-'''class PublicationSubjectRelationFilter(admin.SimpleListFilter):
-    """ Allows filtering of subjects by related Publications """
-    
-    title = _('publication')
-    
-    parameter_name = 'pub'
-    
-    def lookups(self, request, model_admin):
-        pubs = Media.objects.filter(type=2) # select media with type = 'publication'
-        publist = []
-        
-        # create list of lookups; url coded value is ID of media item, displayed name is media title
-        for pub in pubs:
-            item = (pub.id, _(pub.title))
-            publist.append(item)
-        
-        return publist
-        
-    def queryset(self, request, queryset):
-        mediaid = self.value() # id of publication in media table
-        
-        # get all subjects with a relation to the given publication
-        if mediaid:
-            return queryset.filter(mediasubjectrelations__media_id = mediaid)
-        return queryset'''
-    
