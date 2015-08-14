@@ -17,8 +17,10 @@ from django.contrib.auth.models import User
 from suit.widgets import SuitSplitDateTimeWidget, LinkedSelect
 from django_select2 import AutoModelSelect2Field, AutoHeavySelect2Widget,AutoModelSelect2MultipleField, AutoHeavySelect2MultipleWidget
 from django.utils.encoding import force_unicode
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.safestring import mark_safe
+from datetime import datetime
+import csv
 
 OPERATOR = (
     ('and', 'AND'),
@@ -557,6 +559,8 @@ class SubjectAdmin(admin.ModelAdmin):
         }),
     ]
     advanced_search_form = AdminAdvSearchForm()
+    actions = ['export_csv']
+    save_as = True
     
     change_list_template = 'admin/base/subject/change_list.html'
     change_form_template = 'admin/base/change_form.html'
@@ -566,6 +570,59 @@ class SubjectAdmin(admin.ModelAdmin):
         css = {
             "all": ("django_select2/css/select2.min.css",)
         }
+        
+    def export_csv(self, request, queryset):
+        """ Temporary export solution while models are redesigned 
+        
+        This is horribly hackish. If it isn't fixed by Dec 2015..... burn it all"""
+        response = HttpResponse(content_type='text/csv')
+        filename_str = '"admin_search_results_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S") + '.csv"'
+        response['Content-Disposition'] = 'attachment; filename=' + filename_str
+        
+        writer = csv.writer(response)
+        titles = []
+        rows = []
+        for result in queryset:
+            row = []
+            row_dict = {}
+            control_properties = result.subjectcontrolproperty_set.all()
+            properties = result.subjectproperty_set.all()
+            for each_prop in properties:
+                prop_name = each_prop.property.property
+                prop_value = each_prop.property_value
+                if not (prop_name in titles):
+                    column_index = len(titles)                        
+                    titles.append(prop_name)
+                else:
+                    column_index = titles.index(prop_name)
+                    if column_index in row_dict:
+                        prop_value = row_dict[column_index] + '; ' + prop_value
+                row_dict[column_index] = prop_value
+            for each_prop in control_properties:
+                prop_name = each_prop.control_property.property
+                prop_value = each_prop.control_property_value.title
+                if not (prop_name in titles):
+                    column_index = len(titles)   
+                    titles.append(prop_name)
+                else:
+                    column_index = titles.index(prop_name)
+                    if column_index in row_dict:
+                        prop_value = row_dict[column_index] + '; ' + prop_value
+                row_dict[column_index] = prop_value
+            for i in range(len(titles)):
+                if i in row_dict:
+                    row.append(row_dict[i])
+                else:
+                    row.append('')
+                    
+            rows.append(row)
+
+        writer.writerow(titles)
+        for each_row in rows:
+            writer.writerow([unicode(s).encode("utf-8") for s in each_row])
+        return response
+        
+    export_csv.short_description = "Export current search results to CSV"
     
     """ Query set for this admin module will only include subjects of type "object" """
     def queryset(self, request):
