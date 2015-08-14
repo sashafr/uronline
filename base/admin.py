@@ -54,6 +54,10 @@ CONTROL_SEARCH_TYPE = (
 class SubjectChoices(AutoModelSelect2MultipleField):
     queryset = Subject.objects
     search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',]
+    
+class MediaChoices(AutoModelSelect2Field):
+    queryset = Media.objects
+    search_fields = ['title__icontains',]    
 
 class LocationChoices(AutoModelSelect2Field):
     queryset = Location.objects
@@ -231,7 +235,21 @@ class AdminForumPostForm(ModelForm):
   
         widgets = {
             'body': CKEditorWidget(editor_options=_ck_editor_config),
-        }     
+        }
+
+class SubjectMediaRelationForm(ModelForm):
+    
+    media = MediaChoices(        
+        label = 'Media',
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+            }
+        ),
+    ) 
+
+    class Meta:
+        model = File
 
 class LocObjRelForm(ModelForm):
     location = LocationChoices(
@@ -535,13 +553,12 @@ class SubjectSubjectRelationsInline(admin.TabularInline):
 class FileInline(admin.TabularInline):
     model = File
     fields = ['get_thumbnail', 'media', 'relation_type', 'notes', 'last_mod_by']
-    readonly_fields = ('get_thumbnail', 'last_mod_by', 'media', 'relation_type')        
+    readonly_fields = ('get_thumbnail', 'last_mod_by', 'relation_type')        
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
     suit_classes = 'suit-tab suit-tab-files'
-    extra = 0
-    max_num = 0
+    form = SubjectMediaRelationForm
         
 class SubjectAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'modified', 'last_mod_by')    
@@ -570,6 +587,12 @@ class SubjectAdmin(admin.ModelAdmin):
         css = {
             "all": ("django_select2/css/select2.min.css",)
         }
+        
+    def bulk_update(self, request, queryset):
+        """ Redirects to a bulk update form """
+        
+        selected = request.POST.getlist(admin.ACTION_CHECKBOX_NAME)
+        return HttpResponseRedirect("/bulk_update_subject/?ids=%s" % ",".join(selected))
         
     def export_csv(self, request, queryset):
         """ Temporary export solution while models are redesigned 
@@ -714,8 +737,13 @@ class SubjectAdmin(admin.ModelAdmin):
                 instance.save()
                 update_display_fields(instance.subject_id, 'subj')            
 
-            if isinstance(instance, MediaSubjectRelations) or isinstance (instance, SubjectControlProperty): #Check if it is the correct type of inline
+            if isinstance (instance, SubjectControlProperty): #Check if it is the correct type of inline
                 instance.last_mod_by = request.user            
+                instance.save()
+                
+            if isinstance(instance, MediaSubjectRelations):
+                instance.last_mod_by = request.user
+                instance.relation_type = Relations.objects.get(pk=3)
                 instance.save()
 
             if isinstance (instance, LocationSubjectRelations):

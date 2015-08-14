@@ -36,4 +36,5 @@ urlpatterns = patterns('base.views',
     url(r'^search_export/(?P<selected_facets>\S+)/$', 'search_export', name='search_export'),
     url(r'^kyra_special_2/', 'kyra_special_2', name='kyra_special_2'),
     url(r'^select2/', include('django_select2.urls')),
+    url(r'^bulk_update_subject/$', 'bulk_update_subject', name='bulk_update_subject'),
 )

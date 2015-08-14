@@ -475,4 +475,15 @@ def search_export(request, selected_facets):
                 writer.writerow(each_row)
             return response
     
-    return HttpResponseRedirect('/failed_export/')    
+    return HttpResponseRedirect('/failed_export/')
+
+def bulk_update_subject(request):
+    ids = request.GET.get('ids', '')
+    subs = ids.split(",")
+    objects = Subject.objects.filter(id__in=subs)
+    props = DescriptiveProperty.objects.filter(control_field = False)
+    control_props = DescriptiveProperty.objects.filter(control_field = True)
+    control_prop_values = ControlField.objects.all()
+    locations = Location.objects.all()
+    
+    return render(request, 'admin/base/subject/bulk_update_subject.html', {'objects': objects, 'props': props, 'control_props': control_props, 'control_prop_values': control_prop_values, 'locations': locations})
