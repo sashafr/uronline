@@ -2,7 +2,7 @@
 {% for generic_item in items %}{% with generic_item as item %}
         <tr class="clipboardItem">
             <td class="thumbnail"><img src="{{ item.icons.32 }}" alt="{{ item.default_alt_text }}" /></td>
-            <td class="label">{{ item.label }}<input style="display: none;" id="copy_image" value="{{ item.url }}"></input>{% clippy "copy_image" "#F6F7F8" %}</td>
+            <td class="label">{{ item.label }}<input style="display: none;" id="copy_image_{{ forloop.counter }}" value="{{ item.url }}"></input>{% with y=forloop.counter|stringformat:"s" %}{% with copy_image_id="copy_image_"|add:y %}{% clippy copy_image_id "#F6F7F8" %}{% endwith %}{% endwith %}</td>
         </tr>
 {% endwith %}{% endfor %}{% else %}
         <tr class="clipboardItem">

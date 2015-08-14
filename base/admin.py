@@ -198,7 +198,15 @@ class BlogPostForm(ModelForm):
 class AdminForumPostForm(ModelForm):
     """ Used on Admin Post Change Form page to edit admin forum posts """
     
-    subject = SubjectChoices()
+    subject = SubjectChoices(        
+        label = 'Attached Objects',
+        widget = AutoHeavySelect2MultipleWidget(
+            select2_options = {
+                'width': '220px',
+            }
+        ),
+        required = False
+    )
     
     class Meta:
   
@@ -404,6 +412,8 @@ class AdminPostAdmin(admin.ModelAdmin):
         if obj.pk is None:
             obj.author = request.user
             obj.save()
+        else:
+            obj.save()
 
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
@@ -550,6 +560,12 @@ class SubjectAdmin(admin.ModelAdmin):
     
     change_list_template = 'admin/base/subject/change_list.html'
     change_form_template = 'admin/base/change_form.html'
+    
+    class Media:
+        # the django-select2 styles have to be added manually for some reason, otherwise they don't work
+        css = {
+            "all": ("django_select2/css/select2.min.css",)
+        }
     
     """ Query set for this admin module will only include subjects of type "object" """
     def queryset(self, request):

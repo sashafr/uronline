@@ -408,7 +408,7 @@ def kyra_special_2(request):
     """ List of weights from Brad """
     special_objects = Subject.objects.filter(subjectproperty__notes = 'Data recorded by Dr. William B. Hafford.').distinct()
     subj_titles = ResultProperty.objects.filter(display_field__startswith = 'subj_title').order_by('display_field')
-    return render(request, 'base/kyra_special_2.html', {'special_objects':special_objects, 'titles':subj_titles})    
+    return render(request, 'base/kyra_special_2.html', {'special_objects':special_objects, 'titles':subj_titles})
     
 def search_export(request, selected_facets):
     if request.method == 'GET':
@@ -475,7 +475,4 @@ def search_export(request, selected_facets):
                 writer.writerow(each_row)
             return response
     
-    return HttpResponseRedirect('/failed_export/')
-    
-def admin_forum_attachment(request):
-    return render(request, 'admin/base/admin_forum_attachment_form.html')    
+    return HttpResponseRedirect('/failed_export/')    

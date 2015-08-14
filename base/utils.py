@@ -445,12 +445,11 @@ def fix_bm_nums():
         else:
             print "BAD MATCH: " + num + "; ID: " + str(bmnum.subject_id)
             
-def quickfix(letter, length):
-    for i in range (1, length + 1):
-        check = Location.objects.filter(title = 'Room ' + letter + '.' + str(i))
-        if not check:
-            new_loc = Location(title = 'Room ' + letter + '.' + str(i), last_mod_by_id = 1, type_id = 7, parent_id = 3504)
-            new_loc.save()
-            print('Created Room ' + letter + str(i))
-            lprop = LocationProperty(location = new_loc, property_id = 96, property_value = 'Giparu Room ' + letter + str(i), last_mod_by_id = 1)
-            lprop.save()
+def quickfix():
+    bm_mus_nums = SubjectProperty.objects.filter(Q(property_id = 31) | Q(property_id = 33) | Q(property_id = 45) | Q(property_id = 43))
+    for row in bm_mus_nums:
+        sub = row.subject
+        mus_check = SubjectControlProperty.objects.filter(subject = sub, control_property_value_id = 401)
+        if not mus_check:
+            m = SubjectControlProperty(subject = sub, control_property_id = 59, control_property_value_id = 401, last_mod_by_id = 1)
+            m.save()

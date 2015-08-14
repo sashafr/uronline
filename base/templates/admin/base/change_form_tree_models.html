@@ -44,7 +44,9 @@
 
 {% block extrastyle %}
   {{ block.super }}
+  <!-- Modifications to original Django Suit template begin here -->
   <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}suit/css/filer.css">
+  <!-- End modifications -->
 {% endblock %}
 
 {% block content_title_value %}
@@ -104,9 +106,11 @@
 
         </div>
         
+        <!-- Modifications to original Django Suit template begin here -->
         <div class="filebrowser">
             {% include "admin/filer/tools/clipboard/clipboard_special.html" %}
         </div>
+        <!-- End modifications --> 
 
         {% block object-tools %}
           {% if change %}{% if not is_popup %}

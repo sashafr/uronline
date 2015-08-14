@@ -44,6 +44,9 @@
 
 {% block extrastyle %}
   {{ block.super }}
+  <!-- Modifications to original Django Suit template begin here -->
+  <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}suit/css/filer.css">
+  <!-- End modifications -->
 {% endblock %}
 
 {% block content_title_value %}
@@ -92,11 +95,17 @@
           {% block submit_buttons_bottom %}{% submit_row %}{% endblock %}
 
         </div>
+        
+        <!-- Modifications to original Django Suit template begin here -->
+        <div class="filebrowser">
+            {% include "admin/filer/tools/clipboard/clipboard_special.html" %}
+        </div>
+        <!-- End modifications -->        
 
         {% block object-tools %}
+          <h4 class="italic-title">{% trans 'tools'|capfirst %}</h4>
+          <ul class="box menu-box">        
           {% if change %}{% if not is_popup %}
-            <h4 class="italic-title">{% trans 'tools'|capfirst %}</h4>
-            <ul class="box menu-box">
               {% block object-tools-items %}
                 <li><a href="history/" class="historylink"><i
                     class="icon-time icon-alpha75"></i>{% trans "History" %}</a>
@@ -113,19 +122,31 @@
                     <a href="../add/"><i class="icon-plus-sign icon-alpha75"></i>{% blocktrans with opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}
                     </a></li>
                   {# {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}</a>#}
-                {% endif %}
+                {% endif %}                 
 
               {% endblock %}
-            </ul>
           {% endif %}{% endif %}
+          
+            <!-- Modifications to original Django Suit template begin here -->
+            <li>
+              <a href="/admin/filer/folder/" onclick='return showAddAnotherPopup(this);'>
+                <i class="icon-picture icon-alpha75"></i>Add Image to Clipboard
+              </a>
+            </li>                
+            <!-- End modifications -->                 
+          
+          </ul>
+          
         {% endblock %}
         
+        <!-- Modifications to original Django Suit template start here -->
         <h4 class="italic-title">{% trans 'attachments'|capfirst %}</h4>
         <ul class="box menu-box">
-            <li>
-                <a href="{% url 'admin:base_subject_changelist' %}/?attach_type=forum" onclick='return showAddAnotherPopup(this);'><i class="icon-plus-sign icon-alpha75"></i>Add Object</a>
-            </li>
+            {% for sub_attachment in original.subject.all %}
+                <li><a href="{% url 'admin:base_subject_change' sub_attachment.pk %}" target="_blank">{{ sub_attachment }}</a></li>
+            {% endfor %}
         </ul>
+        <!-- End modifications to original Django Suit template -->
 
       {% block sidebar %}{% endblock %}
 
@@ -155,7 +176,9 @@
 
           {% block field_sets %}
             {% for fieldset in adminform %}
+              <!-- Modifications to original Django Suit template start here -->
               {% include "admin/base/adminpost/fieldset_adminpost.html" %}
+              <!-- End modifications to original Django Suit template -->
             {% endfor %}
           {% endblock %}
 

@@ -211,7 +211,7 @@ class AdminPost(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     published = models.BooleanField(default=True)
     author = models.ForeignKey(User)
-    subject = models.ManyToManyField(Subject)
+    subject = models.ManyToManyField(Subject, blank = True, verbose_name="attached objects")
         
     class Meta:
         ordering = ['-created']
