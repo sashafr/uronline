@@ -181,7 +181,6 @@ class Subject(models.Model):
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
     last_mod_by = models.ForeignKey(User, blank = True)
-    type = models.ForeignKey(ObjectType, blank = True, null = True)
     
     # the following fields are populated by an auto task and is set using the Result Properties values
     title1 = models.TextField(blank = True)

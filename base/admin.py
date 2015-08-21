@@ -647,11 +647,6 @@ class SubjectAdmin(admin.ModelAdmin):
         
     export_csv.short_description = "Export current search results to CSV"
     
-    """ Query set for this admin module will only include subjects of type "object" """
-    def queryset(self, request):
-        qs = super(SubjectAdmin, self).queryset(request)
-        return qs.filter(type__type='object')
-    
     def save_model(self, request, obj, form, change):
         obj.last_mod_by = request.user
         obj.type_id = 1 #sets any object created from this admin module to type "object"

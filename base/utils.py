@@ -425,6 +425,21 @@ def clean_dups():
                     print "Removing " + dup.subject.title + ": " + dup.control_property_value.title
                     dup.delete()
                     
+def clean_dup_locs():
+    """ Used for fast updates from command line, not used anywhere on website """
+
+    props = Location.objects.exclude(level = 0)
+    
+    for prop in props:
+        ancs = prop.get_ancestors()
+        for anc in ancs:
+            prob_subj = Subject.objects.filter(locationsubjectrelations__location = anc).filter(locationsubjectrelations__location = prop)
+            for prob in prob_subj:
+                dups = LocationSubjectRelations.objects.filter(subject = prob, location = anc)
+                for dup in dups:
+                    print "Removing " + dup.subject.title + ": " + dup.location.title
+                    dup.delete()
+                    
 def fix_bm_nums():
     """ Used for fast updates from command line, not used anywhere on website """
     
@@ -446,10 +461,16 @@ def fix_bm_nums():
             print "BAD MATCH: " + num + "; ID: " + str(bmnum.subject_id)
             
 def quickfix():
-    bm_mus_nums = SubjectProperty.objects.filter(Q(property_id = 31) | Q(property_id = 33) | Q(property_id = 45) | Q(property_id = 43))
-    for row in bm_mus_nums:
-        sub = row.subject
-        mus_check = SubjectControlProperty.objects.filter(subject = sub, control_property_value_id = 401)
-        if not mus_check:
-            m = SubjectControlProperty(subject = sub, control_property_id = 59, control_property_value_id = 401, last_mod_by_id = 1)
-            m.save()
+    notCorObjs = Subject.objects.filter(subjectproperty__property_id = 23).exclude(subjectproperty__property__property__icontains = 'museum number')
+    for obj in notCorObjs:
+        already_set = False
+        statuses = SubjectControlProperty.objects.filter(subject = obj, control_property_id = 22)
+        if statuses:
+            for status in statuses:
+                if status.control_property_value_id == 889:
+                    already_set = True
+                if not status.control_property_value_id == 889 and not status.control_property_value_id == 885 and not status.control_property_value_id == 886 and not status.control_property_value_id == 888:
+                    status.delete()
+        if not already_set:
+            new_stat = SubjectControlProperty(subject = obj, control_property = DescriptiveProperty.objects.get(pk=22), control_property_value = ControlField.objects.get(pk=889), last_mod_by = User.objects.get(pk=1))
+            new_stat.save()
