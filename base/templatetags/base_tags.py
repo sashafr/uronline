@@ -657,3 +657,14 @@ def get_loci_details(loci_details, index):
     if index in loci_details:
         return loci_details[index]
     return ""
+    
+@register.assignment_tag
+def adv_searchform_has_changed(request):
+    """ Checking whether any advanced search form parameters are set.
+    
+    If any are set and this returns True, it will cause the collapsed adv search form to open. 
+    """
+
+    if (request.GET.get('q', '') == '' and request.GET.get('search_type', '') != 'blank') and (request.GET.get('q2', '') == '' and request.GET.get('search_type2', '') != 'blank') and (request.GET.get('q3', '') == '' and request.GET.get('search_type3', '') != 'blank'):
+        return False
+    return True

@@ -41,7 +41,7 @@
                                 </div>
                             </div>                                  
                         </div>
-                        <div class="collapse" id="advancedsearch">
+                        <div class="row {% adv_searchform_has_changed request as asf_changed %}{% if asf_changed %}in{% else %}collapse{% endif %}" id="advancedsearch">
                             <hr class="intro-divider">
                             <div class="form-group">
                                 <div class="col-sm-4 col-sm-offset-1 adv-form">
@@ -82,16 +82,18 @@
                                     {{ form.q3.label }}: {{ form.q3 }}
                                 </div>
                             </div>
-                            <div class="model_selector">
-                                <div class="col-sm-2 col-sm-offset-2">
-                                    <p>Limit Search To: </p>
-                                </div>
-                                <div class="col-sm-8">                   
-                                    {{ form.models }}
-                                </div>
-                            </div>
                         </div>
-                        <h4 style="text-align: right;"><a style="color: #fff;" data-toggle="collapse" id="searchCollapse" href="#advancedsearch">More Search Options</a></h4>
+                        <div class="row">
+                            <h4 style="text-align: right;"><a style="color: #fff;" data-toggle="collapse" id="searchCollapse" href="#advancedsearch">{% if adv_searchform_has_changed %}Less Search Options{% else %}More Search Options{% endif %}</a></h4>
+                        </div>    
+                        <div class="model_selector">
+                            <div class="col-sm-2 col-sm-offset-2">
+                                <p>Limit Search To: </p>
+                            </div>
+                            <div class="col-sm-8">                   
+                                {{ form.models }}
+                            </div>
+                        </div>                        
                         <ul class="list-inline center-block text-center adv-form">
                             <li>
                                 Order By:{{ form.order }}
@@ -281,6 +283,14 @@
             if (active) $('#accordion .in').collapse('hide');
         });
         
+        $('#searchCollapse').click(function () {
+            if($('#advancedsearch').hasClass('in')) {
+                $(this).text('More Search Options');
+            } else {
+                $(this).text('Less Search Options');
+            }
+        });        
+        
         $("#export").click(function() {
           $(this).closest("form").attr('action', "{% query_params_getlist request 'selected_facets' as facets %}{% url 'search_export' facets %}");
         });
@@ -291,31 +301,6 @@
 
     });
   </script>
-  
-  <script>
-    (function($) {
-      jQuery(document).ready(function() {
-        var ListLengthHidingTrigger = 7;
-        var InitialListItems = 6;
-
-        if ($("#ot_facetvalues dd").length > ListLengthHidingTrigger) {
-            $("#ot_facetvalues dd:gt("+(InitialListItems-1)+")").hide(); // hide all but first N sections
-            $('#ot_slidermenu').html('Show All Object Types');
-        }
-        $('div#ot_slidermenu:contains("All")').live('click',function() {
-                        $('#ot_facetvalues dd').show(); // hide all but first 2 sections
-                        $('#ot_slidermenu').html('Show Fewer Object Types');            
-        });
-        $('div#ot_slidermenu:contains("Fewer")').live('click',function() {
-                        $("#ot_facetvalues dd:gt("+(InitialListItems-1)+")").hide(); // hide all but first N sections
-                        $('#ot_slidermenu').html('Show All Object Types');            
-        });
-        $('#ot_facetname').click(function() {
-            $('#ot_facetvalues').slideToggle(0);
-        });        
-      })
-    });
-  </script>   
 
 {% endblock %}
 <!-- End Search Unique JS -->
