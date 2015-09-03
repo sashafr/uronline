@@ -1,7 +1,7 @@
 from django.contrib import admin
 from base.models import *
 from django.forms.formsets import formset_factory
-from django.db.models import Q
+from django.db.models import Q, Count
 import re
 from django.forms import Textarea, ModelChoiceField, ModelForm
 from django.utils.translation import ugettext_lazy as _
@@ -148,6 +148,9 @@ class AdminAdvSearchForm(forms.Form):
     img = forms.ChoiceField(label='Has Image', required=False, choices=(('default', '---'), ('yes', 'Yes'), ('no', 'No')))
     pub = forms.ModelChoiceField(label='Published', required=False, queryset=Media.objects.filter(type_id=2).order_by('title'))
     last_mod = forms.ModelChoiceField(label='Last Editor', required=False, queryset=User.objects.all())
+    
+    # utilities
+    dup_prop = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.all(), empty_label = "Find Objects with Multiple...")
 
 class ControlFieldForm(ModelForm):
     """ Used on Control Field Change Form page to edit what is displayed on Control Field value public pages """
@@ -651,7 +654,6 @@ class SubjectAdmin(admin.ModelAdmin):
         obj.last_mod_by = request.user
         obj.type_id = 1 #sets any object created from this admin module to type "object"
         obj.save()
-        update_display_fields(obj.id, 'subj')
         
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
@@ -729,8 +731,7 @@ class SubjectAdmin(admin.ModelAdmin):
                     messages.add_message(request, messages.WARNING, warning)                     
                 
                 instance.last_mod_by = request.user            
-                instance.save()
-                update_display_fields(instance.subject_id, 'subj')            
+                instance.save()            
 
             if isinstance (instance, SubjectControlProperty): #Check if it is the correct type of inline
                 instance.last_mod_by = request.user            
@@ -926,6 +927,13 @@ class SubjectAdmin(admin.ModelAdmin):
                 # if connector wasn't set, use &
                 queryset = queryset.filter(cq)
         
+        # UTILITY FILTER
+        dup_prop = adv_fields['dup_prop']
+        if dup_prop != '':
+            dups = SubjectProperty.objects.filter(property_id = dup_prop).values_list('subject', flat = True).annotate(count = Count('property')).filter(count__gt = 1)
+            dups_list = list(dups) # forcing queryset evaluation so next line doesn't throw a MySQLdb error
+            queryset = queryset.filter(id__in = dups_list)
+            
         if queryset.ordered:
             return queryset.distinct(), use_distinct
         else:

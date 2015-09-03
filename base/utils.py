@@ -473,4 +473,22 @@ def quickfix():
                     status.delete()
         if not already_set:
             new_stat = SubjectControlProperty(subject = obj, control_property = DescriptiveProperty.objects.get(pk=22), control_property_value = ControlField.objects.get(pk=889), last_mod_by = User.objects.get(pk=1))
-            new_stat.save()
+            new_stat.save()  
+    
+def get_display_fields(obj, object_type):
+    """ Returns the Title and Descriptor display fields for an object (as dict) with a concatenation
+    of their object property values or (none) if they have not value for the selected
+    property. """
+ 
+    result_props = {'title1': '',
+                    'title2': '',
+                    'title3': '',
+                    'desc1': '',
+                    'desc2': '',
+                    'desc3': ''}
+
+    for key, new_property in result_props.iteritems():
+        result_prop = ResultProperty.objects.get(display_field = (object_type + '_' + key))
+        result_props[key] = get_display_field(obj, object_type, result_prop)
+    
+    return result_props            

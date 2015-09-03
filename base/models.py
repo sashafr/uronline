@@ -7,6 +7,75 @@ import re
 from filer.fields.image import FilerImageField
 from filer.fields.file import FilerFileField
 
+""" HELPER METHODS """
+
+def get_new_title(obj):
+    """ Returns the title of an object using the three Title display properties, or, 
+    if there is no value for the three Title properties or they aren't set, uses the first
+    property with a value, ordered by the Descriptive Property's order. 
+    
+    Called by the object's save method. """
+
+    new_title = ""
+    
+    title1 = obj.title1
+    title2 = obj.title2
+    title3 = obj.title3
+    
+    # if there is no value for any of the Display Properties, check for other properties
+    if title1 == "(none)" and title2 == "(none)" and title3 == "(none)":
+        props = obj.subjectproperty_set.all().order_by("property__order")
+        cntl_props = obj.subjectcontrolproperty_set.all().order_by("control_property__order")
+        # if there are both control and free-form properties, choose one with lowest order
+        if props and cntl_props:
+            if props[0].property.order <= cntl_props[0].control_property.order:
+                new_title = props[0].property_value
+            else:
+                new_title = cntl_props[0].control_property_value.title
+        # if there are only free form properties, select lowest order free form prop
+        elif props:
+            new_title = props[0].property_value
+        # if there are only control properties, select lowest order control prop
+        elif cntl_props:
+            new_title = cntl_props[0].control_property_value.title
+        # if there are no properties, then title is (none)
+        else:
+            new_title = "(none)"
+
+    # if there are title Display Properties, combine them
+    else:
+        combiner = ""
+        if title1 != "(none)":
+            new_title += title1
+            combiner += " | "
+        if title2 != "(none)":
+            new_title += combiner + title2
+            if combiner == "":
+                combiner += " | "
+        if title3 != "(none)":
+            new_title += combiner + title3
+                    
+    return new_title
+
+def get_display_field(obj, object_type, result_prop):
+    """ Returns the selected display field for an object with a concatenation
+    of their object property values or (none) if they have not value for the selected
+    property. """
+ 
+    id_str = ''
+    if result_prop.field_type:
+        ids = obj.subjectproperty_set.filter(property=result_prop.field_type_id)
+        if ids:
+            for i, id in enumerate(ids):
+                if i > 0:
+                    id_str += ', '
+                id_str += id.property_value
+    
+    if id_str == '':
+        id_str = '(none)'
+    
+    return id_str
+
 """ HELPER MODELS """
 
 class ObjectType(models.Model):
@@ -24,7 +93,7 @@ class ObjectType(models.Model):
         
     class Meta:
         verbose_name = 'Entity Type'
-        verbose_name_plural = 'Entity Types'   
+        verbose_name_plural = 'Entity Types'
 
 """ DESCRIPTIVE PROPERTY & CONTROLLED PROPERTY MODELS """
 
@@ -61,8 +130,8 @@ class DescriptiveProperty(models.Model):
         (LONG, 'Long'),
         (TEXT, 'Text'),
         (BOOLEAN, 'Boolean'),
-        (FLOAT, 'Float'),
         (DOUBLE, 'Double'),
+        (FLOAT, 'Float'),
         (DATE, 'Date'),
         (LOCATION, 'Location'),
     )
@@ -169,7 +238,35 @@ class ControlField(MPTTModel):
     def get_children_same_type(self):
         """ Returns all the children of the current node which share the same "type" value """
         
-        return self.get_children().filter(type = self.type)     
+        return self.get_children().filter(type = self.type)
+
+"""Descriptive properties used for displaying search results"""
+class ResultProperty(models.Model):
+    display_field = models.CharField(max_length = 40)
+    field_type = models.ForeignKey(DescriptiveProperty, blank = True, null = True)
+    
+    class Meta:
+        verbose_name = 'Result Property'
+        verbose_name_plural = 'Result Properties'
+        ordering = ['display_field']
+        
+    def human_title(self):
+        types = {'loc': 'Context', 'po': 'Person/Organization', 'subj': 'Object', 'med': 'Media'}
+        fields = {'desc': 'Descriptor', 'title': 'Title'}
+        
+        if self.display_field:
+            m = re.match(r"([a-z]+)_([a-z]+)(\d)", self.display_field)
+        
+            if m:
+                return types[m.group(1)] + ' ' + fields[m.group(2)] + ' ' + m.group(3)
+        return ''
+    human_title.admin_order_field = 'display_field'
+
+    def __unicode__(self):
+        if self.field_type:
+            return self.field_type.property
+        else:
+            return "None"        
         
 """ ARCHAEOLOGICAL ENTITY MODELS """
        
@@ -183,18 +280,26 @@ class Subject(models.Model):
     last_mod_by = models.ForeignKey(User, blank = True)
     
     # the following fields are populated by an auto task and is set using the Result Properties values
-    title1 = models.TextField(blank = True)
-    title2 = models.TextField(blank = True)
-    title3 = models.TextField(blank = True)
-    desc1 = models.TextField(blank = True)
-    desc2 = models.TextField(blank = True)
-    desc3 = models.TextField(blank = True)    
+    title1 = models.TextField(blank = True, default = '(none)')
+    title2 = models.TextField(blank = True, default = '(none)')
+    title3 = models.TextField(blank = True, default = '(none)')
+    desc1 = models.TextField(blank = True, default = '(none)')
+    desc2 = models.TextField(blank = True, default = '(none)')
+    desc3 = models.TextField(blank = True, default = '(none)') 
     
     def __unicode__(self):
-        return self.title1 + ' | ' + self.title2 + ' | ' + self.title3
+        return self.title
         
     def get_type(self):
+        """ Used in templates in lieu of isInstance to tell which type of object is being referenced. """
         return 'subject';
+        
+    def save(self, *args, **kwargs):
+        """ Auto fills the main title field. If object does not have a value for title1, title2, or title3,
+        it draws from any property, preferencing the property based on the Descriptive Property's order """
+        
+        self.title = get_new_title(self)
+        super(Subject, self).save(*args, **kwargs)
         
     class Meta:
         verbose_name = 'Object'    
@@ -282,34 +387,6 @@ class MediaType(models.Model):
 
     def __unicode__(self):
         return self.type
-
-"""Descriptive properties used for displaying search results"""
-class ResultProperty(models.Model):
-    display_field = models.CharField(max_length = 40)
-    field_type = models.ForeignKey(DescriptiveProperty, blank = True, null = True)
-    
-    class Meta:
-        verbose_name = 'Result Property'
-        verbose_name_plural = 'Result Properties'
-        ordering = ['display_field']
-        
-    def human_title(self):
-        types = {'loc': 'Context', 'po': 'Person/Organization', 'subj': 'Object', 'med': 'Media'}
-        fields = {'desc': 'Descriptor', 'title': 'Title'}
-        
-        if self.display_field:
-            m = re.match(r"([a-z]+)_([a-z]+)(\d)", self.display_field)
-        
-            if m:
-                return types[m.group(1)] + ' ' + fields[m.group(2)] + ' ' + m.group(3)
-        return ''
-    human_title.admin_order_field = 'display_field'
-
-    def __unicode__(self):
-        if self.field_type:
-            return self.field_type.property
-        else:
-            return "None"
         
 """Types of relationships between objects"""
 class Relations(models.Model):
@@ -385,6 +462,45 @@ class SubjectProperty(models.Model):
 
     def __unicode__(self):
         return self.property_value
+        
+    def save(self, *args, **kwargs):
+        """ Auto fills the related object's Title and Descriptor Display Fields. 
+        
+        If the property being saved is a Display Field, update the related object's title or desc.
+        Otherwise, ignore. """
+        
+        # save the property first so that when the display fields are generated below,
+        # it has the new property value
+        super(SubjectProperty, self).save(*args, **kwargs)
+        
+        result_prop_ids = []
+        result_props = ResultProperty.objects.filter(display_field__startswith = "subj")
+        for prop in result_props:
+            if prop.field_type:
+                result_prop_ids.append(prop.field_type_id)
+                
+        if self.property_id in result_prop_ids:
+            fields_to_update = ResultProperty.objects.filter(field_type_id = self.property_id, display_field__startswith = "subj")
+            for field in fields_to_update:
+                field_name = field.display_field[5:]
+                if field_name == 'title1':
+                    self.subject.title1 = get_display_field(self.subject, 'subj', field)
+                    self.subject.save()
+                elif field_name == 'title2':
+                    self.subject.title2 = get_display_field(self.subject, 'subj', field)
+                    self.subject.save()
+                elif field_name == 'title3':
+                    self.subject.title3 = get_display_field(self.subject, 'subj', field)
+                    self.subject.save()
+                elif field_name == 'desc1':
+                    self.subject.desc1 = get_display_field(self.subject, 'subj', field)
+                    self.subject.save()
+                elif field_name == 'desc2':
+                    self.subject.desc2 = get_display_field(self.subject, 'subj', field)
+                    self.subject.save()
+                elif field_name == 'desc3':
+                    self.subject.desc3 = get_display_field(self.subject, 'subj', field)
+                    self.subject.save()        
                 
 """The people and institutions that participated in a project"""        
 class PersonOrg(models.Model):

@@ -116,6 +116,15 @@
             </div>            
           </div>
           <hr>
+          <h1>Utilities&nbsp;&nbsp;<a class="btn btn-default" id="utilButton" href="#utilSearch" data-toggle="collapse">Open</a></h1>
+          <div class="collapse" id="utilSearch">
+            <div class="row-fluid">
+              <div class="span2">
+                {{ asf.dup_prop }}
+              </div>                            
+            </div>
+            <hr>              
+          </div>        
         {% endif %}
         {% spaceless %}
           {% if cl.has_filters %}
@@ -161,7 +170,14 @@
             } else {
                 $(this).text('Close');
             }
-        });    
+        }); 
+        $('#utilButton').click(function () {
+            if($('#utilSearch').hasClass('in')) {
+                $(this).text('Open');
+            } else {
+                $(this).text('Close');
+            }
+        });        
         
         // build the dictionary to store all possible control field values
         var control_field_options = {};
@@ -292,7 +308,12 @@
         }
         if (urlparams['last_mod']) {
             document.getElementById('id_last_mod').value = urlparams['last_mod'];
-        }        
+        }
+        if (urlparams['dup_prop']) {
+            document.getElementById('id_dup_prop').value = urlparams['dup_prop'];
+            document.getElementById('utilSearch').className += " in";
+            document.getElementById('utilButton').text = 'Close';
+        }
         
         // clears all advanced search fields
         document.getElementById('clear_search').onclick = function() {
@@ -320,7 +341,8 @@
             document.getElementById('id_loc').selectedIndex = 0;
             document.getElementById('id_img').selectedIndex = 0;
             document.getElementById('id_pub').selectedIndex = 0;            
-            document.getElementById('id_last_mod').selectedIndex = 0;            
+            document.getElementById('id_last_mod').selectedIndex = 0; 
+            document.getElementById('id_dup_prop').selectedIndex = 0;
         }        
     });
 })(django.jQuery);
