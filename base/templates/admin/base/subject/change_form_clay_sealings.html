@@ -1,7 +1,6 @@
 {% extends "admin/base_site.html" %}
-{% load i18n admin_static admin_modify suit_tags admin_urls %}
+{% load i18n admin_static admin_modify suit_tags base_tags admin_urls %}
 {% load url from future %}
-{% load base_tags %}
 
 {% block extrahead %}{{ block.super }}
   {% url 'admin:jsi18n' as jsi18nurl %}
@@ -40,11 +39,13 @@
       });
     }(Suit.$))    
   </script>
+  <script src="{% static 'lightbox/js/lightbox.min.js' %}"></script>
 
 {% endblock %}
 
 {% block extrastyle %}
   {{ block.super }}
+  <link href="{% static 'lightbox/css/lightbox.css' %}" rel="stylesheet">  
 {% endblock %}
 
 {% block content_title_value %}
@@ -115,39 +116,9 @@
                     </a></li>
                   {# {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}</a>#}
                 {% endif %}
-                
-                <!-- Modifications to original Django Suit template begin here -->
-                <li>
-                  <a href="mailto:?subject=[From UrOnline Admin] {{ request.user.first_name }} {{ request.user.last_name }} shared {{ original.title }}&amp;body=You can view this object at http://www.ur-online.org{% url opts|admin_urlname:'change' original.pk|admin_urlquote %}" target="_blank">
-                    <i class="icon-envelope icon-alpha75"></i>
-                    Email
-                  </a>
-                </li>
-                
-                <li>
-                    <a href="{% url 'subjectdetail' original.pk %}" target="_blank">
-                        <i class="icon-globe icon-alpha75"></i>
-                        View on Public Site
-                    </a>
-                </li>
 
-                {% if request|has_prev:object_id %}
-                <li>
-                    {% url 'admin:base_subject_change' request|get_prev:object_id as prev_url %}
-                    <a href="{% add_preserved_filters prev_url %}" class="historylink"><i class="icon-chevron-left"></i> Previous</a>
-                </li>
-                {% endif %}
-                
-                {% if request|has_next:object_id %}
-                <li>
-                    {% url 'admin:base_subject_change' request|get_next:object_id as next_url %}
-                    <a href="{% add_preserved_filters next_url %}" class="historylink"><i class="icon-chevron-right"></i> Next</a>
-                </li>
-                {% endif %}
-                
               {% endblock %}
             </ul>
-            
             {% for coll in collections %}
                 <h4 class="italic-title">Collection: {{ coll.name }}</h4>
                 <div class="box save-box">
@@ -158,10 +129,7 @@
                         <input type="hidden" name="next_id" value="{{ coll.next }}"></input><button class="btn btn-high btn-success" type="submit" name="_viewnext">Save and View Next >></button>
                     {% endif %}                    
                 </div>
-            {% endfor %}  
-            
-            <!-- End Modifications to original Django Suit template -->            
-            
+            {% endfor %}
           {% endif %}{% endif %}
         {% endblock %}
 

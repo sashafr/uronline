@@ -853,6 +853,7 @@ class SubjectCollection(models.Model):
     subject = models.ForeignKey(Subject)
     collection = models.ForeignKey(Collection)
     notes = models.TextField(blank = True)
+    order = models.IntegerField(blank = True, default = 0)
     
     def __unicode__(self):
         return self.subject.title + " [Collection: " + self.collection.title + "]"
@@ -973,4 +974,30 @@ class LegrainNotes(Media):
         proxy = True
         verbose_name = 'Legrain Note Card'
         verbose_name_plural = 'Legrain Note Cards'
-        ordering = ['title']        
+        ordering = ['title']
+        
+class ElenaSubjectPropertyManager(models.Manager):
+    def get_query_set(self):
+        return super(ElenaSubjectPropertyManager, self).get_query_set().filter(property_id = 145)
+        
+class ElenaSubjectProperty(SubjectProperty):
+    objects = ElenaSubjectPropertyManager()
+    
+    class Meta:
+        proxy = True
+        verbose_name = 'Object Property (Elena)'    
+        verbose_name_plural = 'Object Properties (Elena)'
+        ordering = ['property__order']
+
+class ElenaSubjectControlPropertyManager(models.Manager):
+    def get_query_set(self):
+        return super(ElenaSubjectControlPropertyManager, self).get_query_set().filter(Q(Q(control_property_id = 22) | Q(control_property_id = 121)))
+        
+class ElenaSubjectControlProperty(SubjectControlProperty):
+    objects = ElenaSubjectControlPropertyManager()
+    
+    class Meta:
+        proxy = True
+        verbose_name = 'Object Controlled Property (Elena)'    
+        verbose_name_plural = 'Object Controlled Properties (Elena)'
+        ordering = ['property__order']         

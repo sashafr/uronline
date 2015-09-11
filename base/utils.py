@@ -461,19 +461,13 @@ def fix_bm_nums():
             print "BAD MATCH: " + num + "; ID: " + str(bmnum.subject_id)
             
 def quickfix():
-    notCorObjs = Subject.objects.filter(subjectproperty__property_id = 23).exclude(subjectproperty__property__property__icontains = 'museum number')
-    for obj in notCorObjs:
-        already_set = False
-        statuses = SubjectControlProperty.objects.filter(subject = obj, control_property_id = 22)
-        if statuses:
-            for status in statuses:
-                if status.control_property_value_id == 889:
-                    already_set = True
-                if not status.control_property_value_id == 889 and not status.control_property_value_id == 885 and not status.control_property_value_id == 886 and not status.control_property_value_id == 888:
-                    status.delete()
-        if not already_set:
-            new_stat = SubjectControlProperty(subject = obj, control_property = DescriptiveProperty.objects.get(pk=22), control_property_value = ControlField.objects.get(pk=889), last_mod_by = User.objects.get(pk=1))
-            new_stat.save()  
+    seals = Subject.objects.filter(subjectcontrolproperty__control_property_value__in = ControlField.objects.get(pk=42).get_descendants(include_self=True))
+    seals = seals.filter(subjectcontrolproperty__control_property_value_id = 398).order_by("title")
+    ord = 1
+    for seal in seals:
+        new_col = SubjectCollection(subject = seal, collection = Collection.objects.get(pk=5), order = ord)
+        new_col.save()
+        ord += 1
     
 def get_display_fields(obj, object_type):
     """ Returns the Title and Descriptor display fields for an object (as dict) with a concatenation

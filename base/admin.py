@@ -148,6 +148,7 @@ class AdminAdvSearchForm(forms.Form):
     img = forms.ChoiceField(label='Has Image', required=False, choices=(('default', '---'), ('yes', 'Yes'), ('no', 'No')))
     pub = forms.ModelChoiceField(label='Published', required=False, queryset=Media.objects.filter(type_id=2).order_by('title'))
     last_mod = forms.ModelChoiceField(label='Last Editor', required=False, queryset=User.objects.all())
+    col = forms.ModelChoiceField(label='Collection', required=False, queryset=Collection.objects.all())
     
     # utilities
     dup_prop = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.all(), empty_label = "Find Objects with Multiple...")
@@ -308,8 +309,20 @@ class SubjectControlPropertyInline(admin.TabularInline):
     # for control property form dropdown, only show descriptive properties marked as control_field = true
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'control_property':
-            kwargs["queryset"] = DescriptiveProperty.objects.filter(control_field = True)
+            if request.user == User.objects.get(pk=7) or request.user == User.objects.get(pk=17):
+                kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(Q(pk = 22) | Q(pk = 121)))
+            else:
+                kwargs["queryset"] = DescriptiveProperty.objects.filter(control_field = True)
         return super(SubjectControlPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        
+    def queryset(self, request):
+    
+        qs = super(SubjectControlPropertyInline, self).queryset(request)
+        
+        if request.user == User.objects.get(pk=7) or request.user == User.objects.get(pk=17):
+            qs = qs.filter(Q(Q(control_property_id = 22) | Q(control_property_id = 121)))
+            
+        return qs
 
 """ COLLECTION INLINES """
 
@@ -488,6 +501,21 @@ class SubjectPropertyInline(admin.TabularInline):
             kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='SO') | Q(primary_type='AL') | Q(primary_type='SL')).exclude(control_field = True)
         return super(SubjectPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs) 
         
+class ElenaSubjectPropertyInline(admin.TabularInline):
+    model = ElenaSubjectProperty
+    fields = ['property', 'property_value', 'notes', 'inline_notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)    
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_classes = 'suit-tab suit-tab-general'
+    extra = 1
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'property':
+            kwargs["queryset"] = DescriptiveProperty.objects.filter(pk=145)
+        return super(ElenaSubjectPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        
 class MediaSubjectRelationsInline(admin.TabularInline):
     model = MediaSubjectRelations
     fields = ['media', 'relation_type', 'notes', 'last_mod_by']
@@ -565,7 +593,7 @@ class FileInline(admin.TabularInline):
         
 class SubjectAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'modified', 'last_mod_by')    
-    inlines = [SubjectPropertyInline, SubjectControlPropertyInline, MediaSubjectRelationsInline, FileInline, LocationSubjectRelationsInline]
+    inlines = [SubjectPropertyInline, SubjectControlPropertyInline, ElenaSubjectPropertyInline, MediaSubjectRelationsInline, FileInline, LocationSubjectRelationsInline]
     search_fields = ['title', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3']
     list_display = ('title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3', 'created', 'modified')
     formfield_overrides = {
@@ -590,6 +618,47 @@ class SubjectAdmin(admin.ModelAdmin):
         css = {
             "all": ("django_select2/css/select2.min.css",)
         }
+        
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        collections = SubjectCollection.objects.filter(subject_id = object_id)
+        collection_list = []
+        for coll in collections:
+            coll_info = {}
+            current_order = coll.order
+            lt = SubjectCollection.objects.filter(collection = coll.collection, order__lt = current_order).order_by('-order')
+            if lt:
+                coll_info['prev'] = lt[0].subject_id
+            gt = SubjectCollection.objects.filter(collection = coll.collection, order__gt = current_order).order_by('order')
+            if gt:
+                coll_info['next'] = gt[0].subject_id
+            if lt or gt:
+                coll_info['name'] = coll.collection.title
+            collection_list.append(coll_info)
+        extra_context['collections'] = collection_list
+        return super(SubjectAdmin, self).change_view(request, object_id, form_url, extra_context = extra_context)
+        
+    def response_change(self, request, obj):
+        """
+        Determines the HttpResponse for the change_view stage.
+        """
+        if request.POST.has_key("_viewnext"):
+            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
+                   {'name': force_unicode(obj._meta.verbose_name),
+                    'obj': force_unicode(obj)})
+            next = request.POST.get("next_id")
+            if next:
+                self.message_user(request, msg)
+                return HttpResponseRedirect("../%s/" % next)
+        if request.POST.has_key("_viewprev"):
+            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
+                   {'name': force_unicode(obj._meta.verbose_name),
+                    'obj': force_unicode(obj)})
+            prev = request.POST.get("prev_id")
+            if prev:
+                self.message_user(request, msg)
+                return HttpResponseRedirect("../%s/" % prev)
+        return super(SubjectAdmin, self).response_change(request, obj)        
         
     def bulk_update(self, request, queryset):
         """ Redirects to a bulk update form """
@@ -733,7 +802,7 @@ class SubjectAdmin(admin.ModelAdmin):
                 instance.last_mod_by = request.user            
                 instance.save()            
 
-            if isinstance (instance, SubjectControlProperty): #Check if it is the correct type of inline
+            if isinstance (instance, SubjectControlProperty) or isinstance(instance, ElenaSubjectProperty):
                 instance.last_mod_by = request.user            
                 instance.save()
                 
@@ -852,7 +921,11 @@ class SubjectAdmin(admin.ModelAdmin):
             
         last_mod = adv_fields['last_mod']
         if last_mod != '':
-            queryset = queryset.filter(last_mod_by = last_mod)            
+            queryset = queryset.filter(last_mod_by = last_mod)
+
+        col = adv_fields['col']
+        if col != '':
+            queryset = queryset.filter(subjectcollection__collection_id = col)
         
         # CONTROL PROPERTY FILTER
         for i in range(1, 4):
@@ -933,8 +1006,10 @@ class SubjectAdmin(admin.ModelAdmin):
             dups = SubjectProperty.objects.filter(property_id = dup_prop).values_list('subject', flat = True).annotate(count = Count('property')).filter(count__gt = 1)
             dups_list = list(dups) # forcing queryset evaluation so next line doesn't throw a MySQLdb error
             queryset = queryset.filter(id__in = dups_list)
-            
-        if queryset.ordered:
+          
+        if col != '':
+            return queryset.order_by('subjectcollection__order').distinct(), use_distinct
+        elif queryset.ordered:
             return queryset.distinct(), use_distinct
         else:
             return queryset.order_by('-modified').distinct(), use_distinct
