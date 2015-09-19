@@ -461,14 +461,14 @@ def fix_bm_nums():
             print "BAD MATCH: " + num + "; ID: " + str(bmnum.subject_id)
             
 def quickfix():
-    seals = Subject.objects.filter(subjectcontrolproperty__control_property_value__in = ControlField.objects.get(pk=42).get_descendants(include_self=True))
-    seals = seals.filter(subjectcontrolproperty__control_property_value_id = 398).order_by("title")
-    ord = 1
-    for seal in seals:
-        new_col = SubjectCollection(subject = seal, collection = Collection.objects.get(pk=5), order = ord)
-        new_col.save()
-        ord += 1
-    
+    noloc = Subject.objects.exclude(id__in = LocationSubjectRelations.objects.values("subject_id").distinct())
+    unk = Location.objects.get(pk=982)
+    rel = Relations.objects.get(pk=4)
+    me = User.objects.get(pk=1)
+    for sub in noloc:
+        new = LocationSubjectRelations(location = unk, subject = sub, relation_type = rel, notes = "", last_mod_by = me)
+        new.save()
+        
 def get_display_fields(obj, object_type):
     """ Returns the Title and Descriptor display fields for an object (as dict) with a concatenation
     of their object property values or (none) if they have not value for the selected

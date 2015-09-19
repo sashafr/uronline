@@ -174,8 +174,9 @@ def about(request):
     team = get_object_or_404(SiteContent, variable='about_team')
     support = get_object_or_404(SiteContent, variable='about_support')
     dev = get_object_or_404(SiteContent, variable='about_dev')
+    lic = get_object_or_404(SiteContent, variable='about_lic')
     
-    return render(request, 'base/about.html', {'project': project, 'site': site, 'excavation': excavation, 'team': team, 'support': support, 'dev': dev})
+    return render(request, 'base/about.html', {'project': project, 'site': site, 'excavation': excavation, 'team': team, 'support': support, 'dev': dev, 'lic': lic })
     
 def update_index(request):
     t = tasks.index_update()

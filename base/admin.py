@@ -808,7 +808,8 @@ class SubjectAdmin(admin.ModelAdmin):
                 
             if isinstance(instance, MediaSubjectRelations):
                 instance.last_mod_by = request.user
-                instance.relation_type = Relations.objects.get(pk=3)
+                if isinstance(instance, File):
+                    instance.relation_type = Relations.objects.get(pk=3)
                 instance.save()
 
             if isinstance (instance, LocationSubjectRelations):

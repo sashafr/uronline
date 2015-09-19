@@ -110,7 +110,8 @@
                 <li><a href="{% url 'about' %}#excavation">Excavation of Ur</a></li>
                 <li><a href="{% url 'about' %}#team">Team Members</a></li>
                 <li><a href="{% url 'about' %}#support">Support</a></li>
-                <li><a href="{% url 'about' %}#developers">For Developers</a></li>                
+                <li><a href="{% url 'about' %}#developers">For Developers</a></li>
+                <li><a href="{% url 'about' %}#licensing">Licensing</a></li>                
               </ul>
             </li>
             <li><a href="{% url 'news' %}">News</a></li>
@@ -136,27 +137,34 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-12">
-                <ul class="list-inline">
-                    <li>
-                        <a href="{% url 'home' %}">Home</a>
-                    </li>
-                    <li class="footer-menu-divider">&sdot;</li>
-                    <li>
-                        <a href="{% url 'about' %}">About</a>
-                    </li>
-                    <li class="footer-menu-divider">&sdot;</li>
-                    <li>
-                        <a href="{% url 'news' %}">News</a>
-                    </li>
-                    <li class="footer-menu-divider">&sdot;</li>
-                    <li>
-                        <a href="{% url 'contact' %}">Contact</a>
-                    </li>
-                    <li class="footer-menu-divider">&sdot;</li>
-                    <li>
-                        <a href="{% url 'admin:index' %}">Login/Sign Up</a>
-                    </li>                    
-                </ul>
+                <div class="row">
+                    <div class="col-lg-10">
+                        <ul class="list-inline">
+                            <li>
+                                <a href="{% url 'home' %}">Home</a>
+                            </li>
+                            <li class="footer-menu-divider">&sdot;</li>
+                            <li>
+                                <a href="{% url 'about' %}">About</a>
+                            </li>
+                            <li class="footer-menu-divider">&sdot;</li>
+                            <li>
+                                <a href="{% url 'news' %}">News</a>
+                            </li>
+                            <li class="footer-menu-divider">&sdot;</li>
+                            <li>
+                                <a href="{% url 'contact' %}">Contact</a>
+                            </li>
+                            <li class="footer-menu-divider">&sdot;</li>
+                            <li>
+                                <a href="{% url 'admin:index' %}">Login/Sign Up</a>
+                            </li>                    
+                        </ul>
+                    </div>
+                    <div class="col-lg-2">
+                        <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a>
+                    </div>
+                </div>
                 <p class="copyright text-muted small">{% load_globals "footer_text" %}</p>
                 <p class="copyright text-muted small">* Please remember that UrOnline is a work in progress! We are still loading in data and updating the website. For updates on changes to the website, check out the <a href="{% url 'news' %}">dev blog</a>!</p>
             </div>
