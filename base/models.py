@@ -64,17 +64,53 @@ def get_display_field(obj, object_type, result_prop):
  
     id_str = ''
     if result_prop.field_type:
-        ids = obj.subjectproperty_set.filter(property=result_prop.field_type_id)
+        if result_prop.field_type.control_field:
+            ids = obj.subjectcontrolproperty_set.filter(control_property=result_prop.field_type)
+        else:
+            ids = obj.subjectproperty_set.filter(property=result_prop.field_type_id)
         if ids:
             for i, id in enumerate(ids):
                 if i > 0:
                     id_str += ', '
-                id_str += id.property_value
+                if result_prop.field_type.control_field:
+                    id_str += id.control_property_value.title
+                else:
+                    id_str += id.property_value
     
     if id_str == '':
         id_str = '(none)'
     
     return id_str
+    
+def get_display_fields(obj, object_type):
+    """ Returns the Title and Descriptor display fields for an object (as dict) with a concatenation
+    of their object property values or (none) if they have not value for the selected
+    property. """
+ 
+    result_props = {'title1': '',
+                    'title2': '',
+                    'title3': '',
+                    'desc1': '',
+                    'desc2': '',
+                    'desc3': ''}
+
+    for key, new_property in result_props.iteritems():
+        result_prop = ResultProperty.objects.get(display_field = (object_type + '_' + key))
+        result_props[key] = get_display_field(obj, object_type, result_prop)
+    
+    return result_props
+
+def get_display_field_header(result_property):
+    """ Returns the title of the Descriptive Property currently set as the given Result Property.
+    
+    If property is not set, returns Not Set. """
+    
+    title = ResultProperty.objects.filter(display_field = result_property)
+    
+    if title:
+        return title[0].field_type.property
+    else:
+        return "Not Set"
 
 """ HELPER MODELS """
 
@@ -94,6 +130,25 @@ class ObjectType(models.Model):
     class Meta:
         verbose_name = 'Entity Type'
         verbose_name_plural = 'Entity Types'
+        
+class MediaType(models.Model):
+    """ Types of Media, such as image/jpeg, text/html, etc """
+    type = models.CharField(max_length = 40)
+
+    def __unicode__(self):
+        return self.type
+        
+class Collection(models.Model):
+    """ Groupings of Entities """
+
+    title = models.CharField(max_length=60)
+    notes = models.TextField(blank = True)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)    
+    owner = models.ForeignKey(User)
+    
+    def __unicode__(self):
+        return self.title        
 
 """ DESCRIPTIVE PROPERTY & CONTROLLED PROPERTY MODELS """
 
@@ -181,9 +236,10 @@ class ControlField(MPTTModel):
     last_mod_by = models.ForeignKey(User, blank = True)
     type = models.ForeignKey(DescriptiveProperty, blank = True, null = True) #type is the descriptive property for which this control field can be a value
     parent = TreeForeignKey('self', null = True, blank = True, related_name = 'children')
+    order = models.PositiveIntegerField()
     
     class MPTTMeta:
-        order_insertion_by = ['title']
+        order_insertion_by = ['order', 'title']
     
     def __unicode__(self):
         return self.title
@@ -191,6 +247,10 @@ class ControlField(MPTTModel):
     class Meta:
         verbose_name = 'Controlled Term'    
         verbose_name_plural = 'Controlled Terms'
+        
+    def save(self, *args, **kwargs):
+        super(ControlField, self).save(*args, **kwargs)
+        ControlField.objects.rebuild()
         
     def next(self):
         greaterpk = ControlField.objects.filter(id__gt=self.id, type = self.type).order_by('id')
@@ -240,8 +300,9 @@ class ControlField(MPTTModel):
         
         return self.get_children().filter(type = self.type)
 
-"""Descriptive properties used for displaying search results"""
 class ResultProperty(models.Model):
+    """ Descriptive properties used for displaying search results """
+
     display_field = models.CharField(max_length = 40)
     field_type = models.ForeignKey(DescriptiveProperty, blank = True, null = True)
     
@@ -266,26 +327,26 @@ class ResultProperty(models.Model):
         if self.field_type:
             return self.field_type.property
         else:
-            return "None"        
+            return "None"            
         
 """ ARCHAEOLOGICAL ENTITY MODELS """
        
 class Subject(models.Model):
     """ Primary subjects of observation for a project, usually objects or locations. """ 
 
-    title = models.CharField(max_length = 100)
+    title = models.CharField(max_length = 100, default = '(none)')
     notes = models.TextField(blank = True, help_text = "This field is used INTERALLY ONLY for general notes on this object meant for project team members only.")
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
     last_mod_by = models.ForeignKey(User, blank = True)
     
-    # the following fields are populated by an auto task and is set using the Result Properties values
-    title1 = models.TextField(blank = True, default = '(none)')
-    title2 = models.TextField(blank = True, default = '(none)')
-    title3 = models.TextField(blank = True, default = '(none)')
-    desc1 = models.TextField(blank = True, default = '(none)')
-    desc2 = models.TextField(blank = True, default = '(none)')
-    desc3 = models.TextField(blank = True, default = '(none)') 
+    # the following fields are set using the Result Properties values
+    title1 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('subj_title1'))
+    title2 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('subj_title2'))
+    title3 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('subj_title3'))
+    desc1 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('subj_desc1'))
+    desc2 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('subj_desc2'))
+    desc3 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('subj_desc3')) 
     
     def __unicode__(self):
         return self.title
@@ -298,12 +359,84 @@ class Subject(models.Model):
         """ Auto fills the main title field. If object does not have a value for title1, title2, or title3,
         it draws from any property, preferencing the property based on the Descriptive Property's order """
         
+        # set the result properties
+        result_props = get_display_fields(self, 'subj')
+        self.title1 = result_props['title1']
+        self.title2 = result_props['title2']
+        self.title3 = result_props['title3']
+        self.desc1 = result_props['desc1']
+        self.desc2 = result_props['desc2']
+        self.desc3 = result_props['desc3']
+        
+        # set the title
         self.title = get_new_title(self)
+        
         super(Subject, self).save(*args, **kwargs)
         
+    def get_thumbnail(self):
+        """ Returns thumbnail for this object, or if none is set, returns stock "no image". """
+        
+        resource_uri = GlobalVars.objects.get(pk=11)
+        no_img = GlobalVars.objects.get(pk=12).val
+        thumbs = SubjectFile.objects.filter(subject = self, thumbnail = True)
+        if thumbs:
+            return resource_uri.val + str(thumbs[0].rsid)
+        else:
+            return no_img
+    get_thumbnail.short_description = 'Object'
+    get_thumbnail.allow_tags = True
+                
     class Meta:
         verbose_name = 'Object'    
-        verbose_name_plural = 'Objects' 
+        verbose_name_plural = 'Objects'
+        ordering = ['title1']
+        
+""" DESCRIPTIVE PROPERTIES OF ARCHAEOLOGICAL ENTITY MODELS """        
+        
+class SubjectProperty(models.Model):
+    """ Descriptive Properties of Subjects """
+
+    subject = models.ForeignKey(Subject)
+    property = models.ForeignKey(DescriptiveProperty)
+    property_value = models.TextField()
+    notes = models.TextField(blank = True, help_text = "This note will appear on the public site as a footnote. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Footnote Citation")
+    inline_notes = models.TextField(blank = True, help_text = "This note will appear on the public site in line with the data. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Inline Citation")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+
+    class Meta:
+        verbose_name = 'Free-Form Object Property'    
+        verbose_name_plural = 'Free-Form Object Properties'
+        ordering = ['property__order']
+
+    def __unicode__(self):
+        return self.property_value
+        
+    def save(self, *args, **kwargs):
+    
+        # save the property first so that when the display fields are generated below,
+        # it has the new property value
+        super(SubjectProperty, self).save(*args, **kwargs)
+        
+        # this has to be called after every property save so that titles can be regenerated
+        self.subject.save()
+    
+    def delete(self, *args, **kwargs):
+        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
+        
+        super(SubjectProperty, self).delete(*args, **kwargs)
+        
+        self.subject.save()
+
+""" ENTITY MODEL FILE RELATIONS """
+
+class SubjectFile(models.Model):
+    subject = models.ForeignKey(Subject)
+    rsid = models.IntegerField()
+    thumbnail = models.BooleanField(default=False)
+    filetype = models.ForeignKey(MediaType)
+    collection = models.ForeignKey(Collection, blank = True)
 
 """ SITE SETTINGS ETC MODELS """
 
@@ -379,14 +512,6 @@ class FeaturedImgs(models.Model):
         
     def __unicode__(self):
         return self.description
-    
-"""Types of Media, such as image/jpeg, text/html, etc"""
-# consider removing
-class MediaType(models.Model):
-    type = models.CharField(max_length = 40)
-
-    def __unicode__(self):
-        return self.type
         
 """Types of relationships between objects"""
 class Relations(models.Model):
@@ -443,65 +568,7 @@ class MediaProperty(models.Model):
     class Meta:
         verbose_name = 'Media Property'
         verbose_name_plural = 'Media Properties' 
-        
-"""Descriptive Properties of Subjects"""        
-class SubjectProperty(models.Model):
-    subject = models.ForeignKey(Subject)
-    property = models.ForeignKey(DescriptiveProperty)
-    property_value = models.TextField()
-    notes = models.TextField(blank = True, help_text = "This note will appear on the public site as a footnote. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Footnote Citation")
-    inline_notes = models.TextField(blank = True, help_text = "This note will appear on the public site in line with the data. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Inline Citation")
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User, blank = True)
-
-    class Meta:
-        verbose_name = 'Object Property'    
-        verbose_name_plural = 'Object Properties'
-        ordering = ['property__order']
-
-    def __unicode__(self):
-        return self.property_value
-        
-    def save(self, *args, **kwargs):
-        """ Auto fills the related object's Title and Descriptor Display Fields. 
-        
-        If the property being saved is a Display Field, update the related object's title or desc.
-        Otherwise, ignore. """
-        
-        # save the property first so that when the display fields are generated below,
-        # it has the new property value
-        super(SubjectProperty, self).save(*args, **kwargs)
-        
-        result_prop_ids = []
-        result_props = ResultProperty.objects.filter(display_field__startswith = "subj")
-        for prop in result_props:
-            if prop.field_type:
-                result_prop_ids.append(prop.field_type_id)
-                
-        if self.property_id in result_prop_ids:
-            fields_to_update = ResultProperty.objects.filter(field_type_id = self.property_id, display_field__startswith = "subj")
-            for field in fields_to_update:
-                field_name = field.display_field[5:]
-                if field_name == 'title1':
-                    self.subject.title1 = get_display_field(self.subject, 'subj', field)
-                    self.subject.save()
-                elif field_name == 'title2':
-                    self.subject.title2 = get_display_field(self.subject, 'subj', field)
-                    self.subject.save()
-                elif field_name == 'title3':
-                    self.subject.title3 = get_display_field(self.subject, 'subj', field)
-                    self.subject.save()
-                elif field_name == 'desc1':
-                    self.subject.desc1 = get_display_field(self.subject, 'subj', field)
-                    self.subject.save()
-                elif field_name == 'desc2':
-                    self.subject.desc2 = get_display_field(self.subject, 'subj', field)
-                    self.subject.save()
-                elif field_name == 'desc3':
-                    self.subject.desc3 = get_display_field(self.subject, 'subj', field)
-                    self.subject.save()        
-                
+                        
 """The people and institutions that participated in a project"""        
 class PersonOrg(models.Model):
     title = models.CharField(max_length = 100)
@@ -705,7 +772,23 @@ class SubjectControlProperty(models.Model):
         verbose_name_plural = 'Controlled Object Properties'    
 
     def __unicode__(self):
-        return self.control_property_value.title
+        return self.control_property.property + ': ' + self.control_property_value.title
+        
+    def save(self, *args, **kwargs):
+    
+        # save the property first so that when the display fields are generated below,
+        # it has the new property value
+        super(SubjectControlProperty, self).save(*args, **kwargs)
+        
+        # this has to be called after every property save so that titles can be regenerated
+        self.subject.save()
+    
+    def delete(self, *args, **kwargs):
+        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
+        
+        super(SubjectControlProperty, self).delete(*args, **kwargs)
+        
+        self.subject.save()        
 
 class PublicationManager(models.Manager):
     def get_query_set(self):
@@ -838,16 +921,6 @@ class MediaLocationRelations(models.Model):
     class Meta:
         verbose_name = 'Media-Location Relation'
         verbose_name_plural = 'Media-Location Relations'
-
-class Collection(models.Model):
-    title = models.CharField(max_length=60)
-    notes = models.TextField(blank = True)
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)    
-    owner = models.ForeignKey(User)
-    
-    def __unicode__(self):
-        return self.title
         
 class SubjectCollection(models.Model):
     subject = models.ForeignKey(Subject)
@@ -975,29 +1048,3 @@ class LegrainNotes(Media):
         verbose_name = 'Legrain Note Card'
         verbose_name_plural = 'Legrain Note Cards'
         ordering = ['title']
-        
-class ElenaSubjectPropertyManager(models.Manager):
-    def get_query_set(self):
-        return super(ElenaSubjectPropertyManager, self).get_query_set().filter(property_id = 145)
-        
-class ElenaSubjectProperty(SubjectProperty):
-    objects = ElenaSubjectPropertyManager()
-    
-    class Meta:
-        proxy = True
-        verbose_name = 'Object Property (Elena)'    
-        verbose_name_plural = 'Object Properties (Elena)'
-        ordering = ['property__order']
-
-class ElenaSubjectControlPropertyManager(models.Manager):
-    def get_query_set(self):
-        return super(ElenaSubjectControlPropertyManager, self).get_query_set().filter(Q(Q(control_property_id = 22) | Q(control_property_id = 121)))
-        
-class ElenaSubjectControlProperty(SubjectControlProperty):
-    objects = ElenaSubjectControlPropertyManager()
-    
-    class Meta:
-        proxy = True
-        verbose_name = 'Object Controlled Property (Elena)'    
-        verbose_name_plural = 'Object Controlled Properties (Elena)'
-        ordering = ['property__order']         

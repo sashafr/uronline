@@ -17,6 +17,10 @@ from django.http import Http404
 from django.utils.encoding import smart_str
 from haystack.query import SQ
 from datetime import datetime
+from django_tables2 import RequestConfig
+from base.tables import *
+from base.serializers import *
+from rest_framework.renderers import JSONRenderer
 
 def create_footnotes(start_index, properties, gen_notes):
     """ Helper to create footnotes """
@@ -31,6 +35,12 @@ def create_footnotes(start_index, properties, gen_notes):
                 gen_notes.append(gprop.notes)
                 gen_fn_count += 1
     return gen_fn_count
+    
+class JSONResponse(HttpResponse):
+    def __init__(self, data, **kwargs):
+        content = JSONRenderer().render(data)
+        kwargs['content_type'] = 'application/json'
+        super(JSONResponse, self).__init__(content, **kwargs)
 
 def home(request):
     """ Default view for the root """
@@ -233,6 +243,69 @@ def propertydetail(request, prop_id):
             all_objs = SubjectProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)       
             
     return render(request, 'base/propertydetail.html', {'property': prop, 'all_objs': all_objs, 'order': order, 'type': type, 'linked_data': linked_data })
+    
+def termdetail(request, term_id):
+    
+    # get the parameters
+    term = get_object_or_404(ControlField, pk=term_id)
+    coll_id = request.GET.get('col', '')
+    
+    show_contents = 'false'
+    
+    # linked data
+    linked_data = ControlFieldLinkedData.objects.filter(control_field_id=term_id)
+
+    # objects
+    subjects = Subject.objects.filter(subjectcontrolproperty__control_property_value__in = term.get_descendants(include_self = True))
+    
+    # collections that include the selected objects
+    scs = SubjectCollection.objects.filter(subject__in = subjects)
+    collections = Collection.objects.filter(subjectcollection__in = scs).distinct()    
+    
+    # if a specific collection was requested, get only objects in selected collection
+    if coll_id != '' and coll_id != '0':
+        selected_cols = Collection.objects.filter(pk=coll_id)
+        if selected_cols:
+            subjects = subjects.filter(subjectcollection__collection = selected_cols[0])           
+    
+    # create the object table
+    subject_table = SubjectTable(subjects)
+    RequestConfig(request).configure(subject_table)
+    
+    # determine if menu is needed
+    if linked_data or subjects or term.get_siblings_same_type or term.get_children_same_type:
+        show_contents = 'true'
+    
+    return render(request, 'base/termdetail.html', {'term': term, 'subjects': subjects, 'linked_data': linked_data, 'show_contents': show_contents, 'subject_table': subject_table, 'collections': collections, 'sub_col': coll_id })
+    
+def termdetailexport (request, term_id):
+    
+    # get the parameters
+    term = get_object_or_404(ControlField, pk=term_id)
+    coll_id = request.GET.get('col', '')
+    entity = request.GET.get('entity', '')
+    format = request.GET.get('format', '')
+    
+    filename = term.title
+    
+    # subject export
+    if (entity == 'subject'):
+        filename += '_objects_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        qs = Subject.objects.filter(subjectcontrolproperty__control_property_value__in = term.get_descendants(include_self = True))
+        
+        # if a specific collection was requested, get only objects in selected collection
+        if coll_id != '' and coll_id != '0':
+            selected_cols = Collection.objects.filter(pk=coll_id)
+            if selected_cols:
+                qs = qs.filter(subjectcollection__collection = selected_cols[0])        
+    
+    if qs:
+        # json
+        if (format == 'json'):
+            serializer = SubjectSerializer(qs, many=True)
+            response = JSONResponse(serializer.data)
+            response['Content-Disposition'] = 'attachment; filename="' + filename + '.json"'
+            return response
     
 def mapdetail(request, location_id):
     

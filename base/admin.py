@@ -21,6 +21,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.safestring import mark_safe
 from datetime import datetime
 import csv
+from suit.admin import SortableModelAdmin
 
 OPERATOR = (
     ('and', 'AND'),
@@ -310,7 +311,7 @@ class SubjectControlPropertyInline(admin.TabularInline):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'control_property':
             if request.user == User.objects.get(pk=7) or request.user == User.objects.get(pk=17):
-                kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(Q(pk = 22) | Q(pk = 121)))
+                kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(Q(pk = 170) | Q(pk = 121)))
             else:
                 kwargs["queryset"] = DescriptiveProperty.objects.filter(control_field = True)
         return super(SubjectControlPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
@@ -320,7 +321,7 @@ class SubjectControlPropertyInline(admin.TabularInline):
         qs = super(SubjectControlPropertyInline, self).queryset(request)
         
         if request.user == User.objects.get(pk=7) or request.user == User.objects.get(pk=17):
-            qs = qs.filter(Q(Q(control_property_id = 22) | Q(control_property_id = 121)))
+            qs = qs.filter(Q(Q(control_property_id = 170) | Q(control_property_id = 121)))
             
         return qs
 
@@ -362,7 +363,7 @@ admin.site.register(LinkedDataSource, LinkedDataSourceAdmin)
     
 """ DESCRIPTIVE PROPERTY & CONTROLLED PROPERTY ADMIN """    
     
-class ControlFieldAdmin(MPTTModelAdmin):
+class ControlFieldAdmin(MPTTModelAdmin, SortableModelAdmin):
     readonly_fields = ('created', 'modified', 'last_mod_by')    
     inlines = [ControlFieldLinkedDataInline]
     search_fields = ['title', 'definition']
@@ -378,9 +379,12 @@ class ControlFieldAdmin(MPTTModelAdmin):
     )
     form = ControlFieldForm
     fields = ('title', 'definition', 'notes', 'type', 'parent', 'created', 'modified', 'last_mod_by')
+    sortable = 'order'
     
     def save_model(self, request, obj, form, change):
         obj.last_mod_by = request.user
+        if not obj.pk:
+            obj.order = 99
         obj.save()
         
     def save_formset(self, request, form, formset, change):
@@ -488,7 +492,7 @@ class StatusFilter(admin.SimpleListFilter):
 
 class SubjectPropertyInline(admin.TabularInline):
     model = SubjectProperty
-    fields = ['property', 'property_value', 'notes', 'inline_notes', 'last_mod_by']
+    fields = ['property', 'property_value', 'inline_notes', 'notes', 'last_mod_by']
     readonly_fields = ('last_mod_by',)    
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
@@ -498,23 +502,17 @@ class SubjectPropertyInline(admin.TabularInline):
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'property':
-            kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='SO') | Q(primary_type='AL') | Q(primary_type='SL')).exclude(control_field = True)
-        return super(SubjectPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs) 
+            if request.user == User.objects.get(pk=7) or request.user == User.objects.get(pk=17):
+                kwargs["queryset"] = DescriptiveProperty.objects.filter(pk=145)
+            else:
+                kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='SO') | Q(primary_type='AL') | Q(primary_type='SL')).exclude(control_field = True)
+        return super(SubjectPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
         
-class ElenaSubjectPropertyInline(admin.TabularInline):
-    model = ElenaSubjectProperty
-    fields = ['property', 'property_value', 'notes', 'inline_notes', 'last_mod_by']
-    readonly_fields = ('last_mod_by',)    
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
-    suit_classes = 'suit-tab suit-tab-general'
-    extra = 1
-    
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'property':
-            kwargs["queryset"] = DescriptiveProperty.objects.filter(pk=145)
-        return super(ElenaSubjectPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+    def queryset(self, request):   
+        qs = super(SubjectPropertyInline, self).queryset(request)
+        if request.user == User.objects.get(pk=7) or request.user == User.objects.get(pk=17):
+            qs = qs.filter(property_id = 145)
+        return qs
         
 class MediaSubjectRelationsInline(admin.TabularInline):
     model = MediaSubjectRelations
@@ -592,8 +590,8 @@ class FileInline(admin.TabularInline):
     form = SubjectMediaRelationForm
         
 class SubjectAdmin(admin.ModelAdmin):
-    readonly_fields = ('created', 'modified', 'last_mod_by')    
-    inlines = [SubjectPropertyInline, SubjectControlPropertyInline, ElenaSubjectPropertyInline, MediaSubjectRelationsInline, FileInline, LocationSubjectRelationsInline]
+    readonly_fields = ('title', 'created', 'modified', 'last_mod_by')    
+    inlines = [SubjectPropertyInline, SubjectControlPropertyInline, MediaSubjectRelationsInline, FileInline, LocationSubjectRelationsInline]
     search_fields = ['title', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3']
     list_display = ('title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3', 'created', 'modified')
     formfield_overrides = {
@@ -611,7 +609,7 @@ class SubjectAdmin(admin.ModelAdmin):
     save_as = True
     
     change_list_template = 'admin/base/subject/change_list.html'
-    change_form_template = 'admin/base/change_form.html'
+    change_form_template = 'admin/base/subject/change_form.html'
     
     class Media:
         # the django-select2 styles have to be added manually for some reason, otherwise they don't work
@@ -620,6 +618,8 @@ class SubjectAdmin(admin.ModelAdmin):
         }
         
     def change_view(self, request, object_id, form_url='', extra_context=None):
+        """ Added to allow browsing by collection """
+    
         extra_context = extra_context or {}
         collections = SubjectCollection.objects.filter(subject_id = object_id)
         collection_list = []
@@ -721,7 +721,6 @@ class SubjectAdmin(admin.ModelAdmin):
     
     def save_model(self, request, obj, form, change):
         obj.last_mod_by = request.user
-        obj.type_id = 1 #sets any object created from this admin module to type "object"
         obj.save()
         
     def save_formset(self, request, form, formset, change):
@@ -802,7 +801,7 @@ class SubjectAdmin(admin.ModelAdmin):
                 instance.last_mod_by = request.user            
                 instance.save()            
 
-            if isinstance (instance, SubjectControlProperty) or isinstance(instance, ElenaSubjectProperty):
+            if isinstance (instance, SubjectControlProperty):
                 instance.last_mod_by = request.user            
                 instance.save()
                 

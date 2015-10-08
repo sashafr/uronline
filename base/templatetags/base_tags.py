@@ -457,11 +457,6 @@ def custom_header_title(header):
         return props[0].field_type.property
     return header.title()
     
-@register.inclusion_tag("admin/base/subject/change_list_results.html", takes_context=True)
-def subject_result_list(context, cl):
-    res = result_list_with_context(context, cl)
-    return res
-    
 @register.assignment_tag
 def get_linked_data_url(property_id):
     urls = ControlFieldLinkedData.objects.filter(control_field_id=property_id)

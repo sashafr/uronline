@@ -1,0 +1,204 @@
+{% extends "_layouts/base.html" %}
+{% load staticfiles base_tags mptt_tags %}
+{% load render_table from django_tables2 %}
+
+<!-- Metadata -->
+{% block page_title %}{{ term.title }}{% endblock %}
+<!-- End Metadata -->
+
+{% block body_attributes %}data-spy="scroll" data-target="#myScrollspy"{% endblock %}
+
+{% block css %}
+<style type="text/css">
+    /* Custom Styles */
+    ul.nav-tabs{
+        width: 200px;
+        margin-top: 50px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.067);
+    }
+    ul.nav-tabs li{
+        margin: 0;
+        border-top: 1px solid #ddd;
+    }
+    ul.nav-tabs li:first-child{
+        border-top: none;
+    }
+    ul.nav-tabs li a{
+        margin: 0;
+        padding: 8px 16px;
+        border-radius: 0;
+    }
+    ul.nav-tabs li.active a, ul.nav-tabs li.active a:hover{
+        background: #EDF3FE;
+        border: 1px solid #EDF3FE;
+    }
+    ul.nav-tabs li:first-child a{
+        border-radius: 4px 4px 0 0;
+    }
+    ul.nav-tabs li:last-child a{
+        border-radius: 0 0 4px 4px;
+    }
+    ul.nav-tabs.affix{
+        top: 30px; /* Set the top position of pinned element */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="content-section-b" style="padding-top: 80px;">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1 id="top" style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
+                        <a href="{% url 'propertydetail' term.type.id %}"><small>{{ term.type.property }}: </small></a>
+                        {% if term.get_ancestors %}
+                            {% for anc in term.get_ancestors %}
+                                <a href="{% url 'termdetail' anc.id %}" ><small>{{ anc.title }}</small></a><small> > </small>
+                            {% endfor %}
+                        {% endif %}
+                        {{ term.title }}
+                    </h1>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-10">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            {% if term.notes and term.notes != '' %}
+                                {{ term.notes|safe }}
+                            {% else %}
+                                <div class="alert alert-warning" role="alert">
+                                    <p>No details available on this term at this time.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if subjects %}
+                    <div class="row" id="subjects">
+                        <div class="col-lg-12">
+                            <div class="row">
+                                <div class="col-sm-10">
+                                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
+                                        Objects: {{ term.title }}
+                                        <small>Export: </small>
+                                        <a href="{% url 'termdetailexport' term.id %}?col={{ sub_col }}&entity=subject&format=json"><small>JSON</small></a>
+                                    </h3>
+                                </div>
+                                <div class="col-sm-2">
+                                    {% if collections %}
+                                        <button class="btn btn-default dropdown-toggle" style="margin: 40px 0 0;" type="button" data-toggle="dropdown">
+                                            Collection:
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li><a href="{% url 'termdetail' term.id %}?col=0">All Objects</a></li>
+                                            {% for collection in collections %}
+                                                <li><a href="{% url 'termdetail' term.id %}?col={{ collection.id }}">{{ collection.title }}</a></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% render_table subject_table %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if term.get_siblings_same_type %}
+                    <div class="row" id="siblings">
+                        <div class="col-lg-12">
+                            <div class="row">
+                                <div class="col-sm-10">
+                                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">Related Terms</h3>
+                                </div>
+                            </div>
+                            <p>
+                                {% for sibling in term.get_siblings_same_type %}
+                                    {% if forloop.counter0 > 0 %} - {% endif %}<a href="{% url 'termdetail' sibling.id %}">{{ sibling.title }}</a>
+                                {% endfor %}
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if term.get_children_same_type %}
+                    <div class="row" id="children">
+                        <div class="col-lg-12">
+                            <div class="row">
+                                <div class="col-sm-10">
+                                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">Child Terms</h3>
+                                </div>
+                            </div>
+                            <p>
+                                {% for child in term.get_children_same_type %}
+                                    {% if forloop.counter0 > 0 %} - {% endif %}<a href="{% url 'termdetail' child.id %}">{{ child.title }}</a>
+                                {% endfor %}
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}                    
+                </div>
+                {% if show_contents == 'true' %}
+                <div class="col-xs-2 hideonsmall" id="myScrollspy">
+                    <ul class="nav nav-tabs nav-stacked" data-spy="affix" data-offset-top="125">
+                        {% if subjects %}
+                            <li><a href="#subjects">Objects</a></li>
+                        {% endif %}
+                        {% if linked_data %}
+                            <li><a href="#linked-data">Linked Data</a></li>
+                        {% endif %}
+                        {% if term.get_siblings_same_type %}
+                            <li><a href="#siblings">Related Terms</a></li>
+                        {% endif %}
+                        {% if term.get_children_same_type %}
+                            <li><a href="#children">Child Terms</a></li>
+                        {% endif %}                        
+                        <li><a href="#top">Back to Top</a></li>
+                    </ul>                    
+                </div>
+                {% endif %}
+            </div>  
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+
+{{ block.super }}
+
+  <script type="text/javascript">
+    $(document).ready(function(){
+    
+        var active = true;
+
+        $('#collapse-all').click(function (event) {
+            event.preventDefault();
+            if (active) {
+                active = false;
+                $('.collapse-unit').collapse('show');
+                $('.collapse-button').html('  - Collapse');
+                $(this).text('Collapse All');
+            } else {
+                active = true;
+                $('.collapse-unit').collapse('hide');
+                $('.collapse-button').html('  + Expand');
+                $(this).text('Expand All');
+            }
+        });
+
+        $('.collapse-button').click(function () {
+            if($(this).next().hasClass('in')) {
+                $(this).html('  + Expand');
+            } else {
+                $(this).html('  - Collapse');
+            }
+        });
+        
+        $("[data-toggle=popover]").popover({
+            trigger : 'hover'
+        }); 
+    });
+  </script>
+
+{% endblock %}

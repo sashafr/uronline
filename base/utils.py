@@ -461,28 +461,12 @@ def fix_bm_nums():
             print "BAD MATCH: " + num + "; ID: " + str(bmnum.subject_id)
             
 def quickfix():
-    noloc = Subject.objects.exclude(id__in = LocationSubjectRelations.objects.values("subject_id").distinct())
-    unk = Location.objects.get(pk=982)
-    rel = Relations.objects.get(pk=4)
-    me = User.objects.get(pk=1)
-    for sub in noloc:
-        new = LocationSubjectRelations(location = unk, subject = sub, relation_type = rel, notes = "", last_mod_by = me)
-        new.save()
-        
-def get_display_fields(obj, object_type):
-    """ Returns the Title and Descriptor display fields for an object (as dict) with a concatenation
-    of their object property values or (none) if they have not value for the selected
-    property. """
- 
-    result_props = {'title1': '',
-                    'title2': '',
-                    'title3': '',
-                    'desc1': '',
-                    'desc2': '',
-                    'desc3': ''}
+    images = MediaSubjectRelations.objects.filter(relation_type_id = 7)
 
-    for key, new_property in result_props.iteritems():
-        result_prop = ResultProperty.objects.get(display_field = (object_type + '_' + key))
-        result_props[key] = get_display_field(obj, object_type, result_prop)
-    
-    return result_props            
+    for image in images:
+        resids = MediaProperty.objects.filter(property_id = 94, media = image.media)
+        if resids:
+            file = SubjectFile(subject = image.subject, rsid = resids[0].property_value, thumbnail = False, filetype = MediaType.objects.get(pk=1), collection = Collection.objects.get(pk=7))
+            file.save()
+        else:
+            print image.media.id

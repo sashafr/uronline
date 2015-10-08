@@ -63,6 +63,8 @@ INSTALLED_APPS = (
 #   'debug_toolbar', # comment out in production
     'compressor',
     'haystack',
+    'django_tables2',
+    'rest_framework',
 
     # Database migrations
     'south',
