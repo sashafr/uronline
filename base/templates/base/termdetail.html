@@ -84,7 +84,12 @@
                                     <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
                                         Objects: {{ term.title }}
                                         <small>Export: </small>
-                                        <a href="{% url 'termdetailexport' term.id %}?col={{ sub_col }}&entity=subject&format=json"><small>JSON</small></a>
+                                        <a class="subj-ex" href="{% url 'termdetailexport' term.id %}?col={{ sub_col }}&entity=subject&format=json"><small>JSON</small></a>
+                                        <small> - </small>
+                                        <a class="subj-ex" href="{% url 'termdetailexport' term.id %}?col={{ sub_col }}&entity=subject&format=xml"><small>XML</small></a>
+                                        <small> - </small>
+                                        <a class="subj-ex" href="{% url 'termdetailexport' term.id %}?col={{ sub_col }}&entity=subject&format=csv"><small>CSV</small></a>
+                                        <small style="float: right; margin: 10px 0 20px;">{{ sub_col_title }}</small>
                                     </h3>
                                 </div>
                                 <div class="col-sm-2">
@@ -101,6 +106,9 @@
                                         </ul>
                                     {% endif %}
                                 </div>
+                            </div>
+                            <div id="subj-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
+                                <p>Exporting large queries may take several minutes, please do not leave this page until the download completes.</p>
                             </div>
                             {% render_table subject_table %}
                         </div>
@@ -169,35 +177,9 @@
 
   <script type="text/javascript">
     $(document).ready(function(){
-    
-        var active = true;
-
-        $('#collapse-all').click(function (event) {
-            event.preventDefault();
-            if (active) {
-                active = false;
-                $('.collapse-unit').collapse('show');
-                $('.collapse-button').html('  - Collapse');
-                $(this).text('Collapse All');
-            } else {
-                active = true;
-                $('.collapse-unit').collapse('hide');
-                $('.collapse-button').html('  + Expand');
-                $(this).text('Expand All');
-            }
-        });
-
-        $('.collapse-button').click(function () {
-            if($(this).next().hasClass('in')) {
-                $(this).html('  + Expand');
-            } else {
-                $(this).html('  - Collapse');
-            }
-        });
-        
-        $("[data-toggle=popover]").popover({
-            trigger : 'hover'
-        }); 
+        $('.subj-ex').click(function() {
+            $('#subj-ex-warning').show();
+        })
     });
   </script>
 

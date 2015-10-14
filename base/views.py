@@ -21,6 +21,8 @@ from django_tables2 import RequestConfig
 from base.tables import *
 from base.serializers import *
 from rest_framework.renderers import JSONRenderer
+from rest_framework_xml.renderers import XMLRenderer
+import string
 
 def create_footnotes(start_index, properties, gen_notes):
     """ Helper to create footnotes """
@@ -36,11 +38,35 @@ def create_footnotes(start_index, properties, gen_notes):
                 gen_fn_count += 1
     return gen_fn_count
     
+def format_filename(s):
+    """ Take a string and return a valid filename constructed from the string.
+
+    Uses a whitelist approach: any characters not present in valid_chars are
+    removed. Also spaces are replaced with underscores.
+    
+    Note: this method may produce invalid filenames such as ``, `.` or `..`
+    When I use this method I prepend a date string like '2009_01_15_19_46_32_'
+    and append a file extension like '.txt', so I avoid the potential of using
+    an invalid filename. 
+    
+    Taken from: https://gist.github.com/seanh/93666. """
+    
+    valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
+    filename = ''.join(c for c in s if c in valid_chars)
+    filename = filename.replace(' ','_') # I don't like spaces in filenames.
+    return filename
+    
 class JSONResponse(HttpResponse):
     def __init__(self, data, **kwargs):
         content = JSONRenderer().render(data)
         kwargs['content_type'] = 'application/json'
         super(JSONResponse, self).__init__(content, **kwargs)
+        
+class XMLResponse(HttpResponse):
+    def __init__(self, data, **kwargs):
+        content = XMLRenderer().render(data)
+        kwargs['content_type'] = 'text/xml'
+        super (XMLResponse, self).__init__(content, **kwargs)
 
 def home(request):
     """ Default view for the root """
@@ -244,6 +270,12 @@ def propertydetail(request, prop_id):
             
     return render(request, 'base/propertydetail.html', {'property': prop, 'all_objs': all_objs, 'order': order, 'type': type, 'linked_data': linked_data })
     
+def terminology(request):
+
+    cntl_props = DescriptiveProperty.objects.filter(control_field = True, visible = True).order_by('order')
+
+    return render(request, 'base/terminology.html', {'cntl_props': cntl_props})
+    
 def termdetail(request, term_id):
     
     # get the parameters
@@ -251,6 +283,7 @@ def termdetail(request, term_id):
     coll_id = request.GET.get('col', '')
     
     show_contents = 'false'
+    sub_col_title = ''
     
     # linked data
     linked_data = ControlFieldLinkedData.objects.filter(control_field_id=term_id)
@@ -266,7 +299,10 @@ def termdetail(request, term_id):
     if coll_id != '' and coll_id != '0':
         selected_cols = Collection.objects.filter(pk=coll_id)
         if selected_cols:
-            subjects = subjects.filter(subjectcollection__collection = selected_cols[0])           
+            subjects = subjects.filter(subjectcollection__collection = selected_cols[0])
+            sub_col = Collection.objects.filter(pk=coll_id)
+            if sub_col:
+                sub_col_title = sub_col[0].title
     
     # create the object table
     subject_table = SubjectTable(subjects)
@@ -276,7 +312,7 @@ def termdetail(request, term_id):
     if linked_data or subjects or term.get_siblings_same_type or term.get_children_same_type:
         show_contents = 'true'
     
-    return render(request, 'base/termdetail.html', {'term': term, 'subjects': subjects, 'linked_data': linked_data, 'show_contents': show_contents, 'subject_table': subject_table, 'collections': collections, 'sub_col': coll_id })
+    return render(request, 'base/termdetail.html', {'term': term, 'subjects': subjects, 'linked_data': linked_data, 'show_contents': show_contents, 'subject_table': subject_table, 'collections': collections, 'sub_col': coll_id, 'sub_col_title': sub_col_title })
     
 def termdetailexport (request, term_id):
     
@@ -297,7 +333,8 @@ def termdetailexport (request, term_id):
         if coll_id != '' and coll_id != '0':
             selected_cols = Collection.objects.filter(pk=coll_id)
             if selected_cols:
-                qs = qs.filter(subjectcollection__collection = selected_cols[0])        
+                qs = qs.filter(subjectcollection__collection = selected_cols[0])
+                filename += '_collection-' + format_filename(selected_cols[0].title)
     
     if qs:
         # json
@@ -305,6 +342,73 @@ def termdetailexport (request, term_id):
             serializer = SubjectSerializer(qs, many=True)
             response = JSONResponse(serializer.data)
             response['Content-Disposition'] = 'attachment; filename="' + filename + '.json"'
+            return response
+            
+        # xml
+        elif (format == 'xml'):
+            serializer = SubjectSerializer(qs, many=True)
+            response = XMLResponse(serializer.data)
+            response['Content-Disposition'] = 'attachment; filename="' + filename + '.xml"'
+            return response
+            
+        # csv - evil, evil, flattened csv
+        elif (format == 'csv'):
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename="' + filename + '.csv"'
+
+            writer = csv.writer(response)
+            titles = []
+            titles.append('__Title__')
+            titles.append('__URL__')
+            rows = []
+            for result in qs:
+                row = []
+                row_dict = {}
+                
+                # store title and url
+                row_dict[0] = result.title
+                row_dict[1] = result.get_full_absolute_url()
+                
+                # controlled properties
+                for each_prop in result.subjectcontrolproperty_set.all():
+                    if each_prop.control_property.visible:
+                        prop_name = each_prop.control_property.property.strip()
+                        prop_value = each_prop.control_property_value.title.strip()
+                        if not (prop_name in titles):
+                            column_index = len(titles)                        
+                            titles.append(prop_name)
+                        else:
+                            column_index = titles.index(prop_name)
+                            if column_index in row_dict:
+                                prop_value = row_dict[column_index] + '; ' + prop_value
+                        row_dict[column_index] = prop_value
+                
+                # free-form properties
+                for each_prop in result.subjectproperty_set.all():
+                    if each_prop.property.visible:
+                        prop_name = each_prop.property.property.strip()
+                        prop_value = each_prop.property_value.strip()
+                        if not (prop_name in titles):
+                            column_index = len(titles)                        
+                            titles.append(prop_name)
+                        else:
+                            column_index = titles.index(prop_name)
+                            if column_index in row_dict:
+                                prop_value = row_dict[column_index] + '; ' + prop_value
+                        row_dict[column_index] = prop_value                    
+                                
+                # store row in list
+                for i in range(len(titles)):
+                    if i in row_dict:
+                        row.append(row_dict[i])
+                    else:
+                        row.append('')
+                rows.append(row)
+
+            # write out the rows, starting with header
+            writer.writerow(titles)
+            for each_row in rows:
+                writer.writerow(each_row)
             return response
     
 def mapdetail(request, location_id):

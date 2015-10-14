@@ -22,6 +22,7 @@ urlpatterns = patterns('base.views',
     # ex: /ur.iaas.upenn.edu/media/5/
     url(r'^media_item/(?P<media_id>\d+)/$', 'mediadetail', name='mediadetail'),
     url(r'^property/(?P<prop_id>\d+)/$', 'propertydetail', name='propertydetail'),
+    url(r'^terminology/', 'terminology', name='terminology'),
     url(r'^term/(?P<term_id>\d+)/$', 'termdetail', name='termdetail'), 
     url(r'^term_export/(?P<term_id>\d+)/$', 'termdetailexport', name='termdetailexport'),     
     url(r'^location/(?P<location_id>\d+)/$', 'locationdetail', name='locationdetail'),    

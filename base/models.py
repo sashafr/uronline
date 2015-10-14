@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse
 import re
 from filer.fields.image import FilerImageField
 from filer.fields.file import FilerFileField
+from django.conf import settings
 
 """ HELPER METHODS """
 
@@ -355,6 +356,17 @@ class Subject(models.Model):
         """ Used in templates in lieu of isInstance to tell which type of object is being referenced. """
         return 'subject';
         
+    def get_absolute_url(self):
+        return reverse('subjectdetail', args=[str(self.id)])
+        
+    def get_full_absolute_url(self):
+        domain = settings.ALLOWED_HOSTS[0]
+        
+        if domain.startswith('.'):
+            domain = domain[1:]
+
+        return 'http://%s%s' % (domain, self.get_absolute_url())        
+        
     def save(self, *args, **kwargs):
         """ Auto fills the main title field. If object does not have a value for title1, title2, or title3,
         it draws from any property, preferencing the property based on the Descriptive Property's order """
@@ -411,7 +423,7 @@ class SubjectProperty(models.Model):
         ordering = ['property__order']
 
     def __unicode__(self):
-        return self.property_value
+        return self.property.property + ": " + self.property_value
         
     def save(self, *args, **kwargs):
     
