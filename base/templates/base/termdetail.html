@@ -93,15 +93,15 @@
                                     </h3>
                                 </div>
                                 <div class="col-sm-2">
-                                    {% if collections %}
+                                    {% if subject_collections %}
                                         <button class="btn btn-default dropdown-toggle" style="margin: 40px 0 0;" type="button" data-toggle="dropdown">
                                             Collection:
                                             <span class="caret"></span>
                                         </button>
                                         <ul class="dropdown-menu" role="menu">
-                                            <li><a href="{% url 'termdetail' term.id %}?col=0">All Objects</a></li>
-                                            {% for collection in collections %}
-                                                <li><a href="{% url 'termdetail' term.id %}?col={{ collection.id }}">{{ collection.title }}</a></li>
+                                            <li><a href="{% url 'termdetail' term.id %}?subcol=0">All Objects</a></li>
+                                            {% for collection in subject_collections %}
+                                                <li><a href="{% url 'termdetail' term.id %}?subcol={{ collection.id }}">{{ collection.title }}</a></li>
                                             {% endfor %}
                                         </ul>
                                     {% endif %}
@@ -114,6 +114,46 @@
                         </div>
                     </div>
                     {% endif %}
+                    
+                    {% if locations %}
+                    <div class="row" id="locations">
+                        <div class="col-lg-12">
+                            <div class="row">
+                                <div class="col-sm-10">
+                                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
+                                        Locations: {{ term.title }}
+                                        <small>Export: </small>
+                                        <a class="loc-ex" href="{% url 'termdetailexport' term.id %}?col={{ loc_col }}&entity=location&format=json"><small>JSON</small></a>
+                                        <small> - </small>
+                                        <a class="loc-ex" href="{% url 'termdetailexport' term.id %}?col={{ loc_col }}&entity=location&format=xml"><small>XML</small></a>
+                                        <small> - </small>
+                                        <a class="loc-ex" href="{% url 'termdetailexport' term.id %}?col={{ loc_col }}&entity=location&format=csv"><small>CSV</small></a>
+                                        <small style="float: right; margin: 10px 0 20px;">{{ loc_col_title }}</small>
+                                    </h3>
+                                </div>
+                                <div class="col-sm-2">
+                                    {% if location_collections %}
+                                        <button class="btn btn-default dropdown-toggle" style="margin: 40px 0 0;" type="button" data-toggle="dropdown">
+                                            Collection:
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li><a href="{% url 'termdetail' term.id %}?loccol=0">All Locations</a></li>
+                                            {% for collection in location_collections %}
+                                                <li><a href="{% url 'termdetail' term.id %}?loccol={{ collection.id }}">{{ collection.title }}</a></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div id="loc-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
+                                <p>Exporting large queries may take several minutes, please do not leave this page until the download completes.</p>
+                            </div>
+                            {% render_table location_table %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
                     {% if term.get_siblings_same_type %}
                     <div class="row" id="siblings">
                         <div class="col-lg-12">
@@ -153,6 +193,9 @@
                         {% if subjects %}
                             <li><a href="#subjects">Objects</a></li>
                         {% endif %}
+                        {% if locations %}
+                            <li><a href="#locations">Locations</a></li>
+                        {% endif %}                        
                         {% if linked_data %}
                             <li><a href="#linked-data">Linked Data</a></li>
                         {% endif %}
@@ -180,6 +223,9 @@
         $('.subj-ex').click(function() {
             $('#subj-ex-warning').show();
         })
+        $('.loc-ex').click(function() {
+            $('#loc-ex-warning').show();
+        })        
     });
   </script>
 

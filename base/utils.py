@@ -461,12 +461,12 @@ def fix_bm_nums():
             print "BAD MATCH: " + num + "; ID: " + str(bmnum.subject_id)
             
 def quickfix():
-    images = MediaSubjectRelations.objects.filter(relation_type_id = 7)
+    images = MediaLocationRelations.objects.filter(relation_type_id = 3)
 
     for image in images:
         resids = MediaProperty.objects.filter(property_id = 94, media = image.media)
         if resids:
-            file = SubjectFile(subject = image.subject, rsid = resids[0].property_value, thumbnail = False, filetype = MediaType.objects.get(pk=1), collection = Collection.objects.get(pk=7))
+            file = LocationFile(location = image.location, rsid = resids[0].property_value, thumbnail = False, filetype = MediaType.objects.get(pk=1), collection = None)
             file.save()
         else:
             print image.media.id

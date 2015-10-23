@@ -280,39 +280,57 @@ def termdetail(request, term_id):
     
     # get the parameters
     term = get_object_or_404(ControlField, pk=term_id)
-    coll_id = request.GET.get('col', '')
+    sub_coll_id = request.GET.get('subcol', '')
+    loc_coll_id = request.GET.get('loccol', '')    
     
     show_contents = 'false'
     sub_col_title = ''
+    loc_col_title = ''
     
     # linked data
     linked_data = ControlFieldLinkedData.objects.filter(control_field_id=term_id)
 
     # objects
-    subjects = Subject.objects.filter(subjectcontrolproperty__control_property_value__in = term.get_descendants(include_self = True))
+    subjects = Subject.objects.filter(subjectcontrolproperty__control_property_value__in = term.get_descendants(include_self = True)).distinct()
+    # locations
+    locations = Location.objects.filter(locationcontrolproperty__control_property_value__in = term.get_descendants(include_self = True)).distinct()    
     
     # collections that include the selected objects
     scs = SubjectCollection.objects.filter(subject__in = subjects)
-    collections = Collection.objects.filter(subjectcollection__in = scs).distinct()    
+    subject_collections = Collection.objects.filter(subjectcollection__in = scs).distinct()
+    # collections that include the selected locations
+    lcs = LocationCollection.objects.filter(location__in = locations)
+    location_collections = Collection.objects.filter(locationcollection__in = lcs).distinct()     
     
     # if a specific collection was requested, get only objects in selected collection
-    if coll_id != '' and coll_id != '0':
-        selected_cols = Collection.objects.filter(pk=coll_id)
+    if sub_coll_id != '' and sub_coll_id != '0':
+        selected_cols = Collection.objects.filter(pk=sub_coll_id)
         if selected_cols:
             subjects = subjects.filter(subjectcollection__collection = selected_cols[0])
-            sub_col = Collection.objects.filter(pk=coll_id)
+            sub_col = Collection.objects.filter(pk=sub_coll_id)
             if sub_col:
                 sub_col_title = sub_col[0].title
+    # if a specific collection was requested, get only locations in selected collection
+    if loc_coll_id != '' and loc_coll_id != '0':
+        selected_cols = Collection.objects.filter(pk=loc_coll_id)
+        if selected_cols:
+            locations = locations.filter(locationcollection__collection = selected_cols[0])
+            loc_col = Collection.objects.filter(pk=loc_coll_id)
+            if loc_col:
+                loc_col_title = loc_col[0].title                
     
     # create the object table
-    subject_table = SubjectTable(subjects)
+    subject_table = SubjectTable(subjects, prefix='subj-')
     RequestConfig(request).configure(subject_table)
+    # create the location table
+    location_table = LocationTable(locations, prefix='loc-')
+    RequestConfig(request).configure(location_table)    
     
     # determine if menu is needed
-    if linked_data or subjects or term.get_siblings_same_type or term.get_children_same_type:
+    if linked_data or subjects or locations or term.get_siblings_same_type or term.get_children_same_type:
         show_contents = 'true'
     
-    return render(request, 'base/termdetail.html', {'term': term, 'subjects': subjects, 'linked_data': linked_data, 'show_contents': show_contents, 'subject_table': subject_table, 'collections': collections, 'sub_col': coll_id, 'sub_col_title': sub_col_title })
+    return render(request, 'base/termdetail.html', {'term': term, 'subjects': subjects, 'locations': locations, 'linked_data': linked_data, 'show_contents': show_contents, 'subject_table': subject_table, 'location_table': location_table, 'subject_collections': subject_collections, 'location_collections': location_collections, 'sub_col': sub_coll_id, 'loc_col': loc_coll_id, 'sub_col_title': sub_col_title, 'loc_col_title': loc_col_title })
     
 def termdetailexport (request, term_id):
     
@@ -325,7 +343,7 @@ def termdetailexport (request, term_id):
     filename = term.title
     
     # subject export
-    if (entity == 'subject'):
+    if entity == 'subject':
         filename += '_objects_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
         qs = Subject.objects.filter(subjectcontrolproperty__control_property_value__in = term.get_descendants(include_self = True))
         
@@ -335,24 +353,42 @@ def termdetailexport (request, term_id):
             if selected_cols:
                 qs = qs.filter(subjectcollection__collection = selected_cols[0])
                 filename += '_collection-' + format_filename(selected_cols[0].title)
-    
+                
+    # location export
+    if entity == 'location':
+        filename += '_locations_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        qs = Location.objects.filter(locationcontrolproperty__control_property_value__in = term.get_descendants(include_self = True))
+        
+        # if a specific collection was requested, get only objects in selected collection
+        if coll_id != '' and coll_id != '0':
+            selected_cols = Collection.objects.filter(pk=coll_id)
+            if selected_cols:
+                qs = qs.filter(locationcollection__collection = selected_cols[0])
+                filename += '_collection-' + format_filename(selected_cols[0].title)        
+                
     if qs:
         # json
-        if (format == 'json'):
-            serializer = SubjectSerializer(qs, many=True)
+        if format == 'json':
+            if entity == 'location':
+                serializer = LocationSerializer(qs, many=True)
+            else:
+                serializer = SubjectSerializer(qs, many=True)
             response = JSONResponse(serializer.data)
             response['Content-Disposition'] = 'attachment; filename="' + filename + '.json"'
             return response
             
         # xml
-        elif (format == 'xml'):
-            serializer = SubjectSerializer(qs, many=True)
+        elif format == 'xml':
+            if entity == 'location':
+                serializer = LocationSerializer(qs, many=True)
+            else:
+                serializer = SubjectSerializer(qs, many=True)
             response = XMLResponse(serializer.data)
             response['Content-Disposition'] = 'attachment; filename="' + filename + '.xml"'
             return response
             
         # csv - evil, evil, flattened csv
-        elif (format == 'csv'):
+        elif format == 'csv':
             response = HttpResponse(content_type='text/csv')
             response['Content-Disposition'] = 'attachment; filename="' + filename + '.csv"'
 
@@ -370,7 +406,11 @@ def termdetailexport (request, term_id):
                 row_dict[1] = result.get_full_absolute_url()
                 
                 # controlled properties
-                for each_prop in result.subjectcontrolproperty_set.all():
+                if entity == 'location':
+                    cps = result.locationcontrolproperty_set.all()
+                else:
+                    cps = result.subjectcontrolproperty_set.all()
+                for each_prop in cps:
                     if each_prop.control_property.visible:
                         prop_name = each_prop.control_property.property.strip()
                         prop_value = each_prop.control_property_value.title.strip()
@@ -384,7 +424,11 @@ def termdetailexport (request, term_id):
                         row_dict[column_index] = prop_value
                 
                 # free-form properties
-                for each_prop in result.subjectproperty_set.all():
+                if entity == 'location':
+                    ps = result.locationproperty_set.all()
+                else:
+                    ps = result.subjectproperty_set.all()                
+                for each_prop in ps:
                     if each_prop.property.visible:
                         prop_name = each_prop.property.property.strip()
                         prop_value = each_prop.property_value.strip()

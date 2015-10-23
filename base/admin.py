@@ -1523,7 +1523,7 @@ class MediaLocationRelationsInline(admin.TabularInline):
         return qs.filter(Q(relation_type=2) | Q(relation_type=5))        
 
 class LocationAdmin(MPTTModelAdmin):
-    readonly_fields = ('last_mod_by',)    
+    readonly_fields = ('title', 'created', 'modified', 'last_mod_by')    
     inlines = [LocationPropertyInline, MediaLocationRelationsInline]
     search_fields = ['title']
     list_display = ('title', 'notes', 'type', 'ancestors')
@@ -1531,6 +1531,7 @@ class LocationAdmin(MPTTModelAdmin):
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
     list_filter = ['type']
+    fields = ['title', 'notes', 'type', 'parent', 'created', 'modified', 'last_mod_by']
     
     change_form_template = 'admin/base/location/change_form.html'    
     

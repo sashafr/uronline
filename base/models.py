@@ -10,7 +10,7 @@ from django.conf import settings
 
 """ HELPER METHODS """
 
-def get_new_title(obj):
+def get_new_title(obj, type):
     """ Returns the title of an object using the three Title display properties, or, 
     if there is no value for the three Title properties or they aren't set, uses the first
     property with a value, ordered by the Descriptive Property's order. 
@@ -23,10 +23,25 @@ def get_new_title(obj):
     title2 = obj.title2
     title3 = obj.title3
     
+    if type == 'subject':
+        cqs = obj.subjectcontrolproperty_set.all()
+        qs = obj.subjectproperty_set.all()
+    elif type == 'location':
+        cqs = obj.locationcontrolproperty_set.all()
+        qs = obj.locationproperty_set.all()
+    elif type == 'media':
+        cqs = obj.mediacontrolproperty_set.all()
+        qs = obj.mediaproperty_set.all()
+    elif type == 'people':
+        cqs = obj.personorgcontrolproperty_set.all()
+        qs = obj.personorgproperty_set.all()        
+    else:
+        return '(none)'
+    
     # if there is no value for any of the Display Properties, check for other properties
     if title1 == "(none)" and title2 == "(none)" and title3 == "(none)":
-        props = obj.subjectproperty_set.all().order_by("property__order")
-        cntl_props = obj.subjectcontrolproperty_set.all().order_by("control_property__order")
+        props = qs.order_by("property__order")
+        cntl_props = cqs.order_by("control_property__order")
         # if there are both control and free-form properties, choose one with lowest order
         if props and cntl_props:
             if props[0].property.order <= cntl_props[0].control_property.order:
@@ -62,13 +77,29 @@ def get_display_field(obj, object_type, result_prop):
     """ Returns the selected display field for an object with a concatenation
     of their object property values or (none) if they have not value for the selected
     property. """
- 
+    
     id_str = ''
+    
+    if object_type == 'subj':
+        cqs = obj.subjectcontrolproperty_set.all()
+        qs = obj.subjectproperty_set.all()
+    elif object_type == 'loc':
+        cqs = obj.locationcontrolproperty_set.all()
+        qs = obj.locationproperty_set.all()
+    elif object_type == 'med':
+        cqs = obj.mediacontrolproperty_set.all()
+        qs = obj.mediaproperty_set.all()
+    elif object_type == 'po':
+        cqs = obj.personorgcontrolproperty_set.all()
+        qs = obj.personorgproperty_set.all()        
+    else:
+        return id_str   
+ 
     if result_prop.field_type:
         if result_prop.field_type.control_field:
-            ids = obj.subjectcontrolproperty_set.filter(control_property=result_prop.field_type)
+            ids = cqs.filter(control_property=result_prop.field_type)
         else:
-            ids = obj.subjectproperty_set.filter(property=result_prop.field_type_id)
+            ids = qs.filter(property=result_prop.field_type_id)
         if ids:
             for i, id in enumerate(ids):
                 if i > 0:
@@ -108,7 +139,7 @@ def get_display_field_header(result_property):
     
     title = ResultProperty.objects.filter(display_field = result_property)
     
-    if title:
+    if title and title[0].field_type:
         return title[0].field_type.property
     else:
         return "Not Set"
@@ -333,7 +364,7 @@ class ResultProperty(models.Model):
 """ ARCHAEOLOGICAL ENTITY MODELS """
        
 class Subject(models.Model):
-    """ Primary subjects of observation for a project, usually objects or locations. """ 
+    """ Primary subjects of observation for a project, usually artifacts. """ 
 
     title = models.CharField(max_length = 100, default = '(none)')
     notes = models.TextField(blank = True, help_text = "This field is used INTERALLY ONLY for general notes on this object meant for project team members only.")
@@ -381,7 +412,7 @@ class Subject(models.Model):
         self.desc3 = result_props['desc3']
         
         # set the title
-        self.title = get_new_title(self)
+        self.title = get_new_title(self, 'subject')
         
         super(Subject, self).save(*args, **kwargs)
         
@@ -403,10 +434,180 @@ class Subject(models.Model):
         verbose_name_plural = 'Objects'
         ordering = ['title1']
         
+class Location(MPTTModel):
+    """ Geographic subjects of observation for a project, usually locations or contexts. """
+    
+    title = models.CharField(max_length = 100, default = '(none)')
+    notes = models.TextField(blank = True, help_text = "This field is used INTERALLY ONLY for general notes on this location meant for project team members only.")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+    type = models.ForeignKey(ObjectType, blank = True, null = True)
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
+    
+    # the following fields are set using the Result Properties values
+    title1 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('loc_title1'))
+    title2 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('loc_title2'))
+    title3 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('loc_title3'))
+    desc1 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('loc_desc1'))
+    desc2 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('loc_desc2'))
+    desc3 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('loc_desc3'))     
+    
+    def __unicode__(self):
+        return self.title
+        
+    def get_type(self):
+        """ Used in templates in lieu of isInstance to tell which type of object is being referenced. """
+        return 'location';
+
+    def get_absolute_url(self):
+        return reverse('locationdetail', args=[str(self.id)])
+
+    def get_full_absolute_url(self):
+        domain = settings.ALLOWED_HOSTS[0]
+        
+        if domain.startswith('.'):
+            domain = domain[1:]
+
+        return 'http://%s%s' % (domain, self.get_absolute_url())
+
+    def save(self, *args, **kwargs):
+        """ Auto fills the main title field. If l does not have a value for title1, title2, or title3,
+        it draws from any property, preferencing the property based on the Descriptive Property's order """
+        
+        # set the result properties
+        result_props = get_display_fields(self, 'loc')
+        self.title1 = result_props['title1']
+        self.title2 = result_props['title2']
+        self.title3 = result_props['title3']
+        self.desc1 = result_props['desc1']
+        self.desc2 = result_props['desc2']
+        self.desc3 = result_props['desc3']
+        
+        # set the title
+        self.title = get_new_title(self, 'location')
+        
+        super(Location, self).save(*args, **kwargs)
+
+    def get_thumbnail(self):
+        """ Returns thumbnail for this object, or if none is set, returns stock "no image". """
+        
+        resource_uri = GlobalVars.objects.get(pk=11)
+        no_img = GlobalVars.objects.get(pk=12).val
+        thumbs = LocationFile.objects.filter(location = self, thumbnail = True)
+        if thumbs:
+            return resource_uri.val + str(thumbs[0].rsid)
+        else:
+            return no_img
+    get_thumbnail.short_description = 'Location'
+    get_thumbnail.allow_tags = True        
+        
+    def ancestors(self):
+        ancients = self.get_ancestors(include_self=False)
+        ancs = ''
+        for ancient in ancients:
+            ancs = ancs + ancient.title + '>>'
+        return ancs
+        
+    def next(self):
+        try:
+            return Location.objects.get(pk=self.pk+1)
+        except:
+            return None
+            
+    def previous(self):
+        try:
+            return Location.objects.get(pk=self.pk-1)
+        except:
+            return None
+
+    class Meta:
+        verbose_name = 'Location'    
+        verbose_name_plural = 'Locations'
+
+    class MPTTMeta:
+        order_insertion_by = ['title']
+       
+class Media(models.Model):
+    """ Documentation for project. """
+    
+    title = models.CharField(max_length = 100, default = '(none)')
+    notes = models.TextField(blank = True, help_text = "This field is used INTERALLY ONLY for general notes on this media item meant for project team members only.")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User)
+    type = models.ForeignKey(MediaType, blank = True, null = True, related_name = "MIME_type")
+    bib_type = models.ForeignKey(MediaType, blank = True, null = True, related_name = "citation_type")
+    
+    # the following fields are set using the Result Properties values
+    title1 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('med_title1'))
+    title2 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('med_title2'))
+    title3 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('med_title3'))
+    desc1 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('med_desc1'))
+    desc2 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('med_desc2'))
+    desc3 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('med_desc3'))
+    
+    def __unicode__(self):
+        return self.title
+        
+    def get_type(self):
+        """ Used in templates in lieu of isInstance to tell which type of object is being referenced. """
+        return 'media';         
+        
+    def get_properties(self):
+        return self.mediaproperty_set.all()
+
+    def get_absolute_url(self):
+        return reverse('mediadetail', args=[str(self.id)])
+        
+    def get_full_absolute_url(self):
+        domain = settings.ALLOWED_HOSTS[0]
+        
+        if domain.startswith('.'):
+            domain = domain[1:]
+
+        return 'http://%s%s' % (domain, self.get_absolute_url())        
+        
+    def save(self, *args, **kwargs):
+        """ Auto fills the main title field. If object does not have a value for title1, title2, or title3,
+        it draws from any property, preferencing the property based on the Descriptive Property's order """
+        
+        # set the result properties
+        result_props = get_display_fields(self, 'med')
+        self.title1 = result_props['title1']
+        self.title2 = result_props['title2']
+        self.title3 = result_props['title3']
+        self.desc1 = result_props['desc1']
+        self.desc2 = result_props['desc2']
+        self.desc3 = result_props['desc3']
+        
+        # set the title
+        self.title = get_new_title(self, 'media')
+        
+        super(Media, self).save(*args, **kwargs)
+        
+    def get_thumbnail(self):
+        """ Returns thumbnail for this object, or if none is set, returns stock "no image". """
+        
+        resource_uri = GlobalVars.objects.get(pk=11)
+        no_img = GlobalVars.objects.get(pk=12).val
+        thumbs = MediaFile.objects.filter(media = self, thumbnail = True)
+        if thumbs:
+            return resource_uri.val + str(thumbs[0].rsid)
+        else:
+            return no_img
+    get_thumbnail.short_description = 'Media'
+    get_thumbnail.allow_tags = True
+
+    class Meta:
+        verbose_name = 'media'
+        verbose_name_plural = 'media'
+        ordering = ['title1']
+        
 """ DESCRIPTIVE PROPERTIES OF ARCHAEOLOGICAL ENTITY MODELS """        
         
 class SubjectProperty(models.Model):
-    """ Descriptive Properties of Subjects """
+    """ Free-Form Properties of Subjects """
 
     subject = models.ForeignKey(Subject)
     property = models.ForeignKey(DescriptiveProperty)
@@ -440,6 +641,110 @@ class SubjectProperty(models.Model):
         super(SubjectProperty, self).delete(*args, **kwargs)
         
         self.subject.save()
+        
+class SubjectControlProperty(models.Model):
+    """ Controlled Properties of Subjects """
+
+    subject = models.ForeignKey(Subject)
+    control_property = models.ForeignKey(DescriptiveProperty)
+    control_property_value = models.ForeignKey(ControlField)
+    notes = models.TextField(blank = True, help_text = "Please use this field for citations, notes on certainty, and attribution of this piece of information.")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+
+    class Meta:
+        verbose_name = 'Controlled Object Property'    
+        verbose_name_plural = 'Controlled Object Properties'    
+
+    def __unicode__(self):
+        return self.control_property.property + ': ' + self.control_property_value.title
+        
+    def save(self, *args, **kwargs):
+    
+        # save the property first so that when the display fields are generated below,
+        # it has the new property value
+        super(SubjectControlProperty, self).save(*args, **kwargs)
+        
+        # this has to be called after every property save so that titles can be regenerated
+        self.subject.save()
+    
+    def delete(self, *args, **kwargs):
+        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
+        
+        super(SubjectControlProperty, self).delete(*args, **kwargs)
+        
+        self.subject.save()
+        
+class LocationProperty(models.Model):
+    """ Free-Form Properties of Locations """
+
+    location = models.ForeignKey(Location)
+    property = models.ForeignKey(DescriptiveProperty)
+    property_value = models.TextField()
+    notes = models.TextField(blank = True, help_text = "This note will appear on the public site as a footnote. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Footnote Citation")
+    inline_notes = models.TextField(blank = True, help_text = "This note will appear on the public site in line with the data. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Inline Citation")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+
+    class Meta:
+        verbose_name = 'Free-Form Location Property'    
+        verbose_name_plural = 'Free-Form Location Properties'
+        ordering = ['property__order']   
+
+    def __unicode__(self):
+        return self.property.property + ": " + self.property_value
+
+    def save(self, *args, **kwargs):
+    
+        # save the property first so that when the display fields are generated below,
+        # it has the new property value
+        super(LocationProperty, self).save(*args, **kwargs)
+        
+        # this has to be called after every property save so that titles can be regenerated
+        self.location.save()
+    
+    def delete(self, *args, **kwargs):
+        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
+        
+        super(LocationProperty, self).delete(*args, **kwargs)
+        
+        self.location.save()        
+
+class LocationControlProperty(models.Model):
+    """ Controlled Properties of Locations """
+
+    location = models.ForeignKey(Location)
+    control_property = models.ForeignKey(DescriptiveProperty)
+    control_property_value = models.ForeignKey(ControlField)
+    notes = models.TextField(blank = True, help_text = "Please use this field for citations, notes on certainty, and attribution of this piece of information.")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+
+    class Meta:
+        verbose_name = 'Controlled Location Property'    
+        verbose_name_plural = 'Controlled Location Properties'    
+
+    def __unicode__(self):
+        return self.control_property.property + ': ' + self.control_property_value.title
+        
+    def save(self, *args, **kwargs):
+    
+        # save the property first so that when the display fields are generated below,
+        # it has the new property value
+        super(LocationControlProperty, self).save(*args, **kwargs)
+        
+        # this has to be called after every property save so that titles can be regenerated
+        self.location.save()
+    
+    def delete(self, *args, **kwargs):
+        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
+        
+        super(LocationControlProperty, self).delete(*args, **kwargs)
+        
+        self.location.save()        
 
 """ ENTITY MODEL FILE RELATIONS """
 
@@ -448,7 +753,14 @@ class SubjectFile(models.Model):
     rsid = models.IntegerField()
     thumbnail = models.BooleanField(default=False)
     filetype = models.ForeignKey(MediaType)
-    collection = models.ForeignKey(Collection, blank = True)
+    collection = models.ForeignKey(Collection, blank = True, null = True)
+    
+class LocationFile(models.Model):
+    location = models.ForeignKey(Location)
+    rsid = models.IntegerField()
+    thumbnail = models.BooleanField(default=False)
+    filetype = models.ForeignKey(MediaType)
+    collection = models.ForeignKey(Collection, blank = True, null = True)
 
 """ SITE SETTINGS ETC MODELS """
 
@@ -538,28 +850,6 @@ class Relations(models.Model):
         
     class Meta:
         verbose_name_plural = 'relations'
-        
-"""Files that help make up documentation for project"""        
-class Media(models.Model):
-    title = models.CharField(max_length = 100)
-    notes = models.TextField(blank = True, help_text = "This field is used INTERALLY ONLY for general notes on this media item meant for project team members only.")
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User)
-    type = models.ForeignKey(MediaType, blank = True, null = True, related_name = "MIME_type")
-    bib_type = models.ForeignKey(MediaType, blank = True, null = True, related_name = "citation_type")
-
-    class Meta:
-        verbose_name_plural = 'media'
-    
-    def __unicode__(self):
-        return self.title
-        
-    def get_properties(self):
-        return self.mediaproperty_set.all()
-        
-    def get_type(self):
-        return 'media';
 
 """Descriptive Properties of Media Files"""        
 class MediaProperty(models.Model):
@@ -768,39 +1058,7 @@ class PersonOrgLinkedData(models.Model):
     
     class Meta:
         verbose_name = 'Linked Person/Organization Data'
-        verbose_name_plural = 'Linked Person/Organization Data'         
-        
-class SubjectControlProperty(models.Model):
-    subject = models.ForeignKey(Subject)
-    control_property = models.ForeignKey(DescriptiveProperty)
-    control_property_value = models.ForeignKey(ControlField)
-    notes = models.TextField(blank = True, help_text = "Please use this field for citations, notes on certainty, and attribution of this piece of information.")
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User, blank = True)
-
-    class Meta:
-        verbose_name = 'Controlled Object Property'    
-        verbose_name_plural = 'Controlled Object Properties'    
-
-    def __unicode__(self):
-        return self.control_property.property + ': ' + self.control_property_value.title
-        
-    def save(self, *args, **kwargs):
-    
-        # save the property first so that when the display fields are generated below,
-        # it has the new property value
-        super(SubjectControlProperty, self).save(*args, **kwargs)
-        
-        # this has to be called after every property save so that titles can be regenerated
-        self.subject.save()
-    
-    def delete(self, *args, **kwargs):
-        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
-        
-        super(SubjectControlProperty, self).delete(*args, **kwargs)
-        
-        self.subject.save()        
+        verbose_name_plural = 'Linked Person/Organization Data'
 
 class PublicationManager(models.Manager):
     def get_query_set(self):
@@ -832,56 +1090,6 @@ class File(MediaSubjectRelations):
     
     class Meta:
         proxy = True
-
-class Location(MPTTModel):
-    title = models.CharField(max_length = 100)
-    notes = models.TextField(blank = True, help_text = "This field is used INTERALLY ONLY for general notes on this location meant for project team members only.")
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User, blank = True)
-    type = models.ForeignKey(ObjectType, blank = True, null = True)
-    parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
-    
-    def __unicode__(self):
-        return self.title
-     
-    class MPTTMeta:
-        order_insertion_by = ['title']
-        
-    def ancestors(self):
-        ancients = self.get_ancestors(include_self=False)
-        ancs = ''
-        for ancient in ancients:
-            ancs = ancs + ancient.title + '>>'
-        return ancs
-        
-    def next(self):
-        try:
-            return Location.objects.get(pk=self.pk+1)
-        except:
-            return None
-            
-    def previous(self):
-        try:
-            return Location.objects.get(pk=self.pk-1)
-        except:
-            return None
-        
-class LocationProperty(models.Model):
-    location = models.ForeignKey(Location)
-    property = models.ForeignKey(DescriptiveProperty)
-    property_value = models.TextField()
-    notes = models.TextField(blank = True, help_text = "Please use this field for citations, notes on certainty, and attribution of this piece of information.")
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User, blank = True)
-
-    class Meta:
-        verbose_name = 'Location Property'    
-        verbose_name_plural = 'Location Properties'    
-
-    def __unicode__(self):
-        return self.property_value
         
 class LocationSubjectRelations(models.Model):
     location = models.ForeignKey(Location)
@@ -946,6 +1154,19 @@ class SubjectCollection(models.Model):
     class Meta:
         verbose_name = 'Collection Item (Object)'
         verbose_name_plural = 'Collection Items (Object)'
+        
+class LocationCollection(models.Model):
+    location = models.ForeignKey(Location)
+    collection = models.ForeignKey(Collection)
+    notes = models.TextField(blank = True)
+    order = models.IntegerField(blank = True, default = 0)
+    
+    def __unicode__(self):
+        return self.location.title + " [Collection: " + self.collection.title + "]"
+        
+    class Meta:
+        verbose_name = 'Collection Item (Location)'
+        verbose_name_plural = 'Collection Items (Location)'        
         
 class MediaCollection(models.Model):
     media = models.ForeignKey(Media)
