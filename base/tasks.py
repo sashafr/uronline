@@ -13,9 +13,3 @@ def update():
     
 @shared_task
 def precomp_object_fields():
-#    updated_subjects = Subject.objects.all()
-    time_threshold = timezone.now() - timedelta(hours=2)
-    updated_subjects = Subject.objects.filter(modified__gt=time_threshold)
-    
-    for subject in updated_subjects:
-        update_display_fields(subject.id, 'subj')

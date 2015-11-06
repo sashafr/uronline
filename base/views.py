@@ -71,11 +71,7 @@ class XMLResponse(HttpResponse):
 def home(request):
     """ Default view for the root """
 	
-    """ Load featured images """
-    featured_imgs = FeaturedImgs.objects.all()
-    context = {'featured_imgs': featured_imgs}
-	
-    return render(request, 'base/home.html', context)
+    return render(request, 'base/home.html')
     
 def map(request):
 
@@ -275,6 +271,12 @@ def terminology(request):
     cntl_props = DescriptiveProperty.objects.filter(control_field = True, visible = True).order_by('order')
 
     return render(request, 'base/terminology.html', {'cntl_props': cntl_props})
+    
+def collections(request):
+
+    collections = Collection.objects.all()
+
+    return render(request, 'base/collections.html', {'collections': collections})
     
 def termdetail(request, term_id):
     
@@ -490,34 +492,40 @@ def mapdetail(request, location_id):
     
     return render(request, 'base/mapdetail.html', {'location': location, 'current_map': current_map, 'other_maps': other_maps, 'loci': loci, 'rsid': rsid, 'loci_details': loci_details})
     
-'''def collectiondetail(request, collection_id):
+def collectiondetail(request, collection_id):
     
-    current_item_id = request.GET.get('item', '')
-    collection = get_object_or_404(Collection, pk = collection_id)
-    subj_items = SubjectCollection.objects.filter(collection__id = collection.id)
+    # get the parameters
+    collection = get_object_or_404(Collection, pk=collection_id)    
     
-    if current_item_id == '':
-        current_item = get_object_or_404(Subject, pk = subj_items[0].subject_id)
-        subj_items = subj_items[1:]
-    else:
-        subj_items = subj_items.exclude(subject_id = current_item_id)
-        current_item = get_object_or_404(Subject, pk = current_item_id)
+    show_contents = 'false'
     
-    other_items = []
-    for m in maps:
-        try:
-            id_pair = (m.media_id, m.media.notes, MediaProperty.objects.filter(media_id = m.media_id, property_id = 94)[0])
-            other_maps.append(id_pair)
-        except IndexError:
-            continue
+    # objects
+    subjects = Subject.objects.filter(subjectcollection__collection = collection).distinct()
+    # locations
+    locations = Location.objects.filter(locationcollection__collection = collection).distinct()    
+    # media
+    media = Media.objects.filter(mediacollection__collection = collection).distinct()    
+    # people
+    people = PersonOrg.objects.filter(personorgcollection__collection = collection).distinct()    
+            
+    # create the object table
+    subject_table = SubjectTable(subjects, prefix='subj-')
+    RequestConfig(request).configure(subject_table)
+    # create the location table
+    location_table = LocationTable(locations, prefix='loc-')
+    RequestConfig(request).configure(location_table)
+    # create the media table
+    media_table = MediaTable(media, prefix='med-')
+    RequestConfig(request).configure(media_table)  
+    # create the people table
+    people_table = PersonOrgTable(people, prefix='po-')
+    RequestConfig(request).configure(people_table)  
     
-    loci = MediaLocationRelations.objects.filter(media_id = current_map.id, relation_type = 10).order_by('location__title')
-    try:
-        rsid = MediaProperty.objects.filter(media_id = current_map.id, property_id = 94)[0]
-    except IndexError:
-        raise Http404("Could not find map image")
+    # determine if menu is needed
+    if subjects or locations or media or people:
+        show_contents = 'true'
     
-    return render(request, 'base/mapdetail.html', {'location': location, 'current_map': current_map, 'other_maps': other_maps, 'loci': loci, 'rsid': rsid})'''
+    return render(request, 'base/collectiondetail.html', {'collection': collection, 'subjects': subjects, 'locations': locations, 'media': media, 'people': people, 'show_contents': show_contents, 'subject_table': subject_table, 'location_table': location_table, 'media_table': media_table, 'people_table': people_table })
         
 def export_property_details(request, prop_id):
     order = request.GET.get('o', '')
@@ -709,3 +717,159 @@ def bulk_update_subject(request):
     locations = Location.objects.all()
     
     return render(request, 'admin/base/subject/bulk_update_subject.html', {'objects': objects, 'props': props, 'control_props': control_props, 'control_prop_values': control_prop_values, 'locations': locations})
+    
+def collectiondetailexport(request, collection_id):
+
+    # get the parameters
+    collection = get_object_or_404(Collection, pk=collection_id)
+    entity = request.GET.get('entity', '')
+    format = request.GET.get('format', '')
+    all = request.GET.get('a', '')
+    
+    filename = collection.title
+    
+    # subject export
+    if entity == 'subject':
+        filename += '_objects_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        qs = Subject.objects.filter(subjectcollection__collection = collection)
+                        
+    # location export
+    if entity == 'location':
+        filename += '_locations_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        qs = Location.objects.filter(locationcollection__collection = collection)
+        
+    # media export
+    if entity == 'media':
+        filename += '_media_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        qs = Media.objects.filter(mediacollection__collection = collection)
+
+    # person/org export
+    if entity == 'people':
+        filename += '_people_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        qs = PersonOrg.objects.filter(personorgcollection__collection = collection)        
+                        
+    if qs:
+        # json
+        if format == 'json':
+            if all == 'y':
+                if entity == 'location':
+                    serializer = LocationAdminSerializer(qs, many=True)
+                elif entity == 'media':
+                    serializer = MediaAdminSerializer(qs, many=True)
+                elif entity == 'people':
+                    serializer = PersonOrgAdminSerializer(qs, many=True)                
+                else:
+                    serializer = SubjectAdminSerializer(qs, many=True)
+            else:
+                if entity == 'location':
+                    serializer = LocationSerializer(qs, many=True)
+                elif entity == 'media':
+                    serializer = MediaSerializer(qs, many=True)
+                elif entity == 'people':
+                    serializer = PersonOrgSerializer(qs, many=True)                
+                else:
+                    serializer = SubjectSerializer(qs, many=True)            
+            response = JSONResponse(serializer.data)
+            response['Content-Disposition'] = 'attachment; filename="' + filename + '.json"'
+            return response
+            
+        # xml
+        elif format == 'xml':
+            if all == 'y':
+                if entity == 'location':
+                    serializer = LocationAdminSerializer(qs, many=True)
+                elif entity == 'media':
+                    serializer = MediaAdminSerializer(qs, many=True)
+                elif entity == 'people':
+                    serializer = PersonOrgAdminSerializer(qs, many=True)                 
+                else:
+                    serializer = SubjectAdminSerializer(qs, many=True)
+            else:
+                if entity == 'location':
+                    serializer = LocationSerializer(qs, many=True)
+                elif entity == 'media':
+                    serializer = MediaSerializer(qs, many=True)
+                elif entity == 'people':
+                    serializer = PersonOrgSerializer(qs, many=True)                 
+                else:
+                    serializer = SubjectSerializer(qs, many=True)
+            
+            response = XMLResponse(serializer.data)
+            response['Content-Disposition'] = 'attachment; filename="' + filename + '.xml"'
+            return response
+            
+        # csv - evil, evil, flattened csv
+        elif format == 'csv':
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename="' + filename + '.csv"'
+
+            writer = csv.writer(response)
+            titles = []
+            titles.append('__Title__')
+            titles.append('__URL__')
+            rows = []
+            for result in qs:
+                row = []
+                row_dict = {}
+                
+                # store title and url
+                row_dict[0] = result.title
+                row_dict[1] = result.get_full_absolute_url()
+                
+                # controlled properties
+                if entity == 'location':
+                    cps = result.locationcontrolproperty_set.all()
+                elif entity == 'media':
+                    cps = result.mediacontrolproperty_set.all()
+                elif entity == 'people':
+                    cps = result.personorgcontrolproperty_set.all()
+                else:
+                    cps = result.subjectcontrolproperty_set.all()
+                for each_prop in cps:
+                    if each_prop.control_property.visible:
+                        prop_name = each_prop.control_property.property.strip()
+                        prop_value = each_prop.control_property_value.title.strip()
+                        if not (prop_name in titles):
+                            column_index = len(titles)                        
+                            titles.append(prop_name)
+                        else:
+                            column_index = titles.index(prop_name)
+                            if column_index in row_dict:
+                                prop_value = row_dict[column_index] + '; ' + prop_value
+                        row_dict[column_index] = prop_value
+                
+                # free-form properties
+                if entity == 'location':
+                    ps = result.locationproperty_set.all()
+                elif entity == 'media':
+                    ps = result.mediaproperty_set.all()
+                elif entity == 'people':
+                    ps = result.personorgproperty_set.all()                    
+                else:
+                    ps = result.subjectproperty_set.all()                
+                for each_prop in ps:
+                    if each_prop.property.visible:
+                        prop_name = each_prop.property.property.strip()
+                        prop_value = each_prop.property_value.strip()
+                        if not (prop_name in titles):
+                            column_index = len(titles)                        
+                            titles.append(prop_name)
+                        else:
+                            column_index = titles.index(prop_name)
+                            if column_index in row_dict:
+                                prop_value = row_dict[column_index] + '; ' + prop_value
+                        row_dict[column_index] = prop_value                    
+                                
+                # store row in list
+                for i in range(len(titles)):
+                    if i in row_dict:
+                        row.append(row_dict[i])
+                    else:
+                        row.append('')
+                rows.append(row)
+
+            # write out the rows, starting with header
+            writer.writerow(titles)
+            for each_row in rows:
+                writer.writerow(each_row)
+            return response

@@ -35,6 +35,14 @@ def load_globals(key):
     return global_var.val
     
 @register.simple_tag    
+def load_content(key):
+    """ Returns the value of site content """
+
+    content = SiteContent.objects.get(variable = key)
+
+    return content.val
+    
+@register.simple_tag    
 def load_result_display_fields(fields, key):
     """ Selects the field to be displayed in result list """
 

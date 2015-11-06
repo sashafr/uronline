@@ -167,8 +167,7 @@
                         <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a>
                     </div>
                 </div>
-                <p class="copyright text-muted small">{% load_globals "footer_text" %}</p>
-                <p class="copyright text-muted small">* Please remember that UrOnline is a work in progress! We are still loading in data and updating the website. For updates on changes to the website, check out the <a href="{% url 'news' %}">dev blog</a>!</p>
+                <p class="copyright text-muted small">{% autoescape off %}{% load_content "footer_text" %}{% endautoescape %}</p>
             </div>
         </div>    
     </div>

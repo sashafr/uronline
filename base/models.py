@@ -169,18 +169,33 @@ class MediaType(models.Model):
 
     def __unicode__(self):
         return self.type
-        
-class Collection(models.Model):
-    """ Groupings of Entities """
 
-    title = models.CharField(max_length=60)
-    notes = models.TextField(blank = True)
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)    
-    owner = models.ForeignKey(User)
+class UploadBatch(models.Model):
+    """ For tracking batches of uploaded data. 
     
+    Not attached to the Data Upload so it will not be deleted if Data Upload is deleted.
+    """
+    
+    name = models.CharField(max_length = 255)
+    data_upload = models.PositiveIntegerField()
+
     def __unicode__(self):
-        return self.title        
+        return self.name
+        
+    def delete(self, *args, **kwargs):
+        """ Resets the UploadData file to not imported when data is deleted. """
+        
+        super(UploadBatch, self).delete(*args, **kwargs)
+        
+        uploads = DataUpload.objects.filter(pk=self.data_upload)
+        for upload in uploads:
+            upload.imported = False
+            upload.save()       
+        
+    class Meta:
+        verbose_name = 'Upload Batch'
+        verbose_name_plural = 'Upload Batches'
+        ordering = ['name']
 
 """ DESCRIPTIVE PROPERTY & CONTROLLED PROPERTY MODELS """
 
@@ -235,7 +250,7 @@ class DescriptiveProperty(models.Model):
     )
 
     property = models.CharField(max_length = 60)
-    notes = models.TextField(blank = True, help_text = "Please define this space to define the property.")
+    notes = models.TextField(blank = True, help_text = "Please use this space to define the property.")
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
     last_mod_by = models.ForeignKey(User)
@@ -371,6 +386,7 @@ class Subject(models.Model):
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
     last_mod_by = models.ForeignKey(User, blank = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
     
     # the following fields are set using the Result Properties values
     title1 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('subj_title1'))
@@ -385,7 +401,14 @@ class Subject(models.Model):
         
     def get_type(self):
         """ Used in templates in lieu of isInstance to tell which type of object is being referenced. """
-        return 'subject';
+        return 'subject'
+        
+    def has_image(self):
+        files = SubjectFile.objects.filter(subject = self, filetype__startswith = 'image')
+        if files:
+            return True
+        else:
+            return False
         
     def get_absolute_url(self):
         return reverse('subjectdetail', args=[str(self.id)])
@@ -444,6 +467,7 @@ class Location(MPTTModel):
     last_mod_by = models.ForeignKey(User, blank = True)
     type = models.ForeignKey(ObjectType, blank = True, null = True)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
     
     # the following fields are set using the Result Properties values
     title1 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('loc_title1'))
@@ -458,7 +482,14 @@ class Location(MPTTModel):
         
     def get_type(self):
         """ Used in templates in lieu of isInstance to tell which type of object is being referenced. """
-        return 'location';
+        return 'location'
+
+    def has_image(self):
+        files = LocationFile.objects.filter(location = self, filetype__startswith = 'image')
+        if files:
+            return True
+        else:
+            return False        
 
     def get_absolute_url(self):
         return reverse('locationdetail', args=[str(self.id)])
@@ -538,6 +569,7 @@ class Media(models.Model):
     last_mod_by = models.ForeignKey(User)
     type = models.ForeignKey(MediaType, blank = True, null = True, related_name = "MIME_type")
     bib_type = models.ForeignKey(MediaType, blank = True, null = True, related_name = "citation_type")
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
     
     # the following fields are set using the Result Properties values
     title1 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('med_title1'))
@@ -552,10 +584,14 @@ class Media(models.Model):
         
     def get_type(self):
         """ Used in templates in lieu of isInstance to tell which type of object is being referenced. """
-        return 'media';         
-        
-    def get_properties(self):
-        return self.mediaproperty_set.all()
+        return 'media'
+
+    def has_image(self):
+        files = MediaFile.objects.filter(media = self, filetype__startswith = 'image')
+        if files:
+            return True
+        else:
+            return False        
 
     def get_absolute_url(self):
         return reverse('mediadetail', args=[str(self.id)])
@@ -603,408 +639,91 @@ class Media(models.Model):
         verbose_name = 'media'
         verbose_name_plural = 'media'
         ordering = ['title1']
-        
-""" DESCRIPTIVE PROPERTIES OF ARCHAEOLOGICAL ENTITY MODELS """        
-        
-class SubjectProperty(models.Model):
-    """ Free-Form Properties of Subjects """
-
-    subject = models.ForeignKey(Subject)
-    property = models.ForeignKey(DescriptiveProperty)
-    property_value = models.TextField()
-    notes = models.TextField(blank = True, help_text = "This note will appear on the public site as a footnote. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Footnote Citation")
-    inline_notes = models.TextField(blank = True, help_text = "This note will appear on the public site in line with the data. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Inline Citation")
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User, blank = True)
-
-    class Meta:
-        verbose_name = 'Free-Form Object Property'    
-        verbose_name_plural = 'Free-Form Object Properties'
-        ordering = ['property__order']
-
-    def __unicode__(self):
-        return self.property.property + ": " + self.property_value
-        
-    def save(self, *args, **kwargs):
-    
-        # save the property first so that when the display fields are generated below,
-        # it has the new property value
-        super(SubjectProperty, self).save(*args, **kwargs)
-        
-        # this has to be called after every property save so that titles can be regenerated
-        self.subject.save()
-    
-    def delete(self, *args, **kwargs):
-        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
-        
-        super(SubjectProperty, self).delete(*args, **kwargs)
-        
-        self.subject.save()
-        
-class SubjectControlProperty(models.Model):
-    """ Controlled Properties of Subjects """
-
-    subject = models.ForeignKey(Subject)
-    control_property = models.ForeignKey(DescriptiveProperty)
-    control_property_value = models.ForeignKey(ControlField)
-    notes = models.TextField(blank = True, help_text = "Please use this field for citations, notes on certainty, and attribution of this piece of information.")
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User, blank = True)
-
-    class Meta:
-        verbose_name = 'Controlled Object Property'    
-        verbose_name_plural = 'Controlled Object Properties'    
-
-    def __unicode__(self):
-        return self.control_property.property + ': ' + self.control_property_value.title
-        
-    def save(self, *args, **kwargs):
-    
-        # save the property first so that when the display fields are generated below,
-        # it has the new property value
-        super(SubjectControlProperty, self).save(*args, **kwargs)
-        
-        # this has to be called after every property save so that titles can be regenerated
-        self.subject.save()
-    
-    def delete(self, *args, **kwargs):
-        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
-        
-        super(SubjectControlProperty, self).delete(*args, **kwargs)
-        
-        self.subject.save()
-        
-class LocationProperty(models.Model):
-    """ Free-Form Properties of Locations """
-
-    location = models.ForeignKey(Location)
-    property = models.ForeignKey(DescriptiveProperty)
-    property_value = models.TextField()
-    notes = models.TextField(blank = True, help_text = "This note will appear on the public site as a footnote. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Footnote Citation")
-    inline_notes = models.TextField(blank = True, help_text = "This note will appear on the public site in line with the data. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Inline Citation")
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User, blank = True)
-
-    class Meta:
-        verbose_name = 'Free-Form Location Property'    
-        verbose_name_plural = 'Free-Form Location Properties'
-        ordering = ['property__order']   
-
-    def __unicode__(self):
-        return self.property.property + ": " + self.property_value
-
-    def save(self, *args, **kwargs):
-    
-        # save the property first so that when the display fields are generated below,
-        # it has the new property value
-        super(LocationProperty, self).save(*args, **kwargs)
-        
-        # this has to be called after every property save so that titles can be regenerated
-        self.location.save()
-    
-    def delete(self, *args, **kwargs):
-        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
-        
-        super(LocationProperty, self).delete(*args, **kwargs)
-        
-        self.location.save()        
-
-class LocationControlProperty(models.Model):
-    """ Controlled Properties of Locations """
-
-    location = models.ForeignKey(Location)
-    control_property = models.ForeignKey(DescriptiveProperty)
-    control_property_value = models.ForeignKey(ControlField)
-    notes = models.TextField(blank = True, help_text = "Please use this field for citations, notes on certainty, and attribution of this piece of information.")
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User, blank = True)
-
-    class Meta:
-        verbose_name = 'Controlled Location Property'    
-        verbose_name_plural = 'Controlled Location Properties'    
-
-    def __unicode__(self):
-        return self.control_property.property + ': ' + self.control_property_value.title
-        
-    def save(self, *args, **kwargs):
-    
-        # save the property first so that when the display fields are generated below,
-        # it has the new property value
-        super(LocationControlProperty, self).save(*args, **kwargs)
-        
-        # this has to be called after every property save so that titles can be regenerated
-        self.location.save()
-    
-    def delete(self, *args, **kwargs):
-        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
-        
-        super(LocationControlProperty, self).delete(*args, **kwargs)
-        
-        self.location.save()        
-
-""" ENTITY MODEL FILE RELATIONS """
-
-class SubjectFile(models.Model):
-    subject = models.ForeignKey(Subject)
-    rsid = models.IntegerField()
-    thumbnail = models.BooleanField(default=False)
-    filetype = models.ForeignKey(MediaType)
-    collection = models.ForeignKey(Collection, blank = True, null = True)
-    
-class LocationFile(models.Model):
-    location = models.ForeignKey(Location)
-    rsid = models.IntegerField()
-    thumbnail = models.BooleanField(default=False)
-    filetype = models.ForeignKey(MediaType)
-    collection = models.ForeignKey(Collection, blank = True, null = True)
-
-""" SITE SETTINGS ETC MODELS """
-
-class AdminPost(models.Model):
-    """ Admin forum posts. """
-
-    title = models.CharField(max_length=255)
-    body = models.TextField()
-    created = models.DateTimeField(auto_now_add=True)
-    published = models.BooleanField(default=True)
-    author = models.ForeignKey(User)
-    subject = models.ManyToManyField(Subject, blank = True, verbose_name="attached objects")
-        
-    class Meta:
-        ordering = ['-created']
-        verbose_name = 'Admin Forum Post'
-        verbose_name_plural = 'Admin Forum Posts'          
-            
-    def __unicode__(self):
-        return self.title
-        
-class AdminComment(models.Model):
-    """ Comments on admin forum posts """
-    
-    post = models.ForeignKey(AdminPost)
-    body = models.TextField()
-    created = models.DateTimeField(auto_now_add=True)
-    published = models.BooleanField(default=True)
-    author = models.ForeignKey(User)
-        
-    class Meta:
-        ordering = ['-created']
-        verbose_name = 'Comment'
-        verbose_name_plural = 'Comments'          
-            
-    def __unicode__(self):
-        return 'Comment on ' + self.post.title + ' by ' + self.author.username
-
-"""Variables used by pages throughout the site"""
-class GlobalVars(models.Model):
-    variable = models.CharField(max_length = 200)
-    val = models.TextField(verbose_name='Value')
-    human_title = models.CharField(max_length = 200, verbose_name='Setting')
-	
-    class Meta:
-        verbose_name = 'Site Setting'
-        verbose_name_plural = 'Site Settings'
-    
-    def __unicode__(self):
-        return self.human_title
-        
-class SiteContent(models.Model):
-    variable = models.CharField(max_length = 200)
-    val = models.TextField(verbose_name='Value')
-    human_title = models.CharField(max_length = 200, verbose_name='Content Text')
-	
-    class Meta:
-        verbose_name = 'Site Content'
-        verbose_name_plural = 'Site Content'
-    
-    def __unicode__(self):
-        return self.human_title        
-        
-"""Featured images for home page"""
-# consider removing
-class FeaturedImgs(models.Model):
-    uri = models.URLField()
-    description = models.CharField(max_length = 200)
-
-    class Meta:
-        verbose_name = 'Featured Image'
-        verbose_name_plural = 'Featured Images'
-        
-    def __unicode__(self):
-        return self.description
-        
-"""Types of relationships between objects"""
-class Relations(models.Model):
-    relation = models.CharField(max_length = 60)
-    notes = models.TextField(blank = True)
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User)    
-
-    def __unicode__(self):
-        return self.relation
-        
-    class Meta:
-        verbose_name_plural = 'relations'
-
-"""Descriptive Properties of Media Files"""        
-class MediaProperty(models.Model):
-    media = models.ForeignKey(Media)
-    property = models.ForeignKey(DescriptiveProperty)
-    property_value = models.TextField()
-    notes = models.TextField(blank = True, help_text = "Please use this field for citations, notes on certainty, and attribution of this piece of information.")
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User)   
-
-    def __unicode__(self):
-        return self.property_value
-        
-    def get_properties(self):
-        return self.media.get_properties()
-
-    class Meta:
-        verbose_name = 'Media Property'
-        verbose_name_plural = 'Media Properties' 
-                        
-"""The people and institutions that participated in a project"""        
+               
 class PersonOrg(models.Model):
-    title = models.CharField(max_length = 100)
+    """ The people and institutions that participated in a project. """ 
+
+    title = models.CharField(max_length = 100, default = '(none)')
     notes = models.TextField(blank = True, help_text = "This field is used INTERALLY ONLY for general notes on this person/organization meant for project team members only.")
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
     last_mod_by = models.ForeignKey(User)
-    
-    class Meta:
-        verbose_name = 'Person/Organization'
-        verbose_name_plural = 'People/Organizations'    
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
+
+    # the following fields are set using the Result Properties values
+    title1 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('po_title1'))
+    title2 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('po_title2'))
+    title3 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('po_title3'))
+    desc1 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('po_desc1'))
+    desc2 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('po_desc2'))
+    desc3 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('po_desc3'))
     
     def __unicode__(self):
         return self.title
-        
-    def get_properties(self):
-        return self.personorgproperty_set.all()
-       
+
     def get_type(self):
-        return 'person_org';       
+        """ Used in templates in lieu of isInstance to tell which type of object is being referenced. """
+        return 'person_org'  
 
-"""Descriptive Properties of People and Organizations"""        
-class PersonOrgProperty(models.Model):
-    person_org = models.ForeignKey(PersonOrg)
-    property = models.ForeignKey(DescriptiveProperty)
-    property_value = models.TextField()
-    notes = models.TextField(blank = True, help_text = "Please use this field for citations, notes on certainty, and attribution of this piece of information.")
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User)
+    def has_image(self):
+        files = PersonOrgFile.objects.filter(person_org = self, filetype__startswith = 'image')
+        if files:
+            return True
+        else:
+            return False        
 
-    class Meta:
-        verbose_name = 'PersonOrg Property'
-        verbose_name_plural = 'PersonOrg Properties'    
-
-    def __unicode__(self):
-        return self.property_value
+    def get_absolute_url(self):
+        return reverse('personorgdetail', args=[str(self.id)])
         
-    def get_properties(self):
-        return self.person_org.get_properties()
-                
-"""Related media and subjects"""
-class MediaSubjectRelations(models.Model):
-    media = models.ForeignKey(Media)
-    subject = models.ForeignKey(Subject)
-    relation_type = models.ForeignKey(Relations)
-    notes = models.TextField(blank = True, help_text = "Please use this field for specific page or plate information, etc, referring to where this object is mentioned in this media item.")
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User, blank = True)
-
-    def __unicode__(self):
-        return self.media.title + ":" + self.subject.title
+    def get_full_absolute_url(self):
+        domain = settings.ALLOWED_HOSTS[0]
         
-    class Meta:
-        verbose_name = 'Media-Object Relation'
-        verbose_name_plural = 'Media-Object Relations'
+        if domain.startswith('.'):
+            domain = domain[1:]
+
+        return 'http://%s%s' % (domain, self.get_absolute_url())
+
+    def save(self, *args, **kwargs):
+        """ Auto fills the main title field. If object does not have a value for title1, title2, or title3,
+        it draws from any property, preferencing the property based on the Descriptive Property's order """
         
-"""Related media and people"""
-class MediaPersonOrgRelations(models.Model):
-    media = models.ForeignKey(Media)
-    person_org = models.ForeignKey(PersonOrg)
-    relation_type = models.ForeignKey(Relations)
-    notes = models.TextField(blank = True, help_text = "Please use this field for specific page or plate information, etc, referring to where this Person/Organization is mentioned in this media item.")
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User)
-
-    def __unicode__(self):
-        return self.media.title + ":" + self.person_org.title
-
-    class Meta:
-        verbose_name = 'Media-Person/Organization Relation'
-        verbose_name_plural = 'Media-Person/Organization Relations'        
+        # set the result properties
+        result_props = get_display_fields(self, 'po')
+        self.title1 = result_props['title1']
+        self.title2 = result_props['title2']
+        self.title3 = result_props['title3']
+        self.desc1 = result_props['desc1']
+        self.desc2 = result_props['desc2']
+        self.desc3 = result_props['desc3']
         
-"""Related subjects"""
-class SubjectSubjectRelations(models.Model):
-    subject1 = models.ForeignKey(Subject, related_name='subject1')
-    subject2 = models.ForeignKey(Subject, related_name='subject2')
-    relation_type = models.ForeignKey(Relations)
-    notes = models.TextField(blank = True)
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User)
-
-    def __unicode__(self):
-        return self.subject1.title + ":" + self.subject2.title 
+        # set the title
+        self.title = get_new_title(self, 'people')
         
-    class Meta:
-        verbose_name = 'Object-Object Relation'
-        verbose_name_plural = 'Object-Object Relations'    
+        super(PersonOrg, self).save(*args, **kwargs)
         
-"""Related media"""
-class MediaMediaRelations(models.Model):
-    media1 = models.ForeignKey(Media, related_name='media1')
-    media2 = models.ForeignKey(Media, related_name='media2')
-    relation_type = models.ForeignKey(Relations)
-    notes = models.TextField(blank = True)
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User)
-
-    def __unicode__(self):
-        return self.media1.title + ":" + self.media2.title
-
-"""Related persons and organizations"""
-class PersonOrgPersonOrgRelations(models.Model):
-    person_org1 = models.ForeignKey(PersonOrg, related_name='person_org1')
-    person_org2 = models.ForeignKey(PersonOrg, related_name='person_org2')
-    relation_type = models.ForeignKey(Relations)
-    notes = models.TextField(blank = True)
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User)
-
-    def __unicode__(self):
-        return self.person_org1.title + ":" + self.person_org2.title 
+    def get_thumbnail(self):
+        """ Returns thumbnail for this object, or if none is set, returns stock "no image". """
         
-"""Object Status"""
-class Status(models.Model):
-    status = models.CharField(max_length = 60, blank = True)
-    notes = models.TextField(blank = True)
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User, blank = True)
-
-    def __unicode__(self):
-        return self.status 
+        resource_uri = GlobalVars.objects.get(pk=11)
+        no_img = GlobalVars.objects.get(pk=12).val
+        thumbs = PersonOrgFile.objects.filter(person_org = self, thumbnail = True)
+        if thumbs:
+            return resource_uri.val + str(thumbs[0].rsid)
+        else:
+            return no_img
+    get_thumbnail.short_description = 'Person/Organization'
+    get_thumbnail.allow_tags = True        
     
     class Meta:
-        verbose_name = 'Status'    
-        verbose_name_plural = 'Status'        
+        verbose_name = 'Person/Organization'
+        verbose_name_plural = 'People/Organizations'
+        ordering = ['title1']
         
+""" LINKED DATA MODELS """
+
 class LinkedDataSource(models.Model):
+    """ Base urls for all linked data. """
+    
     title = models.CharField(max_length = 60, blank = True)
     link = models.URLField(blank = True)
 
@@ -1058,7 +777,817 @@ class PersonOrgLinkedData(models.Model):
     
     class Meta:
         verbose_name = 'Linked Person/Organization Data'
-        verbose_name_plural = 'Linked Person/Organization Data'
+        verbose_name_plural = 'Linked Person/Organization Data'        
+        
+""" DESCRIPTIVE PROPERTIES OF ARCHAEOLOGICAL ENTITY MODELS """        
+        
+class SubjectProperty(models.Model):
+    """ Free-Form Properties of Subjects """
+
+    subject = models.ForeignKey(Subject)
+    property = models.ForeignKey(DescriptiveProperty)
+    property_value = models.TextField()
+    notes = models.TextField(blank = True, help_text = "This note will appear on the public site as a footnote. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Footnote Citation")
+    inline_notes = models.TextField(blank = True, help_text = "This note will appear on the public site in line with the data. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Inline Citation")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
+
+    class Meta:
+        verbose_name = 'Free-Form Object Property'    
+        verbose_name_plural = 'Free-Form Object Properties'
+        ordering = ['property__order']
+
+    def __unicode__(self):
+        return self.property.property + ": " + self.property_value
+        
+    def save(self, *args, **kwargs):
+    
+        # save the property first so that when the display fields are generated below,
+        # it has the new property value
+        super(SubjectProperty, self).save(*args, **kwargs)
+        
+        # this has to be called after every property save so that titles can be regenerated
+        self.subject.save()
+    
+    def delete(self, *args, **kwargs):
+        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
+        
+        super(SubjectProperty, self).delete(*args, **kwargs)
+        
+        self.subject.save()
+        
+class SubjectControlProperty(models.Model):
+    """ Controlled Properties of Subjects """
+
+    subject = models.ForeignKey(Subject)
+    control_property = models.ForeignKey(DescriptiveProperty)
+    control_property_value = models.ForeignKey(ControlField)
+    notes = models.TextField(blank = True, help_text = "This note will appear on the public site as a footnote. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Footnote Citation")
+    inline_notes = models.TextField(blank = True, help_text = "This note will appear on the public site in line with the data. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Inline Citation")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
+
+    class Meta:
+        verbose_name = 'Controlled Object Property'    
+        verbose_name_plural = 'Controlled Object Properties'    
+
+    def __unicode__(self):
+        return self.control_property.property + ': ' + self.control_property_value.title
+        
+    def save(self, *args, **kwargs):
+    
+        # save the property first so that when the display fields are generated below,
+        # it has the new property value
+        super(SubjectControlProperty, self).save(*args, **kwargs)
+        
+        # this has to be called after every property save so that titles can be regenerated
+        self.subject.save()
+    
+    def delete(self, *args, **kwargs):
+        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
+        
+        super(SubjectControlProperty, self).delete(*args, **kwargs)
+        
+        self.subject.save()
+        
+class LocationProperty(models.Model):
+    """ Free-Form Properties of Locations """
+
+    location = models.ForeignKey(Location)
+    property = models.ForeignKey(DescriptiveProperty)
+    property_value = models.TextField()
+    notes = models.TextField(blank = True, help_text = "This note will appear on the public site as a footnote. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Footnote Citation")
+    inline_notes = models.TextField(blank = True, help_text = "This note will appear on the public site in line with the data. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Inline Citation")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
+
+    class Meta:
+        verbose_name = 'Free-Form Location Property'    
+        verbose_name_plural = 'Free-Form Location Properties'
+        ordering = ['property__order']   
+
+    def __unicode__(self):
+        return self.property.property + ": " + self.property_value
+
+    def save(self, *args, **kwargs):
+    
+        # save the property first so that when the display fields are generated below,
+        # it has the new property value
+        super(LocationProperty, self).save(*args, **kwargs)
+        
+        # this has to be called after every property save so that titles can be regenerated
+        self.location.save()
+    
+    def delete(self, *args, **kwargs):
+        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
+        
+        super(LocationProperty, self).delete(*args, **kwargs)
+        
+        self.location.save()        
+
+class LocationControlProperty(models.Model):
+    """ Controlled Properties of Locations """
+
+    location = models.ForeignKey(Location)
+    control_property = models.ForeignKey(DescriptiveProperty)
+    control_property_value = models.ForeignKey(ControlField)
+    notes = models.TextField(blank = True, help_text = "This note will appear on the public site as a footnote. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Footnote Citation")
+    inline_notes = models.TextField(blank = True, help_text = "This note will appear on the public site in line with the data. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Inline Citation")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
+
+    class Meta:
+        verbose_name = 'Controlled Location Property'    
+        verbose_name_plural = 'Controlled Location Properties'    
+
+    def __unicode__(self):
+        return self.control_property.property + ': ' + self.control_property_value.title
+        
+    def save(self, *args, **kwargs):
+    
+        # save the property first so that when the display fields are generated below,
+        # it has the new property value
+        super(LocationControlProperty, self).save(*args, **kwargs)
+        
+        # this has to be called after every property save so that titles can be regenerated
+        self.location.save()
+    
+    def delete(self, *args, **kwargs):
+        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
+        
+        super(LocationControlProperty, self).delete(*args, **kwargs)
+        
+        self.location.save()
+                
+class MediaProperty(models.Model):
+    """ Free-Form Properties of Media """
+
+    media = models.ForeignKey(Media)
+    property = models.ForeignKey(DescriptiveProperty)
+    property_value = models.TextField()
+    notes = models.TextField(blank = True, help_text = "This note will appear on the public site as a footnote. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Footnote Citation")
+    inline_notes = models.TextField(blank = True, help_text = "This note will appear on the public site in line with the data. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Inline Citation")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
+
+    class Meta:
+        verbose_name = 'Free-Form Media Property'
+        verbose_name_plural = 'Free-Form Media Properties'
+        ordering = ['property__order']
+    
+    def __unicode__(self):
+        return self.property.property + ": " + self.property_value
+        
+    def get_properties(self):
+        return self.media.get_properties()
+
+    def save(self, *args, **kwargs):
+    
+        # save the property first so that when the display fields are generated below,
+        # it has the new property value
+        super(MediaProperty, self).save(*args, **kwargs)
+        
+        # this has to be called after every property save so that titles can be regenerated
+        self.media.save()
+    
+    def delete(self, *args, **kwargs):
+        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
+        
+        super(MediaProperty, self).delete(*args, **kwargs)
+        
+        self.media.save()
+
+class MediaControlProperty(models.Model):
+    """ Controlled Properties of Media """
+
+    media = models.ForeignKey(Media)
+    control_property = models.ForeignKey(DescriptiveProperty)
+    control_property_value = models.ForeignKey(ControlField)
+    notes = models.TextField(blank = True, help_text = "This note will appear on the public site as a footnote. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Footnote Citation")
+    inline_notes = models.TextField(blank = True, help_text = "This note will appear on the public site in line with the data. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Inline Citation")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
+
+    class Meta:
+        verbose_name = 'Controlled Media Property'    
+        verbose_name_plural = 'Controlled Media Properties'    
+
+    def __unicode__(self):
+        return self.control_property.property + ': ' + self.control_property_value.title
+        
+    def save(self, *args, **kwargs):
+    
+        # save the property first so that when the display fields are generated below,
+        # it has the new property value
+        super(MediaControlProperty, self).save(*args, **kwargs)
+        
+        # this has to be called after every property save so that titles can be regenerated
+        self.media.save()
+    
+    def delete(self, *args, **kwargs):
+        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
+        
+        super(MediaControlProperty, self).delete(*args, **kwargs)
+        
+        self.media.save()        
+        
+class PersonOrgProperty(models.Model):
+    """ Free-Form Properties of People and Organizations """
+
+    person_org = models.ForeignKey(PersonOrg)
+    property = models.ForeignKey(DescriptiveProperty)
+    property_value = models.TextField()
+    notes = models.TextField(blank = True, help_text = "This note will appear on the public site as a footnote. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Footnote Citation")
+    inline_notes = models.TextField(blank = True, help_text = "This note will appear on the public site in line with the data. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Inline Citation")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
+
+    class Meta:
+        verbose_name = 'Free-Form Person/Organization Property'
+        verbose_name_plural = 'Free-Form Person/Organization Properties'    
+        ordering = ['property__order']
+
+    def __unicode__(self):
+        return self.property.property + ": " + self.property_value
+        
+    def get_properties(self):
+        return self.person_org.get_properties()
+
+    def save(self, *args, **kwargs):
+    
+        # save the property first so that when the display fields are generated below,
+        # it has the new property value
+        super(PersonOrgProperty, self).save(*args, **kwargs)
+        
+        # this has to be called after every property save so that titles can be regenerated
+        self.person_org.save()
+    
+    def delete(self, *args, **kwargs):
+        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
+        
+        super(PersonOrgProperty, self).delete(*args, **kwargs)
+        
+        self.person_org.save()
+        
+class PersonOrgControlProperty(models.Model):
+    """ Controlled Properties of People & Organizations """
+
+    person_org = models.ForeignKey(PersonOrg)
+    control_property = models.ForeignKey(DescriptiveProperty)
+    control_property_value = models.ForeignKey(ControlField)
+    notes = models.TextField(blank = True, help_text = "This note will appear on the public site as a footnote. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Footnote Citation")
+    inline_notes = models.TextField(blank = True, help_text = "This note will appear on the public site in line with the data. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Inline Citation")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
+
+    class Meta:
+        verbose_name = 'Controlled Person/Organization Property'    
+        verbose_name_plural = 'Controlled Person/Organization Properties'    
+
+    def __unicode__(self):
+        return self.control_property.property + ': ' + self.control_property_value.title
+        
+    def save(self, *args, **kwargs):
+    
+        # save the property first so that when the display fields are generated below,
+        # it has the new property value
+        super(PersonOrgControlProperty, self).save(*args, **kwargs)
+        
+        # this has to be called after every property save so that titles can be regenerated
+        self.person_org.save()
+    
+    def delete(self, *args, **kwargs):
+        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
+        
+        super(PersonOrgControlProperty, self).delete(*args, **kwargs)
+        
+        self.person_org.save()
+
+""" ENTITY COLLECTIONS """
+
+class Collection(models.Model):
+    """ Groupings of Entities """
+
+    title = models.CharField(max_length=60)
+    notes = models.TextField(blank = True)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)    
+    owner = models.ForeignKey(User)
+    
+    def __unicode__(self):
+        return self.title
+        
+    def get_absolute_url(self):
+        return reverse('collectiondetail', args=[str(self.id)])
+        
+    class Meta:
+        ordering = ['title']
+
+class SubjectCollection(models.Model):
+    subject = models.ForeignKey(Subject)
+    collection = models.ForeignKey(Collection)
+    notes = models.TextField(blank = True)
+    order = models.PositiveIntegerField(blank = True, default = 0)
+    
+    def __unicode__(self):
+        return self.subject.title + " [Collection: " + self.collection.title + "]"
+        
+    def get_thumbnail(self):
+        return self.subject.get_thumbnail()
+    get_thumbnail.short_description = 'Object'
+    get_thumbnail.allow_tags = True    
+        
+    def get_thumbnail_admin(self):
+        resource_uri = GlobalVars.objects.get(pk=13).val
+        no_img = GlobalVars.objects.get(pk=12).val
+        thumbs = SubjectFile.objects.filter(subject = self.subject, thumbnail = True)
+        if thumbs:
+            resource_uri += str(thumbs[0].rsid)
+        else:
+            resource_uri = no_img    
+        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(resource_uri, self.subject.get_thumbnail())
+    get_thumbnail_admin.short_description = 'Image'
+    get_thumbnail_admin.allow_tags = True
+
+    class Meta:
+        verbose_name = 'Collection Item (Object)'
+        verbose_name_plural = 'Collection Items (Object)'
+        ordering = ['order']
+        
+class LocationCollection(models.Model):
+    location = models.ForeignKey(Location)
+    collection = models.ForeignKey(Collection)
+    notes = models.TextField(blank = True)
+    order = models.PositiveIntegerField(blank = True, default = 0)
+    
+    def __unicode__(self):
+        return self.location.title + " [Collection: " + self.collection.title + "]"
+        
+    def get_thumbnail(self):
+        return self.location.get_thumbnail()
+    get_thumbnail.short_description = 'Location'
+    get_thumbnail.allow_tags = True    
+        
+    def get_thumbnail_admin(self):
+        resource_uri = GlobalVars.objects.get(pk=13).val
+        no_img = GlobalVars.objects.get(pk=12).val
+        thumbs = LocationFile.objects.filter(location = self.location, thumbnail = True)
+        if thumbs:
+            resource_uri += str(thumbs[0].rsid)
+        else:
+            resource_uri = no_img    
+        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(resource_uri, self.location.get_thumbnail())
+    get_thumbnail_admin.short_description = 'Image'
+    get_thumbnail_admin.allow_tags = True        
+        
+    class Meta:
+        verbose_name = 'Collection Item (Location)'
+        verbose_name_plural = 'Collection Items (Location)'
+        ordering = ['order']        
+        
+class MediaCollection(models.Model):
+    media = models.ForeignKey(Media)
+    collection = models.ForeignKey(Collection)
+    notes = models.TextField(blank = True)
+    order = models.PositiveIntegerField(blank = True, default = 0)
+    
+    def __unicode__(self):
+        return self.media.title + " [Collection: " + self.collection.title + "]"
+        
+    def get_thumbnail(self):
+        return self.media.get_thumbnail()
+    get_thumbnail.short_description = 'Media'
+    get_thumbnail.allow_tags = True    
+        
+    def get_thumbnail_admin(self):
+        resource_uri = GlobalVars.objects.get(pk=13).val
+        no_img = GlobalVars.objects.get(pk=12).val
+        thumbs = MediaFile.objects.filter(media = self.media, thumbnail = True)
+        if thumbs:
+            resource_uri += str(thumbs[0].rsid)
+        else:
+            resource_uri = no_img    
+        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(resource_uri, self.media.get_thumbnail())
+    get_thumbnail_admin.short_description = 'Image'
+    get_thumbnail_admin.allow_tags = True        
+        
+    class Meta:
+        verbose_name = 'Collection Item (Media)'
+        verbose_name_plural = 'Collection Items (Media)'
+        ordering = ['order']
+
+class PersonOrgCollection(models.Model):
+    person_org = models.ForeignKey(PersonOrg)
+    collection = models.ForeignKey(Collection)
+    notes = models.TextField(blank = True)
+    order = models.PositiveIntegerField(blank = True, default = 0)
+    
+    def __unicode__(self):
+        return self.person_org.title + " [Collection: " + self.collection.title + "]"
+        
+    def get_thumbnail(self):
+        return self.person_org.get_thumbnail()
+    get_thumbnail.short_description = 'Person/Organization'
+    get_thumbnail.allow_tags = True    
+        
+    def get_thumbnail_admin(self):
+        resource_uri = GlobalVars.objects.get(pk=13).val
+        no_img = GlobalVars.objects.get(pk=12).val
+        thumbs = PersonOrgFile.objects.filter(person_org = self.person_org, thumbnail = True)
+        if thumbs:
+            resource_uri += str(thumbs[0].rsid)
+        else:
+            resource_uri = no_img    
+        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(resource_uri, self.person_org.get_thumbnail())
+    get_thumbnail_admin.short_description = 'Image'
+    get_thumbnail_admin.allow_tags = True        
+        
+    class Meta:
+        verbose_name = 'Collection Item (Person/Organization)'
+        verbose_name_plural = 'Collection Items (Person/Organization)'
+        ordering = ['order']          
+
+""" ENTITY MODEL FILE RELATIONS """
+
+class SubjectFile(models.Model):
+    """ Stores relations between files stored in DAM and Subjects """
+
+    subject = models.ForeignKey(Subject)
+    rsid = models.IntegerField()
+    thumbnail = models.BooleanField(default=False)
+    filetype = models.ForeignKey(MediaType)
+    collection = models.ForeignKey(Collection, blank = True, null = True)
+    
+class LocationFile(models.Model):
+    """ Stores relations between files stored in DAM and Locations """
+
+    location = models.ForeignKey(Location)
+    rsid = models.IntegerField()
+    thumbnail = models.BooleanField(default=False)
+    filetype = models.ForeignKey(MediaType)
+    collection = models.ForeignKey(Collection, blank = True, null = True)
+    
+class MediaFile(models.Model):
+    """ Stores relations between files stored in DAM and Media """
+
+    media = models.ForeignKey(Media)
+    rsid = models.IntegerField()
+    thumbnail = models.BooleanField(default=False)
+    filetype = models.ForeignKey(MediaType)
+    collection = models.ForeignKey(Collection, blank = True, null = True)
+
+class PersonOrgFile(models.Model):
+    """ Stores relations between files stored in DAM and People """
+
+    person_org = models.ForeignKey(PersonOrg)
+    rsid = models.IntegerField()
+    thumbnail = models.BooleanField(default=False)
+    filetype = models.ForeignKey(MediaType)
+    collection = models.ForeignKey(Collection, blank = True, null = True)
+
+""" ENTITY RELATIONS """
+
+class Relations(models.Model):
+    """ Types of relationships between objects """
+
+    relation = models.CharField(max_length = 60)
+    notes = models.TextField(blank = True)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User)    
+
+    def __unicode__(self):
+        return self.relation
+        
+    class Meta:
+        verbose_name_plural = 'relations'
+                
+class MediaSubjectRelations(models.Model):
+    """ Related media and subjects """
+
+    media = models.ForeignKey(Media)
+    subject = models.ForeignKey(Subject)
+    relation_type = models.ForeignKey(Relations)
+    notes = models.TextField(blank = True, help_text = "Please use this field for specific page or plate information, etc, referring to where this object is mentioned in this media item.")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
+
+    def __unicode__(self):
+        return self.media.title + ":" + self.subject.title
+        
+    class Meta:
+        verbose_name = 'Media-Object Relation'
+        verbose_name_plural = 'Media-Object Relations'
+        
+class MediaPersonOrgRelations(models.Model):
+    """ Related media and people """
+
+    media = models.ForeignKey(Media)
+    person_org = models.ForeignKey(PersonOrg)
+    relation_type = models.ForeignKey(Relations)
+    notes = models.TextField(blank = True, help_text = "Please use this field for specific page or plate information, etc, referring to where this Person/Organization is mentioned in this media item.")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
+
+    def __unicode__(self):
+        return self.media.title + ":" + self.person_org.title
+
+    class Meta:
+        verbose_name = 'Media-Person/Organization Relation'
+        verbose_name_plural = 'Media-Person/Organization Relations'
+        
+class MediaLocationRelations(models.Model):
+    """ Related media and locations """
+
+    media = models.ForeignKey(Media)
+    location = models.ForeignKey(Location)
+    relation_type = models.ForeignKey(Relations)
+    notes = models.TextField(blank = True, help_text = "Please use this field for specific page or plate information, etc, referring to where this location is mentioned in this media item.")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
+
+    def __unicode__(self):
+        return self.media.title + ":" + self.location.title
+        
+    class Meta:
+        verbose_name = 'Media-Location Relation'
+        verbose_name_plural = 'Media-Location Relations'        
+
+class LocationSubjectRelations(models.Model):
+    """ Related Subjects and Locations """
+
+    location = models.ForeignKey(Location)
+    subject = models.ForeignKey(Subject)
+    relation_type = models.ForeignKey(Relations, blank = True, null = True)
+    notes = models.TextField(blank = True, help_text = "Please use this field for more specific information about where this object was found within this context, as well as citations, notes on certainty, and attribution of this piece of information.")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
+
+    def __unicode__(self):
+        return self.location.title + ":" + self.subject.title
+        
+    class Meta:
+        verbose_name = 'Location-Object Relation'
+        verbose_name_plural = 'Location-Object Relations'
+
+class LocationPersonOrgRelations(models.Model):
+    """ Related locations and people """
+
+    location = models.ForeignKey(Location)
+    person_org = models.ForeignKey(PersonOrg)
+    relation_type = models.ForeignKey(Relations)
+    notes = models.TextField(blank = True, help_text = "Please use this field for specific page or plate information, etc, referring to where this Person/Organization is mentioned in this media item.")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
+
+    def __unicode__(self):
+        return self.location.title + ":" + self.person_org.title
+
+    class Meta:
+        verbose_name = 'Location-Person/Organization Relation'
+        verbose_name_plural = 'Location-Person/Organization Relations'
+
+class SubjectPersonOrgRelations(models.Model):
+    """ Related subjects and people """
+
+    subject = models.ForeignKey(Subject)
+    person_org = models.ForeignKey(PersonOrg)
+    relation_type = models.ForeignKey(Relations)
+    notes = models.TextField(blank = True, help_text = "Please use this field for specific page or plate information, etc, referring to where this Person/Organization is mentioned in this media item.")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
+
+    def __unicode__(self):
+        return self.subject.title + ":" + self.person_org.title
+
+    class Meta:
+        verbose_name = 'Object-Person/Organization Relation'
+        verbose_name_plural = 'Object-Person/Organization Relations'        
+        
+"""Related media"""
+class MediaMediaRelations(models.Model):
+    media1 = models.ForeignKey(Media, related_name='media1')
+    media2 = models.ForeignKey(Media, related_name='media2')
+    relation_type = models.ForeignKey(Relations)
+    notes = models.TextField(blank = True)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User)
+
+    def __unicode__(self):
+        return self.media1.title + ":" + self.media2.title        
+
+""" SITE SETTINGS ETC MODELS """
+        
+class DataUpload(models.Model):
+    """ Files uploaded for importing data into the system. """
+    
+    SUBJECT = 'S'
+    LOCATION = 'L'
+    MEDIA = 'M'
+    PERSON_ORGANIZATION = 'PO'
+    ENTITY = (
+        (SUBJECT, 'Object'),
+        (LOCATION, 'Location'),
+        (MEDIA, 'Media'),
+        (PERSON_ORGANIZATION, 'Person/Organization'),
+    )
+    
+    name = models.CharField(max_length=255, blank=True)
+    notes = models.TextField(blank=True)
+    file = FilerFileField()
+    imported = models.BooleanField(default=False, help_text='If yes, this file has already been imported into the database. If no, data has not yet been added.')
+    create_on_no_match = models.BooleanField(default=False, verbose_name='Create New If No Match', help_text='Check this box if you would like to create a new Entity if a row of data does not match any exisiting Entity in the database.')
+    allow_multiple = models.BooleanField(default=False, verbose_name='Allow Row to Match Multiple Entities', help_text='Check this box if you like to allow a row to match multiple entities.')
+    entity = models.CharField(max_length=2, choices=ENTITY, help_text='Please select to which Entity table you would like to add this data.')    
+    owner = models.ForeignKey(User)
+    upload_time = models.DateTimeField(auto_now_add=True, verbose_name='Date of Upload')
+    
+    class Meta:
+        ordering = ['upload_time']
+        verbose_name = 'Data Import File'
+        verbose_name_plural = 'Data Import Files'          
+            
+    def __unicode__(self):
+        return self.name    
+    
+class Column(models.Model):
+    """ Used to record the headers of a data upload column and indicate how to import it. """
+    
+    SUBJECT = 'S'
+    LOCATION = 'L'
+    MEDIA = 'M'
+    PERSON_ORGANIZATION = 'PO'
+    ENTITY = (
+        (SUBJECT, 'Object'),
+        (LOCATION, 'Location'),
+        (MEDIA, 'Media'),
+        (PERSON_ORGANIZATION, 'Person/Organization'),
+    )    
+
+    data_upload = models.ForeignKey(DataUpload)
+    title = models.CharField(max_length = 255)
+    column_index = models.IntegerField(verbose_name='Column Number')
+    matching_field = models.BooleanField(default=False, verbose_name='Identifier', help_text='Check this box to use this column to match each row to an existing entity. You can have multiple identifiers.')
+    matching_order = models.PositiveIntegerField(default=1, verbose_name='Order of Matching Priority', help_text='Use this field to indicate the preferred order of matching priority, if necessary.')
+    matching_required = models.BooleanField(default=False, verbose_name='Required Identifier', help_text='Check this box to indicate entity must match this field or match fails.')
+    property = models.ForeignKey(DescriptiveProperty, blank=True, null=True)
+    insert_as_inline = models.BooleanField(default=False, verbose_name='Insert Column as Inline Note', help_text='Check this box to insert data from this column as an inline note for another column.')
+    insert_as_footnote = models.BooleanField(default=False, verbose_name='Insert Column as Foot Note', help_text='Check this box to insert data from this column as a foot note for another column.')
+    title_for_note = models.CharField(max_length = 255, blank=True, verbose_name='Name of Column For Note', help_text='Use this field to indicate the name of the column for which this column is a note.')
+    relation = models.BooleanField(default=False, help_text='Check this box to indicate this column is a relation to another entity.')
+    rel_entity = models.CharField(max_length=2, choices=ENTITY, blank=True, verbose_name='Related Entity', help_text='If this column is a relation, select the related entity.')
+    rel_match_property = models.ForeignKey(DescriptiveProperty, blank=True, null=True, verbose_name='Relation Identifier', help_text='If this column is a relation, select the property to use to find the matching entity.')
+    ready_for_import = models.BooleanField(default=False, verbose_name='Column is Ready for Import')
+    import_error = models.CharField(max_length = 255, default='Please select a Descriptive Property for this column', verbose_name='Import Status')
+    
+    class Meta:
+        ordering = ['column_index']
+        verbose_name = 'Column'
+        verbose_name_plural = 'Columns'          
+            
+    def __unicode__(self):
+        return self.title + ' [' + str(self.column_index) + ']'
+
+class MatchImportError(models.Model):
+    """ For recording matching import errors. """
+    
+    data_upload = models.ForeignKey(DataUpload)
+    row = models.IntegerField()
+    error_text = models.TextField()
+    subject = models.ForeignKey(Subject, blank = True, null = True, verbose_name="Match to Object")
+    location = models.ForeignKey(Location, blank = True, null = True, verbose_name="Match to Location")
+    media = models.ForeignKey(Media, blank = True, null = True, verbose_name="Match to Media")
+    person = models.ForeignKey(PersonOrg, blank = True, null = True, verbose_name="Match to Person/Organization")
+    batch = models.ForeignKey(UploadBatch, blank = True, null = True, verbose_name="Upload Batch")
+    
+    class Meta:
+        ordering = ['row']
+        verbose_name = 'Matching Error'
+        verbose_name_plural = 'Matching Errors'          
+            
+    def __unicode__(self):
+        return self.error_text
+        
+class RelationImportError(models.Model):
+    """ For recording relation import errors. """
+    
+    data_upload = models.ForeignKey(DataUpload)
+    row = models.IntegerField()
+    column = models.ForeignKey(Column, blank=True, null=True)    
+    error_text = models.TextField()
+    subjects = models.ManyToManyField(Subject, blank = True, null = True, verbose_name="Objects", related_name="matched_subjects")
+    locations = models.ManyToManyField(Location, blank = True, null = True, verbose_name="Locations", related_name="matched_locations")
+    medias = models.ManyToManyField(Media, blank = True, null = True, verbose_name="Media", related_name="matched_media")
+    people = models.ManyToManyField(PersonOrg, blank = True, null = True, verbose_name="People/Organizations", related_name="matched_people")    
+    subject = models.ForeignKey(Subject, blank = True, null = True, verbose_name="Relate to Object", related_name="rel_subject")
+    location = models.ForeignKey(Location, blank = True, null = True, verbose_name="Relate to Location", related_name="rel_location")
+    media = models.ForeignKey(Media, blank = True, null = True, verbose_name="Relate to Media", related_name="rel_media")
+    person = models.ForeignKey(PersonOrg, blank = True, null = True, verbose_name="Relate to Person/Organization", related_name="rel_people")
+    batch = models.ForeignKey(UploadBatch, blank = True, null = True, verbose_name="Upload Batch")    
+    
+    class Meta:
+        ordering = ['row', 'column']
+        verbose_name = 'Relation Error'
+        verbose_name_plural = 'Relation Errors'          
+            
+    def __unicode__(self):
+        return self.error_text        
+
+class ControlFieldImportError(models.Model):
+    """ For controlled term matching import errors. """
+    
+    data_upload = models.ForeignKey(DataUpload)
+    row = models.IntegerField()
+    column = models.ForeignKey(Column, blank=True, null=True)    
+    error_text = models.TextField()
+    subjects = models.ManyToManyField(Subject, blank = True, null = True, verbose_name="Objects")
+    locations = models.ManyToManyField(Location, blank = True, null = True, verbose_name="Locations")
+    medias = models.ManyToManyField(Media, blank = True, null = True, verbose_name="Media")
+    people = models.ManyToManyField(PersonOrg, blank = True, null = True, verbose_name="People/Organizations")    
+    control_field = models.ForeignKey(ControlField, blank = True, null = True, verbose_name="Match to Controlled Term")
+    batch = models.ForeignKey(UploadBatch, blank = True, null = True, verbose_name="Upload Batch")    
+    
+    class Meta:
+        ordering = ['row', 'column']
+        verbose_name = 'Controlled Term Error'
+        verbose_name_plural = 'Controlled Term Errors'          
+            
+    def __unicode__(self):
+        return self.error_text
+        
+class MiscImportError(models.Model):
+    """ For recording miscelaneous import errors. """
+    
+    data_upload = models.ForeignKey(DataUpload)
+    column = models.ForeignKey(Column, blank=True, null=True)
+    row = models.IntegerField()
+    error_text = models.TextField()
+    batch = models.ForeignKey(UploadBatch, blank = True, null = True, verbose_name="Upload Batch")    
+    
+    class Meta:
+        ordering = ['row', 'column']
+        verbose_name = 'Other Error'
+        verbose_name_plural = 'Other Errors'          
+            
+    def __unicode__(self):
+        return self.error_text
+
+class GlobalVars(models.Model):
+    """ Variables used by pages throughout the site """
+    
+    variable = models.CharField(max_length = 200)
+    val = models.TextField(verbose_name='Value')
+    human_title = models.CharField(max_length = 200, verbose_name='Setting')
+	
+    class Meta:
+        verbose_name = 'Site Setting'
+        verbose_name_plural = 'Site Settings'
+    
+    def __unicode__(self):
+        return self.human_title
+        
+class SiteContent(models.Model):
+    """ CMS-style content for general pages on the public website. """
+
+    variable = models.CharField(max_length = 200)
+    val = models.TextField(verbose_name='Value')
+    human_title = models.CharField(max_length = 200, verbose_name='Content Text')
+	
+    class Meta:
+        verbose_name = 'Site Content'
+        verbose_name_plural = 'Site Content'
+    
+    def __unicode__(self):
+        return self.human_title
 
 class PublicationManager(models.Manager):
     def get_query_set(self):
@@ -1089,23 +1618,7 @@ class File(MediaSubjectRelations):
     get_thumbnail.allow_tags = True
     
     class Meta:
-        proxy = True
-        
-class LocationSubjectRelations(models.Model):
-    location = models.ForeignKey(Location)
-    subject = models.ForeignKey(Subject)
-    relation_type = models.ForeignKey(Relations)
-    notes = models.TextField(blank = True, help_text = "Please use this field for more specific information about where this object was found within this context, as well as citations, notes on certainty, and attribution of this piece of information.")
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User, blank = True)
-
-    def __unicode__(self):
-        return self.location.title + ":" + self.subject.title
-        
-    class Meta:
-        verbose_name = 'Location-Object Relation'
-        verbose_name_plural = 'Location-Object Relations'        
+        proxy = True       
         
 class Post(models.Model):
     title = models.CharField(max_length=255)
@@ -1124,62 +1637,7 @@ class Post(models.Model):
         return self.title
 
     def get_absolute_url(self):
-        return reverse('base.views.post', args=[self.slug])
-        
-class MediaLocationRelations(models.Model):
-    media = models.ForeignKey(Media)
-    location = models.ForeignKey(Location)
-    relation_type = models.ForeignKey(Relations)
-    notes = models.TextField(blank = True, help_text = "Please use this field for specific page or plate information, etc, referring to where this location is mentioned in this media item.")
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User, blank = True)
-
-    def __unicode__(self):
-        return self.media.title + ":" + self.location.title
-        
-    class Meta:
-        verbose_name = 'Media-Location Relation'
-        verbose_name_plural = 'Media-Location Relations'
-        
-class SubjectCollection(models.Model):
-    subject = models.ForeignKey(Subject)
-    collection = models.ForeignKey(Collection)
-    notes = models.TextField(blank = True)
-    order = models.IntegerField(blank = True, default = 0)
-    
-    def __unicode__(self):
-        return self.subject.title + " [Collection: " + self.collection.title + "]"
-        
-    class Meta:
-        verbose_name = 'Collection Item (Object)'
-        verbose_name_plural = 'Collection Items (Object)'
-        
-class LocationCollection(models.Model):
-    location = models.ForeignKey(Location)
-    collection = models.ForeignKey(Collection)
-    notes = models.TextField(blank = True)
-    order = models.IntegerField(blank = True, default = 0)
-    
-    def __unicode__(self):
-        return self.location.title + " [Collection: " + self.collection.title + "]"
-        
-    class Meta:
-        verbose_name = 'Collection Item (Location)'
-        verbose_name_plural = 'Collection Items (Location)'        
-        
-class MediaCollection(models.Model):
-    media = models.ForeignKey(Media)
-    collection = models.ForeignKey(Collection)
-    notes = models.TextField(blank = True)
-    order = models.IntegerField(blank = True, default = 0)
-    
-    def __unicode__(self):
-        return self.media.title + " [Collection: " + self.collection.title + "]"
-        
-    class Meta:
-        verbose_name = 'Collection Item (Media)'
-        verbose_name_plural = 'Collection Items (Media)'        
+        return reverse('base.views.post', args=[self.slug])        
         
 class FileUpload(models.Model):
     title = models.CharField(max_length = 255)
@@ -1281,3 +1739,40 @@ class LegrainNotes(Media):
         verbose_name = 'Legrain Note Card'
         verbose_name_plural = 'Legrain Note Cards'
         ordering = ['title']
+        
+""" UPCOMING FEATURES """
+
+class AdminPost(models.Model):
+    """ Admin forum posts. """
+
+    title = models.CharField(max_length=255)
+    body = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    published = models.BooleanField(default=True)
+    author = models.ForeignKey(User)
+    subject = models.ManyToManyField(Subject, blank = True, verbose_name="attached objects")
+        
+    class Meta:
+        ordering = ['-created']
+        verbose_name = 'Admin Forum Post'
+        verbose_name_plural = 'Admin Forum Posts'          
+            
+    def __unicode__(self):
+        return self.title
+        
+class AdminComment(models.Model):
+    """ Comments on admin forum posts """
+    
+    post = models.ForeignKey(AdminPost)
+    body = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    published = models.BooleanField(default=True)
+    author = models.ForeignKey(User)
+        
+    class Meta:
+        ordering = ['-created']
+        verbose_name = 'Comment'
+        verbose_name_plural = 'Comments'          
+            
+    def __unicode__(self):
+        return 'Comment on ' + self.post.title + ' by ' + self.author.username

@@ -21,7 +21,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.safestring import mark_safe
 from datetime import datetime
 import csv
-from suit.admin import SortableModelAdmin
+from suit.admin import SortableModelAdmin, SortableTabularInline
+from filer.fields.image import FilerFileField
 
 OPERATOR = (
     ('and', 'AND'),
@@ -50,19 +51,348 @@ CONTROL_SEARCH_TYPE = (
     ('not_exact', 'does not equal'),
 )
 
+""" ADMIN ACTIONS """
+
+def import_data(modeladmin, request, queryset):
+    """ For importing data from a CSV file into any of the four entity tables. """
+
+    for upload in queryset:
+    
+        # check if already uploaded
+        if upload.imported:
+            message_bit = "FILE ALREADY IMPORTED (" + upload.name + ")"
+            modeladmin.message_user(request, message_bit, level=messages.ERROR)
+            continue
+    
+        # check import status
+        import_errors = Column.objects.filter(data_upload = upload, ready_for_import = False)
+        if import_errors:
+            message_bit = "IMPORT FAILED (" + upload.name + "): Following columns are not ready for upload: "
+            for err in import_errors:
+                message_bit += "[" + err.title + "]: " + err.import_error + "; "
+            modeladmin.message_user(request, message_bit, level=messages.ERROR)
+            continue
+    
+        create = upload.create_on_no_match
+    
+        # get columns for matching rows
+        matchers = Column.objects.filter(data_upload = upload, matching_field = True).order_by('matching_order')
+        
+        # get entity
+        entity = upload.entity
+        
+        # if no matchers identified, check if row should create new entity 
+        if not matchers and not create:
+            message_bit = "IMPORT FAILED (" + upload.name + "): You must identify at least one column as a matcher or check 'Create New If No Match'."
+            modeladmin.message_user(request, message_bit, level=messages.ERROR)
+            continue
+        # we have everything we need for import    
+        else:
+        
+            # create an import batch to track data added
+            batch = UploadBatch(name = upload.name, data_upload = upload.pk)
+            batch.save()
+            
+            with open(upload.file.path) as f:
+                reader = csv.reader(f)
+                for row_index, row in enumerate(reader):
+                    if row_index == 0:
+                        continue
+                
+                    if entity == 'S':
+                        matches = Subject.objects.all()
+                    elif entity == 'L':
+                        matches = Location.objects.all()
+                    elif entity == 'M':
+                        matches = Media.objects.all()
+                    else:
+                        matches = PersonOrg.objects.all()               
+                
+                    # GET ENTITY MATCHES
+                    if matchers:
+                        
+                        q = Q()
+                        match_msg = "Tried to match on: "
+                        
+                        for matcher in matchers:
+                            match_msg += matcher.title + ', '
+                            if matcher.property.control_field:
+                                if entity == 'S':
+                                    cq = Q(Q(subjectcontrolproperty__control_property = matcher.property) & Q(subjectcontrolproperty__control_property_value__title = row[matcher.column_index].strip()))
+                                elif entity == 'L':
+                                    cq = Q(Q(locationcontrolproperty__control_property = matcher.property) & Q(locationcontrolproperty__control_property_value__title = row[matcher.column_index].strip()))
+                                elif entity == 'M':
+                                    cq = Q(Q(mediacontrolproperty__control_property = matcher.property) & Q(mediacontrolproperty__control_property_value__title = row[matcher.column_index].strip()))
+                                else:
+                                    cq = Q(Q(personorgcontrolproperty__control_property = matcher.property) & Q(personorgcontrolproperty__control_property_value__title = row[matcher.column_index].strip()))
+                            else:
+                                if entity == 'S':
+                                    cq = Q(Q(subjectproperty__property = matcher.property) & Q(subjectproperty__property_value = row[matcher.column_index].strip()))
+                                elif entity == 'L':
+                                    cq = Q(Q(locationproperty__property = matcher.property) & Q(locationproperty__property_value = row[matcher.column_index].strip()))
+                                elif entity == 'M':
+                                    cq = Q(Q(mediaproperty__property = matcher.property) & Q(mediaproperty__property_value = row[matcher.column_index].strip()))
+                                else:
+                                    cq = Q(Q(personorgproperty__property = matcher.property) & Q(personorgproperty__property_value = row[matcher.column_index].strip()))
+                                    
+                            if matcher.matching_required:
+                                q &= cq
+                            else:
+                                q |= cq
+                        
+                        matches = matches.filter(q)
+                        match_count = matches.count()
+                        
+                        if not matches and not create:
+                            match_error = MatchImportError(data_upload = upload, row = row_index, error_text = 'MATCH FAILED: ' + match_msg, batch = batch)
+                            match_error.save()
+                            continue
+                        elif match_count > 1 and not upload.allow_multiple:
+                            match_error = MatchImportError(data_upload = upload, row = row_index, error_text = 'MATCH FAILED: Matched too many entities. ' + match_msg, batch = batch)
+                            match_error.save()
+                            continue
+                        elif match_count == 1:
+                            # if we did get a match, then we don't need to worry about creating an entry
+                            create = False
+                            
+                    # CREATE ENTITY IF NO MATCH AND CREATE IS TRUE
+                    if create:
+                        if entity == 'S':
+                            new_match = Subject(last_mod_by = request.user, upload_batch = batch)
+                            new_match.save()
+                            matches = Subject.objects.filter(pk=new_match.id)
+                        elif entity == 'L':
+                            new_match = Location(last_mod_by = request.user, upload_batch = batch)
+                            new_match.save()
+                            matches = Location.objects.filter(pk=new_match.id)                            
+                        elif entity == 'M':
+                            new_match = Media(last_mod_by = request.user, upload_batch = batch)
+                            new_match.save()
+                            matches = Media.objects.filter(pk=new_match.id)                            
+                        else:
+                            new_match = PersonOrg(last_mod_by = request.user, upload_batch = batch)
+                            new_match.save()
+                            matches = PersonOrg.objects.get(pk=new_match.id)                            
+                    
+                    # ITERATE THROUGH COLUMNS
+                    for index, cell in enumerate(row):
+                    
+                        cell = cell.strip()                         
+                    
+                        # CHECK COLUMN INDEX
+                        columns = Column.objects.filter(data_upload = upload, column_index = index)
+                        column_count = columns.count()
+                        if not columns or column_count > 1:
+                            continue                            
+                        else:
+                            column = columns[0]
+                            
+                            # DESCRIPTIVE PROPERTY
+                            dp = column.property                            
+                            
+                            if (column.matching_field and not create) or column.insert_as_inline or column.insert_as_footnote:
+                                continue
+                            
+                            inline = ''
+                            footnote = ''
+                            
+                            # GET ANY NOTES FOR COLUMN
+                            matching_inlines = Column.objects.filter(data_upload = upload, insert_as_inline = True, title_for_note = column.title.strip())
+                            if matching_inlines:
+                                for idx, mi in enumerate(matching_inlines):
+                                    if idx > 0:
+                                        inline += '; '
+                                    if len(row) >= mi.column_index:
+                                        inline += row[mi.column_index]
+                                        
+                            matching_footnotes = Column.objects.filter(data_upload = upload, insert_as_footnote = True, title_for_note = column.title.strip())
+                            if matching_footnotes:
+                                for idx, mf in enumerate(matching_footnotes):
+                                    if idx > 0:
+                                        footnote += '; '
+                                    if len(row) >= mf.column_index:
+                                        footnote += row[mf.column_index]
+                                        
+                            rel_note = inline
+                            if inline != '' and footnote != '':
+                                rel_note += '; '
+                            rel_note += footnote
+                            
+                            # HANDLE RELATIONS
+                            if column.relation:
+                                if column.rel_entity == 'S':
+                                    if column.rel_match_property.control_field:
+                                        rels = Subject.objects.filter(subjectcontrolproperty__control_property = column.rel_match_property, subjectcontrolproperty__control_property_value__title = cell)
+                                    else:
+                                        rels = Subject.objects.filter(subjectproperty__property = column.rel_match_property, subjectproperty__property_value = cell)
+                                elif column.rel_entity == 'L':
+                                    if column.rel_match_property.control_field:
+                                        rels = Location.objects.filter(locationcontrolproperty__control_property = column.rel_match_property, locationcontrolproperty__control_property_value__title = cell)
+                                    else:
+                                        rels = Location.objects.filter(locationproperty__property = column.rel_match_property, locationproperty__property_value = cell)
+                                elif column.rel_entity == 'M':
+                                    if column.rel_match_property.control_field:
+                                        rels = Media.objects.filter(mediacontrolproperty__control_property = column.rel_match_property, mediacontrolproperty__control_property_value__title = cell)
+                                    else:
+                                        rels = Media.objects.filter(mediaproperty__property = column.rel_match_property, mediaproperty__property_value = cell)
+                                else:
+                                    if column.rel_match_property.control_field:
+                                        rels = PersonOrg.objects.filter(personorgcontrolproperty__control_property = column.rel_match_property, personorgcontrolproperty__control_property_value__title = cell)
+                                    else:
+                                        rels = PersonOrg.objects.filter(personorgproperty__property = column.rel_match_property, personorgproperty__property_value = cell)
+                                
+                                rel_count = rels.count()
+                                if not rels:
+                                    if entity == 'S':
+                                        relation_error = RelationImportError(data_upload = upload, row = row_index, column = column, subjects = matches, batch = batch, error_text = "No entity found matching " + column.rel_match_property + " : " + cell)
+                                    elif entity == 'L':
+                                        relation_error = RelationImportError(data_upload = upload, row = row_index, column = column, locations = matches, batch = batch, error_text = "No entity found matching " + column.rel_match_property + " : " + cell)
+                                    elif entity == 'M':
+                                        relation_error = RelationImportError(data_upload = upload, row = row_index, column = column, medias = matches, batch = batch, error_text = "No entity found matching " + column.rel_match_property + " : " + cell)
+                                    else:
+                                        relation_error = RelationImportError(data_upload = upload, row = row_index, column = column, people = matches, batch = batch, error_text = "No entity found matching " + column.rel_match_property + " : " + cell)                                        
+                                    relation_error.save()
+                                    continue
+                                elif rel_count > 1:
+                                    if entity == 'S':
+                                        relation_error = RelationImportError(data_upload = upload, row = row_index, column = column, subjects = matches, batch = batch, error_text = "Multiple entities found matching " + column.rel_match_property + " : " + cell)
+                                    elif entity == 'L':
+                                        relation_error = RelationImportError(data_upload = upload, row = row_index, column = column, locations = matches, batch = batch, error_text = "Multiple entities found matching " + column.rel_match_property + " : " + cell)
+                                    elif entity == 'M':
+                                        relation_error = RelationImportError(data_upload = upload, row = row_index, column = column, medias = matches, batch = batch, error_text = "Multiple entities found matching " + column.rel_match_property + " : " + cell)
+                                    else:
+                                        relation_error = RelationImportError(data_upload = upload, row = row_index, column = column, people = matches, batch = batch, error_text = "Multiple entities found matching " + column.rel_match_property + " : " + cell)       
+                                    relation_error.save()
+                                    continue
+                                else:
+                                    if entity == 'S':
+                                        if column.rel_entity == 'L':
+                                            for match in matches:
+                                                lsr = LocationSubjectRelations(location = rels[0], subject = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                lsr.save()
+                                        elif column.rel_entity == 'M':
+                                            for match in matches:
+                                                msr = MediaSubjectRelations(media = rels[0], subject = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                msr.save()
+                                        elif column.rel_entity == 'PO':
+                                            for match in matches:
+                                                posr = SubjectPersonOrgRelations(person_org = rels[0], subject = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                posr.save()
+                                    elif entity == 'L':
+                                        if column.rel_entity == 'S':
+                                            for match in matches:
+                                                lsr = LocationSubjectRelations(subject = rels[0], location = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                lsr.save()
+                                        elif column.rel_entity == 'M':
+                                            for match in matches:
+                                                mlr = MediaLocationRelations(media = rels[0], location = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                mlr.save()
+                                        elif column.rel_entity == 'PO':
+                                            for match in matches:
+                                                polr = LocationPersonOrgRelations(person_org = rels[0], location = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                polr.save()
+                                    elif entity == 'M':
+                                        if column.rel_entity == 'S':
+                                            for match in matches:
+                                                msr = MediaSubjectRelations(subject = rels[0], media = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                msr.save()
+                                        elif column.rel_entity == 'L':
+                                            for match in matches:
+                                                mlr = MediaLocationRelations(location = rels[0], media = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                mlr.save()
+                                        elif column.rel_entity == 'PO':
+                                            for match in matches:
+                                                pomr = MediaPersonOrgRelations(person_org = rels[0], media = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                pomr.save()
+                                    elif entity == 'PO':
+                                        if column.rel_entity == 'S':
+                                            for match in matches:
+                                                posr = SubjectPersonOrgRelations(subject = rels[0], person_org = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                posr.save()
+                                        elif column.rel_entity == 'L':
+                                            for match in matches:
+                                                polr = LocationPersonOrgRelations(location = rels[0], person_org = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                polr.save()
+                                        elif column.rel_entity == 'M':
+                                            for match in matches:
+                                                pomr = MediaPersonOrgRelations(media = rels[0], person_org = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                pomr.save()                                               
+                            
+                            # HANDLE CONTROL FIELDS
+                            elif dp.control_field:
+                                cf = ControlField.objects.filter(title = cell, type = dp)
+                                if cf:
+                                    if entity == 'S':
+                                        for match in matches:
+                                            scp = SubjectControlProperty(subject = match, control_property = dp, control_property_value = cf[0], notes = footnote, inline_notes = inline, last_mod_by = request.user, upload_batch = batch)
+                                            scp.save()
+                                    elif entity == 'L':
+                                        for match in matches:
+                                            lcp = LocationControlProperty(location = match, control_property = dp, control_property_value = cf[0], notes = footnote, inline_notes = inline, last_mod_by = request.user, upload_batch = batch)
+                                            lcp.save()
+                                    elif entity == 'M':
+                                        for match in matches:
+                                            mcp = MediaControlProperty(media = match, control_property = dp, control_property_value = cf[0], notes = footnote, inline_notes = inline, last_mod_by = request.user, upload_batch = batch)
+                                            mcp.save()
+                                    elif entity == 'PO':
+                                        for match in matches:
+                                            pocp = PersonOrgControlProperty(person_org = match, control_property = dp, control_property_value = cf[0], notes = footnote, inline_notes = inline, last_mod_by = request.user, upload_batch = batch)
+                                            pocp.save()
+                                else:
+                                    if entity == 'S':
+                                        cf_error = ControlFieldImportError(data_upload = upload, row = row_index, column = column, error_text = 'Could not find Controlled Term match for ' + dp.property + ' : ' + cell, subjects = matches, batch = batch)
+                                    elif entity == 'L':
+                                        cf_error = ControlFieldImportError(data_upload = upload, row = row_index, column = column, error_text = 'Could not find Controlled Term match for ' + dp.property + ' : ' + cell, locations = matches, batch = batch)
+                                    elif entity == 'M':
+                                        cf_error = ControlFieldImportError(data_upload = upload, row = row_index, column = column, error_text = 'Could not find Controlled Term match for ' + dp.property + ' : ' + cell, media = matches, batch = batch)
+                                    else:
+                                        cf_error = ControlFieldImportError(data_upload = upload, row = row_index, column = column, error_text = 'Could not find Controlled Term match for ' + dp.property + ' : ' + cell, people = matches, batch = batch)
+                                    cf_error.save()
+                                    
+                            # HANDLE FREE FORM PROPERTY
+                            else:
+                                cf = ControlField.objects.filter(title = cell, type = dp)
+                                if entity == 'S':
+                                    for match in matches:
+                                        sp = SubjectProperty(subject = match, property = dp, property_value = cell, notes = footnote, inline_notes = inline, last_mod_by = request.user, upload_batch = batch)
+                                        sp.save()
+                                elif entity == 'L':
+                                    for match in matches:
+                                        lp = LocationProperty(location = match, property = dp, property_value = cell, notes = footnote, inline_notes = inline, last_mod_by = request.user, upload_batch = batch)
+                                        lp.save()
+                                elif entity == 'M':
+                                    for match in matches:
+                                        mp = MediaProperty(media = match, property = dp, property_value = cell, notes = footnote, inline_notes = inline, last_mod_by = request.user, upload_batch = batch)
+                                        mp.save()
+                                elif entity == 'PO':
+                                    for match in matches:
+                                        pop = PersonOrgProperty(person_org = match, property = dp, property_value = cell, notes = footnote, inline_notes = inline, last_mod_by = request.user, upload_batch = batch)
+                                        pop.save()
+            
+                upload.imported = True
+                upload.save()
+                message_bit = "Import " + upload.name + " completed. Click on data upload file to view any errors generated by upload."
+                modeladmin.message_user(request, message_bit, level=messages.SUCCESS)
+            
+import_data.short_description = "Import data from selected CSV files"
+
 """ SPECIAL FORM FIELDS """
 
-class SubjectChoices(AutoModelSelect2MultipleField):
+class SubjectChoices(AutoModelSelect2Field):
     queryset = Subject.objects
     search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',]
     
 class MediaChoices(AutoModelSelect2Field):
     queryset = Media.objects
-    search_fields = ['title__icontains',]    
+    search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',]    
 
 class LocationChoices(AutoModelSelect2Field):
     queryset = Location.objects
-    search_fields = ['title__icontains',]
+    search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',] 
+    
+class PersonOrgChoices(AutoModelSelect2Field):
+    queryset = PersonOrg.objects
+    search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',]
 
 """ LIST FILTERS """
 
@@ -205,42 +535,6 @@ class BlogPostForm(ModelForm):
         widgets = {
             'body': CKEditorWidget(editor_options=_ck_editor_config),
         }
-        
-class AdminForumPostForm(ModelForm):
-    """ Used on Admin Post Change Form page to edit admin forum posts """
-    
-    subject = SubjectChoices(        
-        label = 'Attached Objects',
-        widget = AutoHeavySelect2MultipleWidget(
-            select2_options = {
-                'width': '220px',
-            }
-        ),
-        required = False
-    )
-    
-    class Meta:
-  
-        _ck_editor_toolbar = [
-            {'name': 'basicstyles', 'groups': ['basicstyles', 'cleanup']},
-            {'name': 'paragraph',
-             'groups': ['list', 'indent', 'blocks', 'align']},
-            {'name': 'document', 'groups': ['mode']}, '/',
-            {'name': 'styles'}, {'name': 'colors'},
-            {'name': 'insert_custom',
-             'items': ['Image', 'Flash', 'Table', 'HorizontalRule']},
-            {'name': 'links'},
-            {'name': 'about'}]
-
-        _ck_editor_config = {'autoGrow_onStartup': True,
-                             'autoGrow_minHeight': 100,
-                             'autoGrow_maxHeight': 250,
-                             'extraPlugins': 'autogrow',
-                             'toolbarGroups': _ck_editor_toolbar}            
-  
-        widgets = {
-            'body': CKEditorWidget(editor_options=_ck_editor_config),
-        }
 
 class SubjectMediaRelationForm(ModelForm):
     
@@ -269,6 +563,154 @@ class LocObjRelForm(ModelForm):
 
     class Meta:
         model = LocationSubjectRelations
+        
+class SubjectCollectionForm(ModelForm):
+    subject = SubjectChoices(
+        label = Subject._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Subject._meta.verbose_name
+            }
+        )
+    )
+
+    class Meta:
+          model = SubjectCollection
+          
+class LocationCollectionForm(ModelForm):
+    location = LocationChoices(
+        label = Location._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Location._meta.verbose_name
+            }
+        )
+    )
+
+    class Meta:
+          model = LocationCollection
+
+class MediaCollectionForm(ModelForm):
+    media = MediaChoices(
+        label = Media._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Media._meta.verbose_name
+            }
+        )
+    )
+
+    class Meta:
+          model = MediaCollection
+
+class PersonOrgCollectionForm(ModelForm):
+    person_org = PersonOrgChoices(
+        label = PersonOrg._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % PersonOrg._meta.verbose_name
+            }
+        )
+    )
+
+    class Meta:
+          model = PersonOrgCollection          
+        
+class DataUploadForm(ModelForm):
+    """ Used to make certain the uploaded file is CSV. """
+        
+    def clean(self):
+        if self.cleaned_data.get('file'):
+            file = self.cleaned_data.get('file')
+            if not file.file.name.endswith('.csv'):
+                raise forms.ValidationError(u'Not a valid CSV file')        
+        return self.cleaned_data
+        
+class MatchImportErrorForm(ModelForm):
+    subject = SubjectChoices(
+        label = Subject._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Subject._meta.verbose_name
+            }
+        )
+    )
+    location = LocationChoices(
+        label = Location._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Location._meta.verbose_name
+            }
+        )
+    )
+    media = MediaChoices(
+        label = Media._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Media._meta.verbose_name
+            }
+        )
+    )
+    person = PersonOrgChoices(
+        label = PersonOrg._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % PersonOrg._meta.verbose_name
+            }
+        )
+    )    
+    
+    class Meta:
+          model = MatchImportError
+
+class RelationImportErrorForm(ModelForm):
+    subject = SubjectChoices(
+        label = Subject._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Subject._meta.verbose_name
+            }
+        )
+    )
+    location = LocationChoices(
+        label = Location._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Location._meta.verbose_name
+            }
+        )
+    )
+    media = MediaChoices(
+        label = Media._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Media._meta.verbose_name
+            }
+        )
+    )
+    person = PersonOrgChoices(
+        label = PersonOrg._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % PersonOrg._meta.verbose_name
+            }
+        )
+    )    
+    
+    class Meta:
+          model = RelationImportError           
 
 """ INLINES """
 
@@ -327,26 +769,119 @@ class SubjectControlPropertyInline(admin.TabularInline):
 
 """ COLLECTION INLINES """
 
-class SubjectCollectionInline(admin.TabularInline):
-    model = SubjectCollection 
+class SubjectCollectionInline(SortableTabularInline):
+    model = SubjectCollection
+    fields = ['get_thumbnail_admin', 'subject', 'notes', 'order']
+    readonly_fields = ('get_thumbnail_admin',)
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
-    extra = 1
+    form = SubjectCollectionForm
+    sortable = 'order'
+    
+class LocationCollectionInline(SortableTabularInline):
+    model = LocationCollection
+    fields = ['get_thumbnail_admin', 'location', 'notes', 'order']
+    readonly_fields = ('get_thumbnail_admin',)
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    form = LocationCollectionForm
+    sortable = 'order'
+
+class MediaCollectionInline(SortableTabularInline):
+    model = MediaCollection
+    fields = ['get_thumbnail_admin', 'media', 'notes', 'order']
+    readonly_fields = ('get_thumbnail_admin',)
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    form = MediaCollectionForm
+    sortable = 'order'
+
+class PersonOrgCollectionInline(SortableTabularInline):
+    model = PersonOrgCollection
+    fields = ['get_thumbnail_admin', 'person_org', 'notes', 'order']
+    readonly_fields = ('get_thumbnail_admin',)
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    form = PersonOrgCollectionForm
+    sortable = 'order'   
+
+class SubjectCollectionEntityInline(admin.TabularInline):
+    model = SubjectCollection
+    fields = ['collection', 'notes', 'order']
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    
+class LocationCollectionEntityInline(admin.TabularInline):
+    model = LocationCollection
+    fields = ['collection', 'notes', 'order']
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+
+class MediaCollectionEntityInline(admin.TabularInline):
+    model = MediaCollection
+    fields = ['collection', 'notes', 'order']
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+
+class PersonOrgCollectionEntityInline(admin.TabularInline):
+    model = PersonOrgCollection
+    fields = ['collection', 'notes', 'order']
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }     
     
 """ SITE SETTINGS ETC INLINES """
 
-class AdminCommentInline(admin.StackedInline):
-    model = AdminComment
+class ColumnInline(admin.StackedInline):
+    model = Column
     extra = 0
-    readonly_fields = ('author', 'created')
-    template = 'admin/edit_inline/stacked_adminpost.html'
+    readonly_fields = ('title', 'ready_for_import', 'import_error', 'column_index')
+    fields = ('title', 'column_index', 'ready_for_import', 'import_error', 'property', 'matching_field', 'matching_order', 'matching_required', 'insert_as_inline', 'insert_as_footnote', 'title_for_note', 'relation', 'rel_entity', 'rel_match_property' )
+    suit_classes = 'suit-tab suit-tab-step1'
     
-    def queryset(self, request):
-        """ Returns only comments checked as published or written by the author (even if unpublished) """
-        
-        qs = super(AdminCommentInline, self).queryset(request)
-        return qs.filter(Q(published = True) | Q(published = False, author = request.user))    
+class UploadBatchInline(admin.TabularInline):
+    model = UploadBatch
+    extra = 0
+    readonly_fields = ('name')
+    fields = ('name', )
+    suit_classes = 'suit-tab suit-tab-step1'    
+    
+class MatchImportErrorInline(admin.TabularInline):
+    model = MatchImportError
+    extra = 0
+    readonly_fields = ('row', 'error_text')
+    fields = ('row', 'error_text', 'subject', 'location', 'media', 'person')
+    suit_classes = 'suit-tab suit-tab-step2'
+    form = MatchImportErrorForm
+    
+class RelationImportErrorInline(admin.TabularInline):
+    model = RelationImportError
+    extra = 0
+    readonly_fields = ('row', 'column', 'error_text')
+    fields = ('row', 'column', 'error_text', 'subject', 'location', 'media', 'person')
+    suit_classes = 'suit-tab suit-tab-step2'
+    form = RelationImportErrorForm
+
+class ControlFieldImportErrorInline(admin.TabularInline):
+    model = ControlFieldImportError
+    extra = 0
+    readonly_fields = ('row', 'column', 'error_text')
+    fields = ('row', 'column', 'error_text', 'control_field')
+    suit_classes = 'suit-tab suit-tab-step2'
+
+class MiscImportErrorInline(admin.TabularInline):
+    model = MiscImportError
+    extra = 0
+    readonly_fields = ('row', 'column', 'error_text')
+    fields = ('row', 'column', 'error_text')
+    suit_classes = 'suit-tab suit-tab-step2'
 
 """ ADMINS """
 
@@ -406,13 +941,27 @@ admin.site.register(ControlField, ControlFieldAdmin)
 """ COLLECTION ADMIN """    
     
 class CollectionAdmin(admin.ModelAdmin):
-    readonly_fields = ('created', 'modified')    
-    inlines = [SubjectCollectionInline]
+    readonly_fields = ('created', 'modified', 'owner')    
+    inlines = [SubjectCollectionInline, LocationCollectionInline, MediaCollectionInline, PersonOrgCollectionInline]
     search_fields = ['title', 'notes']
-    list_display = ('title', 'notes', 'owner')
+    list_display = ('title', 'notes', 'created', 'modified', 'owner')
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
+    fields = ['title', 'notes', 'created', 'modified', 'owner']
+    
+    change_form_template = 'admin/base/collection/change_form.html' 
+    
+    class Media:
+        # the django-select2 styles have to be added manually for some reason, otherwise they don't work
+        css = {
+            "all": ("django_select2/css/select2.min.css",)
+        }
+        
+    def save_model(self, request, obj, form, change):
+        if obj.pk is None:
+            obj.owner = request.user
+        obj.save()
 
 admin.site.register(Collection, CollectionAdmin)
 
@@ -431,49 +980,436 @@ class ResultPropertyAdmin(admin.ModelAdmin):
     
 admin.site.register(ResultProperty, ResultPropertyAdmin)
 
-class AdminPostAdmin(admin.ModelAdmin):
-    form = AdminForumPostForm
-    readonly_fields = ('author', 'created')
-    inlines = [AdminCommentInline]
-    list_display = ['title', 'author', 'created', 'published']
-    list_filter = ['published', 'created']
-    search_fields = ['title', 'body']
-    date_hierarchy = 'created'
-    save_on_top = True
-    change_form_template = 'admin/base/adminpost/change_form_adminpost.html'
+class DataUploadAdmin(admin.ModelAdmin):
+    fields = ['name', 'file', 'notes', 'entity', 'imported', 'create_on_no_match', 'owner', 'upload_time']
+    readonly_fields = ('name', 'imported', 'owner', 'upload_time')
+    list_display = ['name', 'imported', 'owner', 'upload_time']
+    list_filter = ['imported', 'owner', 'upload_time']
+    search_fields = ['name', 'notes']
+    date_hierarchy = 'upload_time'
+    inlines = [ColumnInline, MatchImportErrorInline, RelationImportErrorInline, ControlFieldImportErrorInline, MiscImportErrorInline]
+    actions = [import_data]
+    form = DataUploadForm
     
+    suit_form_tabs = (('step1', 'Step 1: Prepare Columns for Import'), ('step2', 'Step 2: Resolve Errors'))
+    fieldsets = [
+        (None, {
+            'classes': ('suit-tab', 'suit-tab-step1'),
+            'fields': ['name', 'file', 'notes', 'entity', 'imported', 'create_on_no_match', 'owner', 'upload_time']
+        }),
+    ]
+
     class Media:
         # the django-select2 styles have to be added manually for some reason, otherwise they don't work
         css = {
             "all": ("django_select2/css/select2.min.css",)
-        }
+        }    
     
     def save_model(self, request, obj, form, change):
+        
+        # when file is uploaded, get the column headers
         if obj.pk is None:
-            obj.author = request.user
+            obj.owner = request.user
+            obj.name = obj.file.__unicode__()           
             obj.save()
+            with open(obj.file.path) as f:
+                reader = csv.reader(f)
+                for row in reader:
+                    for index, cell in enumerate(row):
+                        new_column = Column(data_upload = obj, title = cell.strip(), column_index = index)
+                        new_column.save()
+                    break
         else:
+            obj.name = obj.file.__unicode__()           
             obj.save()
-
+            
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
 
         for instance in instances:
-            if isinstance(instance, AdminComment): #Check if it is the correct type of inline
-                instance.author = request.user            
-                instance.save()        
-        
-    def queryset(self, request):
-        qs = super(AdminPostAdmin, self).queryset(request)
-        return qs.filter(Q(published = True) | Q(published = False, author = request.user))
-        
-    def has_delete_permission(self, request, obj = None):
-        if obj is not None:
-            if request.user == obj.author:
-                return True
-        return False
+            if isinstance(instance, Column): #Check if it is the correct type of inline
+                status = ''
+                ready = True
+                
+                if not instance.property:
+                    status += 'Please select a Descriptive Property for this column.'
+                    ready = False
+                
+                if instance.matching_field or instance.matching_required:
+                    if instance.insert_as_inline or instance.insert_as_footnote:
+                        if status != '':
+                            status += '; '
+                        status += 'Column can not be both an Identifier and Note. Please select only one.'
+                        instance.matching_field = False
+                        instance.insert_as_inline = False
+                        instance.insert_as_footnote = False
+                        ready = False
+                    instance.title_for_note = ''
+                    if instance.relation:
+                        if status != '':
+                            status += '; '
+                        status += 'Column can not be both an Identifier and Relation. Please select only one.'
+                        instance.matching_field = False
+                        instance.relation = False
+                        ready = False
+                    instance.rel_entity = ''
+                    instance.rel_match_property = None
+                
+                if instance.matching_required and not instance.matching_field:
+                    instance.matching_field = True
+                    
+                if instance.relation:
+                    if instance.insert_as_inline or instance.insert_as_footnote:
+                        if status != '':
+                            status += '; '
+                        status += 'Column not be both a Relation and Note. Please select only one.'
+                        instance.relation = False
+                        instance.insert_as_inline = False
+                        instance.insert_as_footnote = False
+                        ready = False
+                    if instance.rel_entity == '':
+                        if status != '':
+                            status += '; '
+                        status += 'If you select Relation, you must select the Related Entity.'
+                        ready = False
+                    if not instance.rel_match_property:
+                        if status != '':
+                            status += '; '
+                        status += 'If you select Relation, you must select a Relation Identifier.'
+                        ready = False
+                        
+                if (instance.rel_entity != '' or instance.rel_match_property) and not instance.relation:
+                    if status != '':
+                        status += '; '
+                    status += 'You selected a Related Entity or Relation Identifier but did not check Relation. Please confirm this Column is a Relation.'
+                    ready = False
 
-admin.site.register(AdminPost, AdminPostAdmin)
+                if instance.rel_entity == instance.data_upload.entity:
+                    if status != '':
+                        status += '; '
+                    status += 'The Related Entity can not be the same as the parent Data Import File Entity. Please select a different Related Entity.' 
+                    ready = False
+
+                if status == '':
+                    status = 'Column is ready for import.'
+                    
+                instance.import_error = status
+                instance.ready_for_import = ready
+                
+                instance.save()
+
+            elif isinstance(instance, MatchImportError):
+                if instance.subject or instance.location or instance.media or instance.person:
+                    batch = instance.batch
+                    if instance.subject:
+                        match = instance.subject
+                        entity = 'S'
+                    elif instance.location:
+                        match = instance.location
+                        entity = 'L'
+                    elif instance.media:
+                        match = instance.media
+                        entity = 'M'
+                    else:
+                        match = instance.person
+                        entity = 'PO'
+                    with open(instance.data_upload.file.path) as f:
+                        reader = csv.reader(f)
+                        for row_index, row in enumerate(reader):
+                            if row_index != instance.row:
+                                continue
+                            else:                            
+                                # ITERATE THROUGH COLUMNS
+                                for index, cell in enumerate(row):
+                                
+                                    cell = cell.strip()                         
+                                
+                                    # CHECK COLUMN INDEX
+                                    columns = Column.objects.filter(data_upload = upload, column_index = index)
+                                    column_count = columns.count()
+                                    if not columns or column_count > 1:
+                                        continue
+                                    else:
+                                        column = columns[0]
+                                        
+                                        # DESCRIPTIVE PROPERTY
+                                        dp = column.property                            
+                                        
+                                        if column.insert_as_inline or column.insert_as_footnote:
+                                            continue
+                                        
+                                        inline = ''
+                                        footnote = ''
+                                        
+                                        # GET ANY NOTES FOR COLUMN
+                                        matching_inlines = Column.objects.filter(data_upload = upload, insert_as_inline = True, title_for_note = column.title.strip())
+                                        if matching_inlines:
+                                            for idx, mi in enumerate(matching_inlines):
+                                                if idx > 0:
+                                                    inline += '; '
+                                                if len(row) >= mi.column_index:
+                                                    inline += row[mi.column_index]
+                                                    
+                                        matching_footnotes = Column.objects.filter(data_upload = upload, insert_as_footnote = True, title_for_note = column.title.strip())
+                                        if matching_footnotes:
+                                            for idx, mf in enumerate(matching_footnotes):
+                                                if idx > 0:
+                                                    footnote += '; '
+                                                if len(row) >= mf.column_index:
+                                                    footnote += row[mf.column_index]
+                                                    
+                                        rel_note = inline
+                                        if inline != '' and footnote != '':
+                                            rel_note += '; '
+                                        rel_note += footnote
+                                        
+                                        # HANDLE RELATIONS
+                                        if column.relation:
+                                            if column.rel_entity == 'S':
+                                                if column.rel_match_property.control_field:
+                                                    rels = Subject.objects.filter(subjectcontrolproperty__control_property = column.rel_match_property, subjectcontrolproperty__control_property_value__title = cell)
+                                                else:
+                                                    rels = Subject.objects.filter(subjectproperty__property = column.rel_match_property, subjectproperty__property_value = cell)
+                                            elif column.rel_entity == 'L':
+                                                if column.rel_match_property.control_field:
+                                                    rels = Location.objects.filter(locationcontrolproperty__control_property = column.rel_match_property, locationcontrolproperty__control_property_value__title = cell)
+                                                else:
+                                                    rels = Location.objects.filter(locationproperty__property = column.rel_match_property, locationproperty__property_value = cell)
+                                            elif column.rel_entity == 'M':
+                                                if column.rel_match_property.control_field:
+                                                    rels = Media.objects.filter(mediacontrolproperty__control_property = column.rel_match_property, mediacontrolproperty__control_property_value__title = cell)
+                                                else:
+                                                    rels = Media.objects.filter(mediaproperty__property = column.rel_match_property, mediaproperty__property_value = cell)
+                                            else:
+                                                if column.rel_match_property.control_field:
+                                                    rels = PersonOrg.objects.filter(personorgcontrolproperty__control_property = column.rel_match_property, personorgcontrolproperty__control_property_value__title = cell)
+                                                else:
+                                                    rels = PersonOrg.objects.filter(personorgproperty__property = column.rel_match_property, personorgproperty__property_value = cell)
+                                            
+                                            rel_count = rels.count()
+                                            if not rels:
+                                                relation_error = RelationImportError(data_upload = upload, row = row_index, column = column, error_text = "No entity found matching " + column.rel_match_property + " : " + cell)
+                                                relation_error.save()
+                                                continue
+                                            elif rel_count > 1:
+                                                relation_error = RelationImportError(data_upload = upload, row = row_index, column = column, error_text = "Multiple entities found matching " + column.rel_match_property + " : " + cell)
+                                                relation_error.save()
+                                                continue
+                                            else:
+                                                if entity == 'S':
+                                                    if column.rel_entity == 'L':
+                                                        lsr = LocationSubjectRelations(location = rels[0], subject = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                        lsr.save()
+                                                    elif column.rel_entity == 'M':
+                                                        msr = MediaSubjectRelations(media = rels[0], subject = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                        msr.save()
+                                                    elif column.rel_entity == 'PO':
+                                                        posr = SubjectPersonOrgRelations(person_org = rels[0], subject = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                        posr.save()
+                                                elif entity == 'L':
+                                                    if column.rel_entity == 'S':
+                                                        lsr = LocationSubjectRelations(subject = rels[0], location = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                        lsr.save()
+                                                    elif column.rel_entity == 'M':
+                                                        mlr = MediaLocationRelations(media = rels[0], location = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                        mlr.save()
+                                                    elif column.rel_entity == 'PO':
+                                                        polr = LocationPersonOrgRelations(person_org = rels[0], location = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                        polr.save()
+                                                elif entity == 'M':
+                                                    if column.rel_entity == 'S':
+                                                        msr = MediaSubjectRelations(subject = rels[0], media = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                        msr.save()
+                                                    elif column.rel_entity == 'L':
+                                                        mlr = MediaLocationRelations(location = rels[0], media = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                        mlr.save()
+                                                    elif column.rel_entity == 'PO':
+                                                        pomr = MediaPersonOrgRelations(person_org = rels[0], media = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                        pomr.save()
+                                                elif entity == 'PO':
+                                                    if column.rel_entity == 'S':
+                                                        posr = SubjectPersonOrgRelations(subject = rels[0], person_org = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                        posr.save()
+                                                    elif column.rel_entity == 'L':
+                                                        polr = LocationPersonOrgRelations(location = rels[0], person_org = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                        polr.save()
+                                                    elif column.rel_entity == 'M':
+                                                        pomr = MediaPersonOrgRelations(media = rels[0], person_org = match, notes = rel_note, last_mod_by = request.user, upload_batch = batch)
+                                                        pomr.save()
+                                                        
+                                        # HANDLE CONTROL FIELDS
+                                        elif dp.control_field:
+                                            cf = ControlField.objects.filter(title = cell, type = dp)
+                                            if cf:
+                                                if entity == 'S':
+                                                    scp = SubjectControlProperty(subject = match, control_property = dp, control_property_value = cf[0], notes = footnote, inline_notes = inline, last_mod_by = request.user, upload_batch = batch)
+                                                    scp.save()
+                                                elif entity == 'L':
+                                                    lcp = LocationControlProperty(location = match, control_property = dp, control_property_value = cf[0], notes = footnote, inline_notes = inline, last_mod_by = request.user, upload_batch = batch)
+                                                    lcp.save()
+                                                elif entity == 'M':
+                                                    mcp = MediaControlProperty(media = match, control_property = dp, control_property_value = cf[0], notes = footnote, inline_notes = inline, last_mod_by = request.user, upload_batch = batch)
+                                                    mcp.save()
+                                                elif entity == 'PO':
+                                                    pocp = PersonOrgControlProperty(person_org = match, control_property = dp, control_property_value = cf[0], notes = footnote, inline_notes = inline, last_mod_by = request.user, upload_batch = batch)
+                                                    pocp.save()
+                                            else:
+                                                cf_error = ControlFieldImportError(data_upload = upload, row = row_index, column = column, error_text = 'Could not find Controlled Term match for ' + dp.property + ' : ' + cell)
+                                                
+                                        # HANDLE FREE FORM PROPERTY
+                                        else:
+                                            cf = ControlField.objects.filter(title = cell, type = dp)
+                                            if entity == 'S':
+                                                sp = SubjectProperty(subject = match, property = dp, property_value = cell, notes = footnote, inline_notes = inline, last_mod_by = request.user, upload_batch = batch)
+                                                sp.save()
+                                            elif entity == 'L':
+                                                lp = LocationProperty(location = match, property = dp, property_value = cell, notes = footnote, inline_notes = inline, last_mod_by = request.user, upload_batch = batch)
+                                                lp.save()
+                                            elif entity == 'M':
+                                                mp = MediaProperty(media = match, property = dp, property_value = cell, notes = footnote, inline_notes = inline, last_mod_by = request.user, upload_batch = batch)
+                                                mp.save()
+                                            elif entity == 'PO':
+                                                pop = PersonOrgProperty(person_org = match, property = dp, property_value = cell, notes = footnote, inline_notes = inline, last_mod_by = request.user, upload_batch = batch)
+                                                pop.save()
+                    instance.delete()
+                else:
+                    instance.save()
+
+            elif isinstance(instance, RelationImportError):
+                if instance.subject or instance.location or instance.media or instance.person:
+                    batch = instance.batch
+                    
+                    if instance.subject:
+                        rel_match = instance.subject
+                        rel_entity = 'S'
+                    elif instance.location:
+                        rel_match = instance.location
+                        rel_entity = 'L'
+                    elif instance.media:
+                        rel_match = instance.media
+                        rel_entity = 'M'
+                    else:
+                        rel_match = instance.person
+                        rel_entity = 'PO'
+                        
+                    if instance.subjects:
+                        matches = instance.subjects
+                        entity = 'S'                        
+                    elif instance.locations:
+                        matches = instance.locations
+                        entity = 'L'                        
+                    elif instance.medias:
+                        matches = instance.medias
+                        entity = 'M'                        
+                    else:
+                        matches = instance.people
+                        entity = 'PO'                        
+                            
+                    column = instance.column
+                    dp = column.property                            
+                    
+                    # HANDLE RELATIONS
+                    
+                    if entity == 'S':
+                        if rel_entity == 'L':
+                            for match in matches:
+                                lsr = LocationSubjectRelations(location = rel_match, subject = match, last_mod_by = request.user, upload_batch = batch)
+                                lsr.save()
+                        elif rel_entity == 'M':
+                            for match in matches:
+                                msr = MediaSubjectRelations(media = rel_match, subject = match, last_mod_by = request.user, upload_batch = batch)
+                                msr.save()
+                        elif rel_entity == 'PO':
+                            for match in matches:
+                                posr = SubjectPersonOrgRelations(person_org = rel_match, subject = match, last_mod_by = request.user, upload_batch = batch)
+                                posr.save()
+                    elif entity == 'L':
+                        if rel_entity == 'S':
+                            for match in matches:
+                                lsr = LocationSubjectRelations(subject = rel_match, location = match, last_mod_by = request.user, upload_batch = batch)
+                                lsr.save()
+                        elif rel_entity == 'M':
+                            for match in matches:
+                                mlr = MediaLocationRelations(media = rel_match, location = match, last_mod_by = request.user, upload_batch = batch)
+                                mlr.save()
+                        elif rel_entity == 'PO':
+                            for match in matches:
+                                polr = LocationPersonOrgRelations(person_org = rel_match, location = match, last_mod_by = request.user, upload_batch = batch)
+                                polr.save()
+                    elif entity == 'M':
+                        if rel_entity == 'S':
+                            for match in matches:
+                                msr = MediaSubjectRelations(subject = rel_match, media = match, last_mod_by = request.user, upload_batch = batch)
+                                msr.save()
+                        elif rel_entity == 'L':
+                            for match in matches:
+                                mlr = MediaLocationRelations(location = rel_match, media = match, last_mod_by = request.user, upload_batch = batch)
+                                mlr.save()
+                        elif rel_entity == 'PO':
+                            for match in matches:
+                                pomr = MediaPersonOrgRelations(person_org = rel_match, media = match, last_mod_by = request.user, upload_batch = batch)
+                                pomr.save()
+                    elif entity == 'PO':
+                        if rel_entity == 'S':
+                            for match in matches:
+                                posr = SubjectPersonOrgRelations(subject = rel_match, person_org = match, last_mod_by = request.user, upload_batch = batch)
+                                posr.save()
+                        elif rel_entity == 'L':
+                            for match in matches:
+                                polr = LocationPersonOrgRelations(location = rel_match, person_org = match, last_mod_by = request.user, upload_batch = batch)
+                                polr.save()
+                        elif rel_entity == 'M':
+                            for match in matches:
+                                pomr = MediaPersonOrgRelations(media = rel_match, person_org = match, last_mod_by = request.user, upload_batch = batch)
+                                pomr.save()
+                    instance.delete()
+                else:
+                    instance.save()
+                        
+            elif isinstance(instance, ControlFieldImportError):
+                if instance.control_field:
+                    batch = instance.batch
+                        
+                    if instance.subjects:
+                        matches = instance.subjects
+                        entity = 'S'                        
+                    elif instance.locations:
+                        matches = instance.locations
+                        entity = 'L'                        
+                    elif instance.medias:
+                        matches = instance.medias
+                        entity = 'M'                        
+                    else:
+                        matches = instance.people
+                        entity = 'PO'                        
+                            
+                    column = instance.column
+                    dp = column.property
+
+                    # HANDLE CONTROL FIELDS
+                    cf = instance.control_field
+                    if entity == 'S':
+                        for match in matches:
+                            scp = SubjectControlProperty(subject = match, control_property = dp, control_property_value = cf, last_mod_by = request.user, upload_batch = batch)
+                            scp.save()
+                    elif entity == 'L':
+                        for match in matches:
+                            lcp = LocationControlProperty(location = match, control_property = dp, control_property_value = cf, last_mod_by = request.user, upload_batch = batch)
+                            lcp.save()
+                    elif entity == 'M':
+                        for match in matches:
+                            mcp = MediaControlProperty(media = match, control_property = dp, control_property_value = cf, last_mod_by = request.user, upload_batch = batch)
+                            mcp.save()
+                    elif entity == 'PO':
+                        for match in matches:
+                            pocp = PersonOrgControlProperty(person_org = match, control_property = dp, control_property_value = cf, last_mod_by = request.user, upload_batch = batch)
+                            pocp.save()                   
+
+                    instance.delete()
+                else:
+                    instance.save()
+                        
+admin.site.register(DataUpload, DataUploadAdmin)
 
 class StatusFilter(admin.SimpleListFilter):
 
@@ -567,17 +1503,7 @@ class LocationSubjectRelationsInline(admin.TabularInline):
     }
     suit_classes = 'suit-tab suit-tab-general'
     extra = 1
-    form = LocationRelationAdminForm
-        
-class SubjectSubjectRelationsInline(admin.TabularInline):
-    model = SubjectSubjectRelations
-    fk_name = "subject1"
-    fields = ['subject2', 'relation_type', 'notes', 'last_mod_by']
-    readonly_fields = ('last_mod_by',)        
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
-    suit_classes = 'suit-tab suit-tab-general'    
+    form = LocationRelationAdminForm 
         
 class FileInline(admin.TabularInline):
     model = File
@@ -591,7 +1517,7 @@ class FileInline(admin.TabularInline):
         
 class SubjectAdmin(admin.ModelAdmin):
     readonly_fields = ('title', 'created', 'modified', 'last_mod_by')    
-    inlines = [SubjectPropertyInline, SubjectControlPropertyInline, MediaSubjectRelationsInline, FileInline, LocationSubjectRelationsInline]
+    inlines = [SubjectPropertyInline, SubjectControlPropertyInline, MediaSubjectRelationsInline, FileInline, LocationSubjectRelationsInline, SubjectCollectionEntityInline]
     search_fields = ['title', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3']
     list_display = ('title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3', 'created', 'modified')
     formfield_overrides = {
@@ -1080,7 +2006,7 @@ class MediaAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2})},
     }
-    inlines = [MediaPropertyInline, MediaCollectionInline]
+    inlines = [MediaPropertyInline, MediaCollectionEntityInline]
     search_fields = ['title', 'notes']
     change_form_template = 'admin/base/media/change_form_media.html'
     suit_form_includes = (
@@ -1321,7 +2247,7 @@ class PersonOrgAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'modified', 'last_mod_by')
     fields = ['title', 'notes', 'created', 'modified', 'last_mod_by']
     list_display = ['title', 'notes', 'created', 'modified', 'last_mod_by']
-    inlines = [PersonOrgPropertyInline, MediaPersonOrgRelationsInline, PersonOrgLinkedDataInline]
+    inlines = [PersonOrgPropertyInline, MediaPersonOrgRelationsInline, PersonOrgLinkedDataInline, PersonOrgCollectionEntityInline]
     search_fields = ['title']
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2})},
@@ -1405,7 +2331,6 @@ class DescriptivePropertyAdmin(admin.ModelAdmin):
 
 admin.site.register(DescriptiveProperty, DescriptivePropertyAdmin)
 admin.site.register(MediaProperty)
-admin.site.register(FeaturedImgs)
 
 class SubjectPropertyAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'modified', 'last_mod_by')
@@ -1458,35 +2383,8 @@ class LocationSubjectRelationsAdmin(admin.ModelAdmin):
 
 admin.site.register(LocationSubjectRelations, LocationSubjectRelationsAdmin)
 
-class SubjectSubjectRelationsAdmin(admin.ModelAdmin):
-    readonly_fields = ('created', 'modified', 'last_mod_by')
-    fields = ['subject1', 'subject2', 'relation_type', 'notes', 'created', 'modified', 'last_mod_by']
-    list_display = ['subject1', 'subject2', 'relation_type', 'notes', 'created', 'modified', 'last_mod_by']
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2})},
-    }
-    
-    def save_model(self, request, obj, form, change):
-        obj.last_mod_by = request.user
-        obj.save()
-
-admin.site.register(SubjectSubjectRelations, SubjectSubjectRelationsAdmin)
 admin.site.register(MediaPersonOrgRelations)
 admin.site.register(PersonOrgProperty)
-
-class StatusAdmin(admin.ModelAdmin):
-    readonly_fields = ('created', 'modified', 'last_mod_by')
-    fields = ['status', 'notes', 'created', 'modified', 'last_mod_by']
-    list_display = ['status', 'notes', 'created', 'modified', 'last_mod_by']
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2})},
-    }
-    
-    def save_model(self, request, obj, form, change):
-        obj.last_mod_by = request.user
-        obj.save()
-    
-admin.site.register(Status, StatusAdmin)
 
 class LocationPropertyInline(admin.TabularInline):
     model = LocationProperty
@@ -1524,7 +2422,7 @@ class MediaLocationRelationsInline(admin.TabularInline):
 
 class LocationAdmin(MPTTModelAdmin):
     readonly_fields = ('title', 'created', 'modified', 'last_mod_by')    
-    inlines = [LocationPropertyInline, MediaLocationRelationsInline]
+    inlines = [LocationPropertyInline, MediaLocationRelationsInline, LocationCollectionEntityInline]
     search_fields = ['title']
     list_display = ('title', 'notes', 'type', 'ancestors')
     formfield_overrides = {
@@ -1583,3 +2481,104 @@ class LinkedDataAdmin(admin.ModelAdmin):
     show_url.short_description = "Link"
 
 admin.site.register(ControlFieldLinkedData, LinkedDataAdmin)
+
+class UploadBatchAdmin(admin.ModelAdmin):
+    fields = ['name']
+    readonly_fields = ('name', )
+    search_fields = ['name']
+    
+admin.site.register(UploadBatch, UploadBatchAdmin)
+
+""" UPCOMING FEATURES """
+
+class AdminForumPostForm(ModelForm):
+    """ Used on Admin Post Change Form page to edit admin forum posts """
+    
+    subject = SubjectChoices(        
+        label = 'Attached Objects',
+        widget = AutoHeavySelect2MultipleWidget(
+            select2_options = {
+                'width': '220px',
+            }
+        ),
+        required = False
+    )
+    
+    class Meta:
+  
+        _ck_editor_toolbar = [
+            {'name': 'basicstyles', 'groups': ['basicstyles', 'cleanup']},
+            {'name': 'paragraph',
+             'groups': ['list', 'indent', 'blocks', 'align']},
+            {'name': 'document', 'groups': ['mode']}, '/',
+            {'name': 'styles'}, {'name': 'colors'},
+            {'name': 'insert_custom',
+             'items': ['Image', 'Flash', 'Table', 'HorizontalRule']},
+            {'name': 'links'},
+            {'name': 'about'}]
+
+        _ck_editor_config = {'autoGrow_onStartup': True,
+                             'autoGrow_minHeight': 100,
+                             'autoGrow_maxHeight': 250,
+                             'extraPlugins': 'autogrow',
+                             'toolbarGroups': _ck_editor_toolbar}            
+  
+        widgets = {
+            'body': CKEditorWidget(editor_options=_ck_editor_config),
+        }
+
+class AdminCommentInline(admin.StackedInline):
+    model = AdminComment
+    extra = 0
+    readonly_fields = ('author', 'created')
+    template = 'admin/edit_inline/stacked_adminpost.html'
+    
+    def queryset(self, request):
+        """ Returns only comments checked as published or written by the author (even if unpublished) """
+        
+        qs = super(AdminCommentInline, self).queryset(request)
+        return qs.filter(Q(published = True) | Q(published = False, author = request.user))
+        
+""" class AdminPostAdmin(admin.ModelAdmin):
+    form = AdminForumPostForm
+    readonly_fields = ('author', 'created')
+    inlines = [AdminCommentInline]
+    list_display = ['title', 'author', 'created', 'published']
+    list_filter = ['published', 'created']
+    search_fields = ['title', 'body']
+    date_hierarchy = 'created'
+    save_on_top = True
+    change_form_template = 'admin/base/adminpost/change_form_adminpost.html'
+    
+    class Media:
+        # the django-select2 styles have to be added manually for some reason, otherwise they don't work
+        css = {
+            "all": ("django_select2/css/select2.min.css",)
+        }
+    
+    def save_model(self, request, obj, form, change):
+        if obj.pk is None:
+            obj.author = request.user
+            obj.save()
+        else:
+            obj.save()
+
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
+        for instance in instances:
+            if isinstance(instance, AdminComment): #Check if it is the correct type of inline
+                instance.author = request.user            
+                instance.save()        
+        
+    def queryset(self, request):
+        qs = super(AdminPostAdmin, self).queryset(request)
+        return qs.filter(Q(published = True) | Q(published = False, author = request.user))
+        
+    def has_delete_permission(self, request, obj = None):
+        if obj is not None:
+            if request.user == obj.author:
+                return True
+        return False
+
+admin.site.register(AdminPost, AdminPostAdmin) """
