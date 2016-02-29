@@ -163,6 +163,22 @@ class ObjectType(models.Model):
         verbose_name = 'Entity Type'
         verbose_name_plural = 'Entity Types'
         
+class PropertyType(models.Model):
+    """ Sub-groupings of Properties """
+    
+    type = models.CharField(max_length = 40)
+    notes = models.TextField(blank = True)
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User) 
+
+    def __unicode__(self):
+        return self.type
+        
+    class Meta:
+        verbose_name = 'Property Type'
+        verbose_name_plural = 'Property Types'        
+        
 class MediaType(models.Model):
     """ Types of Media, such as image/jpeg, text/html, etc """
     type = models.CharField(max_length = 40)
@@ -237,17 +253,6 @@ class DescriptiveProperty(models.Model):
         (DATE, 'Date'),
         (LOCATION, 'Location'),
     )
-    
-    GEN = 'gen'
-    CON = 'con'
-    ARCH = 'arc'
-    TEXT = 'txt'
-    DATA_SOURCE_TYPE = (
-        (GEN, 'General'),
-        (CON, 'Conservation-Analytic'),
-        (ARCH, 'Archival'),
-        (TEXT, 'Textual'),
-    )
 
     property = models.CharField(max_length = 60)
     notes = models.TextField(blank = True, help_text = "Please use this space to define the property.")
@@ -260,7 +265,7 @@ class DescriptiveProperty(models.Model):
     solr_type = models.CharField(max_length = 45, choices = SOLR_TYPE, default = TEXT, blank = True)
     facet = models.BooleanField(default = False)
     control_field = models.BooleanField(default = False)
-    data_source_type = models.CharField(max_length=3, choices=DATA_SOURCE_TYPE, default = GEN, blank = True)
+    property_type = models.ForeignKey(PropertyType, blank = True, null = True)
 
     def __unicode__(self):
         return self.property
@@ -906,7 +911,8 @@ class LocationControlProperty(models.Model):
 
     class Meta:
         verbose_name = 'Controlled Location Property'    
-        verbose_name_plural = 'Controlled Location Properties'    
+        verbose_name_plural = 'Controlled Location Properties'
+        ordering = ['control_property__order']
 
     def __unicode__(self):
         return self.control_property.property + ': ' + self.control_property_value.title

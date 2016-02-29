@@ -12,4 +12,5 @@ def update():
     print response
     
 @shared_task
-def precomp_object_fields():
+def bulk_import_files():
+    

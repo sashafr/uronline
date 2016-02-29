@@ -896,8 +896,23 @@ class LinkedDataSourceAdmin(admin.ModelAdmin):
     
 admin.site.register(LinkedDataSource, LinkedDataSourceAdmin)   
     
-""" DESCRIPTIVE PROPERTY & CONTROLLED PROPERTY ADMIN """    
+""" HELPER ADMIN """
+
+class PropertyTypeAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'modified', 'last_mod_by')    
+    search_fields = ['type']
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
     
+    def save_model(self, request, obj, form, change):
+        obj.last_mod_by = request.user
+        obj.save()
+
+admin.site.register(PropertyType, PropertyTypeAdmin)    
+    
+""" DESCRIPTIVE PROPERTY & CONTROLLED PROPERTY ADMIN """    
+ 
 class ControlFieldAdmin(MPTTModelAdmin, SortableModelAdmin):
     readonly_fields = ('created', 'modified', 'last_mod_by')    
     inlines = [ControlFieldLinkedDataInline]
@@ -2316,14 +2331,14 @@ admin.site.register(MediaType)
 
 class DescriptivePropertyAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'modified', 'last_mod_by')
-    fields = ['property', 'primary_type', 'order', 'data_source_type', 'visible', 'solr_type', 'facet', 'notes', 'created', 'modified', 'last_mod_by']
-    list_display = ['property', 'primary_type', 'order', 'data_source_type', 'visible', 'solr_type', 'facet', 'notes', 'created', 'modified', 'last_mod_by']
+    fields = ['property', 'primary_type', 'order', 'property_type', 'visible', 'solr_type', 'facet', 'notes', 'created', 'modified', 'last_mod_by']
+    list_display = ['property', 'primary_type', 'order', 'property_type', 'visible', 'solr_type', 'facet', 'notes', 'created', 'modified', 'last_mod_by']
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2})},
     }
     search_fields = ['property']
-    list_filter = ('primary_type', 'visible', 'solr_type', 'facet', 'data_source_type')
-    list_editable = ('primary_type', 'order', 'visible', 'solr_type', 'facet', 'notes', 'data_source_type')
+    list_filter = ('primary_type', 'visible', 'solr_type', 'facet', 'property_type')
+    list_editable = ('primary_type', 'order', 'visible', 'solr_type', 'facet', 'notes', 'property_type')
     
     def save_model(self, request, obj, form, change):
         obj.last_mod_by = request.user
@@ -2360,7 +2375,7 @@ class MediaSubjectRelationsAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2})},
     }
-    search_fields = ['notes']
+    search_fields = ['media__title', 'notes']
 #    form = MediaSubjectRelationsForm
     
     def save_model(self, request, obj, form, change):

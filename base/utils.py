@@ -461,10 +461,28 @@ def fix_bm_nums():
             print "BAD MATCH: " + num + "; ID: " + str(bmnum.subject_id)
             
 def quickfix():
-    pdw = Location.objects.get(pk=3683)
-    pdws = pdw.get_descendants(include_self=False)
-    for p in pdws:
-        sublocs = p.locationsubjectrelations_set.all()
-        for subloc in sublocs:
-            subloc.location = pdw
-            subloc.save()
+    resids = MediaProperty.objects.filter(property_id = 94, media__type_id = 1)
+    for resid in resids:
+        subs = SubjectFile.objects.filter(rsid = resid.property_value)
+        if not subs:
+            locs = LocationFile.objects.filter(rsid = resid.property_value)
+            if not locs:
+                meds = MediaFile.objects.filter(rsid = resid.property_value)
+                if not meds:
+                    media_item = resid.media
+                    media_item.type_id = 2
+                    media_item.notes = "Created during separation of media and files."
+                    media_item.save()
+                    check = MediaFile.objects.filter(media = media_item)
+                    if check:
+                        thumb = False
+                    else:
+                        thumb = True
+                    file = MediaFile(media = media_item, rsid = resid.property_value, thumbnail = check, filetype = MediaType.objects.get(pk=1), collection = None)
+                    file.save()
+                    
+def fix():
+    cols = MediaCollection.objects.filter(id__gt = 2355)
+    for col in cols:
+        col.order = col.order + 30
+        col.save()
