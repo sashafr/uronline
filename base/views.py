@@ -28,6 +28,12 @@ from operator import attrgetter
 
 def create_footnotes(start_index, properties, gen_notes):
     """ Helper to create footnotes """
+    #gen_notes is what ?
+    #It contains objects 
+    #properties of what ? What type is properties ? 
+    #where is .notes defined ?
+    #I think properties is a list of objects in which ".notes" is some instantaneous variable 
+    
 
     gen_fn_count = start_index
     for gprop in properties:

@@ -206,7 +206,7 @@ class UploadBatch(models.Model):
         uploads = DataUpload.objects.filter(pk=self.data_upload)
         for upload in uploads:
             upload.imported = False
-            upload.save()       
+            upload.save()  
         
     class Meta:
         verbose_name = 'Upload Batch'
@@ -374,6 +374,22 @@ class ResultProperty(models.Model):
                 return types[m.group(1)] + ' ' + fields[m.group(2)] + ' ' + m.group(3)
         return ''
     human_title.admin_order_field = 'display_field'
+    
+    def save(self, *args, **kwargs):
+        """ Identifies what result property has been reset and updates every affeced entity. """
+            
+        super(ResultProperty, self).save(*args, **kwargs)             
+        
+        if self.display_field.startswith('subj'):
+            entities = Subject.objects.all()
+        elif self.display_field.startswith('loc'):
+            entities = Location.objects.all()
+        elif self.display_field.startswith('med'):
+            entities = Media.objects.all()
+        else:
+            entities = PersonOrganization.objects.all()
+        for entity in entities:
+            entity.save()   
 
     def __unicode__(self):
         if self.field_type:

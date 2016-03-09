@@ -987,11 +987,6 @@ class ResultPropertyAdmin(admin.ModelAdmin):
     search_fields = ['display_field', 'field_type']
     list_display = ('human_title', 'field_type')
     list_editable = ('field_type',)
-
-    def save_model(self, request, obj, form, change):
-        subjects = Subject.objects.all()
-        for subj in subjects:
-            update_display_fields(subj.id, 'subj')    
     
 admin.site.register(ResultProperty, ResultPropertyAdmin)
 
