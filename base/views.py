@@ -116,6 +116,9 @@ def subjectdetail(request, subject_id):
         related_web = []
         property_count = 0
         
+    # files
+    files = SubjectFile.objects.filter(subject = subject)        
+        
     gen_notes = []
     gen_index = create_footnotes(1, gen_control_properties, gen_notes)
     create_footnotes(gen_index, gen_properties, gen_notes)
@@ -128,7 +131,7 @@ def subjectdetail(request, subject_id):
     con_index = create_footnotes(1, con_control_properties, con_notes)
     create_footnotes(con_index, con_properties, con_notes) 
     
-    return render(request, 'base/subjectdetail.html', {'subject': subject, 'gen_images': gen_images, 'con_images': con_images, 'arc_images': arc_images, 'gen_properties': gen_properties, 'con_properties': con_properties, 'arc_properties': arc_properties, 'control_properties': gen_control_properties, 'arc_control_properties': arc_control_properties, 'con_control_properties': con_control_properties, 'related_media': related_media, 'related_web': related_web, 'property_count': property_count, 'gen_footnotes': gen_notes, 'arc_footnotes': arc_notes, 'con_footnotes': con_notes})
+    return render(request, 'base/subjectdetail.html', {'subject': subject, 'gen_images': gen_images, 'con_images': con_images, 'arc_images': arc_images, 'gen_properties': gen_properties, 'con_properties': con_properties, 'arc_properties': arc_properties, 'control_properties': gen_control_properties, 'arc_control_properties': arc_control_properties, 'con_control_properties': con_control_properties, 'related_media': related_media, 'related_web': related_web, 'property_count': property_count, 'gen_footnotes': gen_notes, 'arc_footnotes': arc_notes, 'con_footnotes': con_notes, 'files': files})
     
 def mediadetail(request, media_id):
     """ Detailed view of a media record """

@@ -68,19 +68,6 @@
                                         <p>This object is currently undergoing analysis. More information to come...</p>
                                     </div>
                                 {% endif %}
-                                <hr />
-                                {% if gen_images %}
-                                <h3 id="addimgs">Additional Images</h3>
-                                <ul class="enlarge">
-                                    {% for image in gen_images %}
-                                        <li style="border: 1px solid #ddd; border-radius: 4px; margin: 10px; padding: 10px;">
-                                            <a data-lightbox="image-{{ image }}" href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}"><img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'></a>
-                                            <p style="text-align: center;">
-                                            <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">Download</a></p>
-                                        </li>
-                                    {% endfor %}
-                                </ul>              
-                                {% endif %}
                             </div>
                             <div id="archival" class="tab-pane" style="margin-top: 20px;">
                                 {% if arc_properties %}
@@ -130,19 +117,6 @@
                                     <div class="alert alert-warning" role="alert">
                                         <p>This object is currently undergoing analysis. More information to come...</p>
                                     </div>
-                                {% endif %}
-                                {% if arc_images %}
-                                <hr />
-                                <h3 id="addimgs">Archival Images</h3>
-                                <ul class="enlarge">
-                                    {% for image in arc_images %}
-                                        <li style="border: 1px solid #ddd; border-radius: 4px; margin: 10px; padding: 10px;">
-                                            <a data-lightbox="image-{{ image }}" href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}"><img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'></a>
-                                            <p style="text-align: center;">
-                                            <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">Download</a></p>
-                                        </li>
-                                    {% endfor %}
-                                </ul>  
                                 {% endif %}
                             </div>  
                             <div id="conservation" class="tab-pane" style="margin-top: 20px;">
@@ -194,22 +168,35 @@
                                         <p>This object is currently undergoing analysis. More information to come...</p>
                                     </div>
                                 {% endif %}
-                                {% if con_images %}
-                                <hr />
-                                <h3 id="addimgs">Conservation/Analytic Images</h3>
-                                <ul class="enlarge">
-                                    {% for image in con_images %}
-                                        <li style="border: 1px solid #ddd; border-radius: 4px; margin: 10px; padding: 10px;">
-                                            <a data-lightbox="image-{{ image }}" href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}"><img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'></a>
-                                            <p style="text-align: center;">
-                                            <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">Download</a></p>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                                {% endif %}
                             </div>                              
                         </div> 
-                    </div>                    
+                    </div>
+                    {% if files %}
+                        <div class="row" id="files">
+                            <div class="col-lg-12">
+                                <div class="row">
+                                    <div class="col-sm-10">
+                                        <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">Files</h3>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <ul class="enlarge">
+                                            {% for file in files %}
+                                                <li style="border: 1px solid #ddd; border-radius: 4px; margin: 10px; padding: 10px;">
+                                                    <a data-lightbox="location-file" href="{% load_globals 'image_uri' %}{{ file.rsid }}">
+                                                        <img class="img-responsive" src="{% load_globals 'thumbnail_uri' %}{{ file.rsid }}">
+                                                    </a>
+                                                    <p style="text-align: center;">
+                                                    <a href="{% load_globals 'image_uri' %}{{ file.rsid }}">Download</a></p>
+                                                </li>                                                
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}                    
                 </div>
                 <div class="col-md-3">
                     <div class="row">

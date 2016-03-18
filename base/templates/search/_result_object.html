@@ -36,7 +36,7 @@
       <a href="{% url 'subjectdetail' obj.id %}" style="color:#000;">
           <div class="row" style="padding-top:10px;">
             <div class="col-md-3">
-              <img src="{% get_img_thumb obj 'ms' 'thm' %}" style="display: inline; margin: 0 5px;"></img>        
+              <img src="{{ obj.get_thumbnail }}" style="display: inline; margin: 0 5px;"></img>        
             </div>
             <div class="col-md-9">
               <h4 class="list-group-item-heading">
