@@ -3,16 +3,16 @@
 from django.shortcuts import render, get_object_or_404, render_to_response
 from base.models import *
 from haystack.views import SearchView
-from base.forms import AdvancedSearchForm, AdvModelSearchForm
+from base.forms import AdvancedSearchForm, AdvModelSearchForm, FileUploadForm
 from django.forms.formsets import formset_factory
 from base import tasks
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
-from base.utils import get_img_ids, search_for_export, get_img_ids_spec, single_context_in_ah
+from base.utils import get_img_ids, search_for_export, get_img_ids_spec, single_context_in_ah, single_file_upload
 from django.db.models import Count
 import djqscsv
 from django.core import serializers
 import csv
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.http import Http404
 from django.utils.encoding import smart_str
 from haystack.query import SQ
@@ -25,6 +25,7 @@ from rest_framework_xml.renderers import XMLRenderer
 import string
 from itertools import chain
 from operator import attrgetter
+from django.conf import settings
 
 def create_footnotes(start_index, properties, gen_notes):
     """ Helper to create footnotes """
@@ -89,10 +90,7 @@ def subjectdetail(request, subject_id):
     """ Detailed view of a subject record """
     
     subject = get_object_or_404(Subject, pk=subject_id)
-    if subject:
-        gen_images = get_img_ids_spec(subject, 'ms', 3)
-        arc_images = get_img_ids_spec(subject, 'ms', 7)
-        con_images = get_img_ids_spec(subject, 'ms', 6)        
+    if subject:      
         gen_properties = subject.subjectproperty_set.filter(property__visible=True, property__property_type__id=1)
         arc_properties = subject.subjectproperty_set.filter(property__visible=True, property__property_type__id=3)
         con_properties = subject.subjectproperty_set.filter(property__visible=True, property__property_type__id=2)        
@@ -102,10 +100,7 @@ def subjectdetail(request, subject_id):
         related_media = subject.mediasubjectrelations_set.filter(relation_type_id=2)
         related_web = subject.subjectlinkeddata_set.all()
         property_count = subject.subjectproperty_set.filter(property__visible=True).count() + subject.subjectcontrolproperty_set.all().count()
-    else:
-        gen_images = []
-        arc_images = []
-        con_images = []        
+    else:     
         gen_properties = []
         arc_properties = []
         con_properties = []
@@ -117,7 +112,19 @@ def subjectdetail(request, subject_id):
         property_count = 0
         
     # files
-    files = SubjectFile.objects.filter(subject = subject)        
+    files = {}
+    files[''] = []
+    files_list = SubjectFile.objects.filter(subject = subject)
+    for file in files_list:
+        cols = FileCollection.objects.filter(file = file.rsid)
+        if not cols:
+            files[''].append(file)
+        else:
+            for col in cols:
+                if not col.collection.title in files.keys():
+                    files[col.collection.title] = [file]
+                else:
+                    files[col.collection.title].append(file)     
         
     gen_notes = []
     gen_index = create_footnotes(1, gen_control_properties, gen_notes)
@@ -131,7 +138,7 @@ def subjectdetail(request, subject_id):
     con_index = create_footnotes(1, con_control_properties, con_notes)
     create_footnotes(con_index, con_properties, con_notes) 
     
-    return render(request, 'base/subjectdetail.html', {'subject': subject, 'gen_images': gen_images, 'con_images': con_images, 'arc_images': arc_images, 'gen_properties': gen_properties, 'con_properties': con_properties, 'arc_properties': arc_properties, 'control_properties': gen_control_properties, 'arc_control_properties': arc_control_properties, 'con_control_properties': con_control_properties, 'related_media': related_media, 'related_web': related_web, 'property_count': property_count, 'gen_footnotes': gen_notes, 'arc_footnotes': arc_notes, 'con_footnotes': con_notes, 'files': files})
+    return render(request, 'base/subjectdetail.html', {'subject': subject, 'gen_properties': gen_properties, 'con_properties': con_properties, 'arc_properties': arc_properties, 'control_properties': gen_control_properties, 'arc_control_properties': arc_control_properties, 'con_control_properties': con_control_properties, 'related_media': related_media, 'related_web': related_web, 'property_count': property_count, 'gen_footnotes': gen_notes, 'arc_footnotes': arc_notes, 'con_footnotes': con_notes, 'files': files})
     
 def mediadetail(request, media_id):
     """ Detailed view of a media record """
@@ -224,7 +231,19 @@ def locationdetail(request, location_id):
             properties[pt].append(p)
             
     # files
-    files = LocationFile.objects.filter(location = location)
+    files = {}
+    files[''] = []
+    files_list = LocationFile.objects.filter(location = location)
+    for file in files_list:
+        cols = FileCollection.objects.filter(file = file.rsid)
+        if not cols:
+            files[''].append(file)
+        else:
+            for col in cols:
+                if not col.collection.title in files.keys():
+                    files[col.collection.title] = [file]
+                else:
+                    files[col.collection.title].append(file)    
     
     # objects
     subjects = Subject.objects.filter(locationsubjectrelations__location__in = location.get_descendants(include_self = True)).distinct()
@@ -511,7 +530,7 @@ def terminology(request):
     
 def collections(request):
 
-    collections = Collection.objects.all()
+    collections = Collection.objects.filter(public = True)
 
     return render(request, 'base/collections.html', {'collections': collections})
     
@@ -1110,3 +1129,21 @@ def collectiondetailexport(request, collection_id):
             for each_row in rows:
                 writer.writerow(each_row)
             return response
+            
+def bulk_upload_file(request):
+    tasks.bulk_file_upload()
+    return HttpResponseRedirect(request.GET.get('next'))
+    
+def addfile(request):
+    if request.method == 'POST':
+        form = FileUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            file = request.FILES['file']
+            with open(settings.FILE_UPLOAD_FOLDER + '/' + file.name, 'wb+') as destination:
+                for chunk in request.FILES['file'].chunks():
+                    destination.write(chunk)
+            new_file = single_file_upload(str(file.name))
+            return HttpResponseRedirect("../%s" % new_file)
+    else:
+        form = FileUploadForm()
+    return render(request, 'admin/base/file/add_form.html', {'form': form})

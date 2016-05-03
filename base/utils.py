@@ -7,6 +7,12 @@ from haystack.inputs import Raw
 from haystack.query import SearchQuerySet, SQ
 import re
 from django.contrib.auth.models import User
+from datetime import datetime
+import urllib, urllib2, pycurl, json
+from django.conf import settings
+from os import listdir, remove
+from os.path import isfile, join, splitext
+from StringIO import StringIO
 
 def export_csv(results):
     response = HttpResponse(mimetype='text/csv')
@@ -481,8 +487,67 @@ def quickfix():
                     file = MediaFile(media = media_item, rsid = resid.property_value, thumbnail = check, filetype = MediaType.objects.get(pk=1), collection = None)
                     file.save()
                     
+def quickfix2():
+    fils = LocationFile.objects.all()
+    for fil in fils:
+        new_file = File(id = fil.rsid, title = "(none)")
+        new_file.save()                    
+                    
 def fix():
     cols = MediaCollection.objects.filter(id__gt = 2355)
     for col in cols:
         col.order = col.order + 30
         col.save()
+
+def single_file_upload(file):
+    """ This method presumes you are using ResourceSpace. If you are not, you will need to
+    modify the method to properly make the API call and handle the response. """
+
+    # create new upload batch
+    current_time = datetime.strftime(datetime.now(), '%Y-%m-%d_%H-%M-%S')
+    upload_batch = UploadBatch(name = "Single File Upload " + current_time, data_upload = 0)
+    upload_batch.save()
+    
+    name_only, ext = splitext(file)
+    upload_file_loc = settings.FILE_UPLOAD_FOLDER + '/' + file
+    
+    curl = pycurl.Curl()
+    storage = StringIO()
+    data = [ 
+        ('userfile', (pycurl.FORM_FILE, upload_file_loc)),
+        ('key', settings.FILE_UPLOAD_API_KEY),
+        ('field8', "File Upload " + current_time) #this is very specific to UrOnline installation
+    ]
+    curl.setopt(pycurl.URL, settings.FILE_UPLOAD_API_URI)            
+    curl.setopt(pycurl.HTTPPOST, data)
+    curl.setopt(pycurl.WRITEFUNCTION, storage.write)
+    curl.setopt(pycurl.USERAGENT, "API Client") 
+    curl.perform()
+    curl.close()
+    content = storage.getvalue()
+    json_content = json.loads(content)
+    new_rsid = int(json_content['resource'][0]['ref'])
+    
+    # create new file in main db
+    new_file = File(id = new_rsid, upload_batch = upload_batch, filetype = ext[1:])
+    new_file.save()
+    
+    # create property for file name
+    fn_prop_test = ResultProperty.objects.filter(display_field = 'file_name')
+    
+    # create a file name result property if one isn't designated
+    if not (fn_prop_test and fn_prop_test[0].field_type):
+        dp = DescriptiveProperty(property = 'Filename', last_mod_by = User.objects.get(pk=1), primary_type = 'MF', visible = 0)
+        dp.save()
+        fn_prop_test.field_type = dp
+        fn_prop_test.save()
+    else:
+        dp = fn_prop_test[0].field_type
+    
+    new_fp = FileProperty(file = new_file, property = dp, property_value = file, last_mod_by = User.objects.get(pk=1), upload_batch = upload_batch)
+    new_fp.save()
+    
+    # delete file from temp storage now that its uploaded
+    remove(upload_file_loc)
+
+    return new_rsid

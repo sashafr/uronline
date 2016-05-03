@@ -15,19 +15,62 @@
     <div class="container">
     
       <div class="row">
-        <div class="col-lg-12">
-            <div class="intro-message">
-                <h1>Search {% load_globals "site_title" %}</h1>            
+        <div class="col-md-3">
+            <div class="intro-message intro-well">
+                <h3>Search Objects</h3>  
                 <form action="/search" method="get" class="form-inline" role="form">
                     <div class="form-group col-lg-8 col-lg-offset-2">
                         <label class="sr-only" for="general_search">Search</label>
-                        <input type="text" name="keyword" class="form-control" id="general_search" placeholder="Enter search terms">
+                        <input type="hidden" name="models" value="base.subject" />
+                        <input type="text" name="keyword" class="form-control" id="general_search"  placeholder="Enter search terms">
+                        <button type="submit">Advanced Object Search</button>
                     </div>
                 </form>
                 <div class="clearfix"></div>
-                <h4><a href="{% url 'haystack_search' %}">Advanced Search</a></h4>
             </div>          
         </div>
+        <div class="col-md-3">
+            <div class="intro-message intro-well">
+                <h3>Search Locations</h3>  
+                <form action="/search" method="get" class="form-inline" role="form">
+                    <div class="form-group col-lg-8 col-lg-offset-2">
+                        <label class="sr-only" for="general_search">Search</label>
+                        <input type="hidden" name="models" value="base.location" />
+                        <input type="text" name="keyword" class="form-control" id="general_search"  placeholder="Enter search terms">
+                       <button type="submit">Advanced Location Search</button>                        
+                    </div>
+                </form>
+                <div class="clearfix"></div>
+            </div>          
+        </div>
+        <div class="col-md-3">
+            <div class="intro-message intro-well">
+                <h3>Search Media</h3>  
+                <form action="/search" method="get" class="form-inline" role="form">
+                    <div class="form-group col-lg-8 col-lg-offset-2">
+                        <label class="sr-only" for="general_search">Search</label>
+                        <input type="hidden" name="models" value="base.media" />
+                        <input type="text" name="keyword" class="form-control" id="general_search"  placeholder="Enter search terms">
+                       <button type="submit">Advanced Media Search</button>                        
+                    </div>
+                </form>
+                <div class="clearfix"></div>
+            </div>          
+        </div>
+        <div class="col-md-3">
+            <div class="intro-message intro-well">
+                <h3>Search People</h3>  
+                <form action="/search" method="get" class="form-inline" role="form">
+                    <div class="form-group col-lg-8 col-lg-offset-2">
+                        <label class="sr-only" for="general_search">Search</label>
+                        <input type="hidden" name="models" value="base.personorg" />
+                        <input type="text" name="keyword" class="form-control" id="general_search"  placeholder="Enter search terms">
+                       <button type="submit">Advanced People Search</button>                        
+                    </div>
+                </form>
+                <div class="clearfix"></div>
+            </div>          
+        </div>        
       </div>
     </div>
   </div>

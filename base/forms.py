@@ -309,4 +309,9 @@ class AdvModelSearchForm(AdvFacetedSearchForm):
 
     def search(self):
         sqs = super(AdvModelSearchForm, self).search()
-        return sqs.models(*self.get_models())        
+        return sqs.models(*self.get_models())
+        
+class FileUploadForm(forms.Form):
+    """Simple form used to upload files via the admin interface"""
+    
+    file = forms.FileField(label='File', required=True)

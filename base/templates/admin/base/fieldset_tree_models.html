@@ -100,7 +100,7 @@
         // build the dictionary to store all possible control field values
         var control_field_options = {};
         control_field_options['0'] = '<option value="">---------</option>'
-        {% get_control_fields as control_fields %}
+        {% get_control_fields 'SL' as control_fields %}
         {% for field in control_fields %}
             control_field_options['{{field.id}}'] = "{% get_control_prop_vals field.id '' %}";
         {% endfor %}

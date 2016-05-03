@@ -8,6 +8,7 @@ from haystack.query import SearchQuerySet
 sqs = SearchQuerySet().facet('prop_19_exact')
 
 urlpatterns = patterns('base.views',
+    url(r'^admin/base/file/add/', 'addfile', name='addfile'),
     url(r'^$', 'home', name='home'),
     url(r'^map/(?P<location_id>\d+)/$', 'mapdetail', name='mapdetail'),
     url(r'^about/', 'about', name='about'),
@@ -45,4 +46,5 @@ urlpatterns = patterns('base.views',
     url(r'^select2/', include('django_select2.urls')),
     url(r'^bulk_update_subject/$', 'bulk_update_subject', name='bulk_update_subject'),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    url(r'^bulk_upload_file/', 'bulk_upload_file', name='bulk_upload_file'),
 )

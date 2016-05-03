@@ -34,7 +34,10 @@ def get_new_title(obj, type):
         qs = obj.mediaproperty_set.all()
     elif type == 'people':
         cqs = obj.personorgcontrolproperty_set.all()
-        qs = obj.personorgproperty_set.all()        
+        qs = obj.personorgproperty_set.all()  
+    elif type == 'file':
+        cqs = obj.filecontrolproperty_set.all()
+        qs = obj.fileproperty_set.all()         
     else:
         return '(none)'
     
@@ -91,7 +94,10 @@ def get_display_field(obj, object_type, result_prop):
         qs = obj.mediaproperty_set.all()
     elif object_type == 'po':
         cqs = obj.personorgcontrolproperty_set.all()
-        qs = obj.personorgproperty_set.all()        
+        qs = obj.personorgproperty_set.all()
+    elif object_type == 'file':
+        cqs = obj.filecontrolproperty_set.all()
+        qs = obj.fileproperty_set.all()        
     else:
         return id_str   
  
@@ -124,11 +130,13 @@ def get_display_fields(obj, object_type):
                     'title3': '',
                     'desc1': '',
                     'desc2': '',
-                    'desc3': ''}
+                    'desc3': '',
+                    'caption': ''}
 
     for key, new_property in result_props.iteritems():
-        result_prop = ResultProperty.objects.get(display_field = (object_type + '_' + key))
-        result_props[key] = get_display_field(obj, object_type, result_prop)
+        result_prop = ResultProperty.objects.filter(display_field = (object_type + '_' + key))
+        if result_prop:
+            result_props[key] = get_display_field(obj, object_type, result_prop[0])
     
     return result_props
 
@@ -364,11 +372,11 @@ class ResultProperty(models.Model):
         ordering = ['display_field']
         
     def human_title(self):
-        types = {'loc': 'Context', 'po': 'Person/Organization', 'subj': 'Object', 'med': 'Media'}
-        fields = {'desc': 'Descriptor', 'title': 'Title'}
+        types = {'loc': 'Context', 'po': 'Person/Organization', 'subj': 'Object', 'med': 'Media', 'file': 'File'}
+        fields = {'desc': 'Descriptor', 'title': 'Title', 'caption': 'Caption', 'name': 'Name'}
         
         if self.display_field:
-            m = re.match(r"([a-z]+)_([a-z]+)(\d)", self.display_field)
+            m = re.match(r"([a-z]+)_([a-z]+)(\d*)", self.display_field)
         
             if m:
                 return types[m.group(1)] + ' ' + fields[m.group(2)] + ' ' + m.group(3)
@@ -386,6 +394,8 @@ class ResultProperty(models.Model):
             entities = Location.objects.all()
         elif self.display_field.startswith('med'):
             entities = Media.objects.all()
+        elif self.display_field.startswith('file'):
+            entities = File.objects.all()            
         else:
             entities = PersonOrganization.objects.all()
         for entity in entities:
@@ -467,12 +477,26 @@ class Subject(models.Model):
         no_img = GlobalVars.objects.get(pk=12).val
         thumbs = SubjectFile.objects.filter(subject = self, thumbnail = True)
         if thumbs:
-            return resource_uri.val + str(thumbs[0].rsid)
+            return resource_uri.val + str(thumbs[0].rsid.id)
         else:
             return no_img
     get_thumbnail.short_description = 'Object'
     get_thumbnail.allow_tags = True
-                
+    
+    def get_thumbnail_admin(self):
+        resource_uri = GlobalVars.objects.get(pk=13)
+        no_img = GlobalVars.objects.get(pk=12).val    
+        thumbs = SubjectFile.objects.filter(subject = self, thumbnail = True)
+        if thumbs:
+            url = resource_uri + str(thumbs[0].rsid.id)
+            thumbnail = GlobalVars.objects.get(pk=11).val + str(thumbs[0].rsid.id)
+        else:
+            url =  no_img
+            thumbnail = no_img
+        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, thumbnail) 
+    get_thumbnail_admin.short_description = 'Object Thumbnail'
+    get_thumbnail_admin.allow_tags = True   
+    
     class Meta:
         verbose_name = 'Object'    
         verbose_name_plural = 'Objects'
@@ -548,7 +572,7 @@ class Location(MPTTModel):
         no_img = GlobalVars.objects.get(pk=12).val
         thumbs = LocationFile.objects.filter(location = self, thumbnail = True)
         if thumbs:
-            return resource_uri.val + str(thumbs[0].rsid)
+            return resource_uri.val + str(thumbs[0].rsid.id)
         else:
             return no_img
     get_thumbnail.short_description = 'Location'
@@ -650,15 +674,15 @@ class Media(models.Model):
         no_img = GlobalVars.objects.get(pk=12).val
         thumbs = MediaFile.objects.filter(media = self, thumbnail = True)
         if thumbs:
-            return resource_uri.val + str(thumbs[0].rsid)
+            return resource_uri.val + str(thumbs[0].rsid.id)
         else:
             return no_img
     get_thumbnail.short_description = 'Media'
     get_thumbnail.allow_tags = True
 
     class Meta:
-        verbose_name = 'media'
-        verbose_name_plural = 'media'
+        verbose_name = 'Media'
+        verbose_name_plural = 'Media'
         ordering = ['title1']
                
 class PersonOrg(models.Model):
@@ -729,16 +753,114 @@ class PersonOrg(models.Model):
         no_img = GlobalVars.objects.get(pk=12).val
         thumbs = PersonOrgFile.objects.filter(person_org = self, thumbnail = True)
         if thumbs:
-            return resource_uri.val + str(thumbs[0].rsid)
+            return resource_uri.val + str(thumbs[0].rsid.id)
         else:
             return no_img
     get_thumbnail.short_description = 'Person/Organization'
     get_thumbnail.allow_tags = True        
     
     class Meta:
-        verbose_name = 'Person/Organization'
-        verbose_name_plural = 'People/Organizations'
+        verbose_name = 'Person'
+        verbose_name_plural = 'People'
         ordering = ['title1']
+        
+class File(models.Model):
+    """ While files are not stored in the Django part of the application, all information about them are stored here, including a reference to their unique id in the file storage system. """ 
+
+    title = models.CharField(max_length = 100, default = '(none)')
+    filetype = models.CharField(max_length = 100, verbose_name = 'File Type')
+    notes = models.TextField(blank = True, help_text = "This field is used INTERALLY ONLY for general notes on this file meant for project team members only.")
+    uploaded = models.DateTimeField(auto_now = False, auto_now_add = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
+    public = models.BooleanField(default = True) 
+    
+    # the following fields are set using the Result Properties values
+    title1 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('file_title1'))
+    title2 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('file_title2'))
+    title3 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('file_title3'))
+    desc1 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('file_desc1'))
+    desc2 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('file_desc2'))
+    desc3 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('file_desc3')) 
+    caption = models.TextField(blank = True, default = '', verbose_name = get_display_field_header('file_caption'))
+    
+    def __unicode__(self):
+        return self.title
+        
+    def get_absolute_url(self):
+        return reverse('filedetail', args=[str(self.id)])
+        
+    def get_full_absolute_url(self):
+        domain = settings.ALLOWED_HOSTS[0]
+        
+        if domain.startswith('.'):
+            domain = domain[1:]
+
+        return 'http://%s%s' % (domain, self.get_absolute_url())        
+        
+    def save(self, *args, **kwargs):
+        """ Auto fills the main title field. If file does not have a value for title1, title2, or title3,
+        it draws from any property, preferencing the property based on the Descriptive Property's order """
+        
+        # set the result properties
+        result_props = get_display_fields(self, 'file')
+        self.title1 = result_props['title1']
+        self.title2 = result_props['title2']
+        self.title3 = result_props['title3']
+        self.desc1 = result_props['desc1']
+        self.desc2 = result_props['desc2']
+        self.desc3 = result_props['desc3']
+        self.caption = result_props['caption']
+        
+        # set the title
+        self.title = get_new_title(self, 'file')
+        
+        super(File, self).save(*args, **kwargs)
+        
+    def get_thumbnail(self):
+        """ Returns thumbnail for this object, or if none is set, returns stock "no image". """
+        
+        resource_uri = GlobalVars.objects.get(pk=11)
+        return resource_uri.val + str(self.id)
+    get_thumbnail.short_description = 'Thumbnail'
+    get_thumbnail.allow_tags = True
+    
+    def get_thumbnail_admin(self):
+        url = GlobalVars.objects.get(pk=13).val + str(self.id)
+        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, self.get_thumbnail())
+    get_thumbnail_admin.short_description = 'Thumbnail'
+    get_thumbnail_admin.allow_tags = True
+
+    def get_download(self):  
+        resource_uri = GlobalVars.objects.get(pk=14)
+        # I am essentially hard coding a file extension param, need to come up with something better
+        extra_params = GlobalVars.objects.get(pk=15)
+        return resource_uri.val + str(self.id) + extra_params.val + self.filetype
+    get_download.short_description = 'Download'
+    get_download.allow_tags = True     
+    
+    def get_download_admin(self):  
+        return u'<a href="{0}" target="_blank">Click to Download</a>'.format(self.get_download())
+    get_download_admin.short_description = 'Download'
+    get_download_admin.allow_tags = True
+    
+    def next(self):
+        next_files = File.objects.filter(pk__gt=self.pk)
+        if next_files:
+            return next_files[0]
+        else:
+            return None
+            
+    def prev(self):
+        prev_files = File.objects.filter(pk__lt = self.pk)
+        if prev_files:
+            return prev_files.reverse()[0]
+        else:
+            return None
+    
+    class Meta:
+        verbose_name = 'File'    
+        verbose_name_plural = 'Files'
+        ordering = ['-uploaded']        
         
 """ LINKED DATA MODELS """
 
@@ -798,7 +920,16 @@ class PersonOrgLinkedData(models.Model):
     
     class Meta:
         verbose_name = 'Linked Person/Organization Data'
-        verbose_name_plural = 'Linked Person/Organization Data'        
+        verbose_name_plural = 'Linked Person/Organization Data'
+
+class FileLinkedData(models.Model):
+    file = models.ForeignKey(File)
+    source = models.ForeignKey(LinkedDataSource)
+    link = models.URLField(blank = True)
+    
+    class Meta:
+        verbose_name = 'Linked File Data'
+        verbose_name_plural = 'Linked File Data'        
         
 """ DESCRIPTIVE PROPERTIES OF ARCHAEOLOGICAL ENTITY MODELS """        
         
@@ -1100,6 +1231,79 @@ class PersonOrgControlProperty(models.Model):
         super(PersonOrgControlProperty, self).delete(*args, **kwargs)
         
         self.person_org.save()
+        
+class FileProperty(models.Model):
+    """ Free-Form Properties of Files """
+
+    file = models.ForeignKey(File)
+    property = models.ForeignKey(DescriptiveProperty)
+    property_value = models.TextField()
+    notes = models.TextField(blank = True, help_text = "This note will appear on the public site as a footnote. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Footnote Citation")
+    inline_notes = models.TextField(blank = True, help_text = "This note will appear on the public site in line with the data. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Inline Citation")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
+
+    class Meta:
+        verbose_name = 'Free-Form File Property'    
+        verbose_name_plural = 'Free-Form File Properties'
+        ordering = ['property__order']
+
+    def __unicode__(self):
+        return self.property.property + ": " + self.property_value
+        
+    def save(self, *args, **kwargs):
+    
+        # save the property first so that when the display fields are generated below,
+        # it has the new property value
+        super(FileProperty, self).save(*args, **kwargs)
+        
+        # this has to be called after every property save so that titles can be regenerated
+        self.file.save()
+    
+    def delete(self, *args, **kwargs):
+        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
+        
+        super(FileProperty, self).delete(*args, **kwargs)
+        
+        self.file.save()
+        
+class FileControlProperty(models.Model):
+    """ Controlled Properties of Files """
+
+    file = models.ForeignKey(File)
+    control_property = models.ForeignKey(DescriptiveProperty)
+    control_property_value = models.ForeignKey(ControlField)
+    notes = models.TextField(blank = True, help_text = "This note will appear on the public site as a footnote. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Footnote Citation")
+    inline_notes = models.TextField(blank = True, help_text = "This note will appear on the public site in line with the data. Please use this field for citations, notes on certainty, and attribution of this piece of information.", verbose_name = "Inline Citation")
+    created = models.DateTimeField(auto_now = False, auto_now_add = True)
+    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
+    last_mod_by = models.ForeignKey(User, blank = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
+
+    class Meta:
+        verbose_name = 'Controlled File Property'    
+        verbose_name_plural = 'Controlled File Properties'    
+
+    def __unicode__(self):
+        return self.control_property.property + ': ' + self.control_property_value.title
+        
+    def save(self, *args, **kwargs):
+    
+        # save the property first so that when the display fields are generated below,
+        # it has the new property value
+        super(FileControlProperty, self).save(*args, **kwargs)
+        
+        # this has to be called after every property save so that titles can be regenerated
+        self.file.save()
+    
+    def delete(self, *args, **kwargs):
+        """ Resets all the titles and descriptors in case the deleted property was being used as a title. """
+        
+        super(FileControlProperty, self).delete(*args, **kwargs)
+        
+        self.file.save()        
 
 """ ENTITY COLLECTIONS """
 
@@ -1108,9 +1312,11 @@ class Collection(models.Model):
 
     title = models.CharField(max_length=60)
     notes = models.TextField(blank = True)
+    thumbnail = models.ForeignKey(File, blank = True, null = True)
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)    
     owner = models.ForeignKey(User)
+    public = models.BooleanField(default = False)
     
     def __unicode__(self):
         return self.title
@@ -1136,14 +1342,16 @@ class SubjectCollection(models.Model):
     get_thumbnail.allow_tags = True    
         
     def get_thumbnail_admin(self):
-        resource_uri = GlobalVars.objects.get(pk=13).val
-        no_img = GlobalVars.objects.get(pk=12).val
+        resource_uri = GlobalVars.objects.get(pk=13)
+        no_img = GlobalVars.objects.get(pk=12).val    
         thumbs = SubjectFile.objects.filter(subject = self.subject, thumbnail = True)
         if thumbs:
-            resource_uri += str(thumbs[0].rsid)
+            url = resource_uri + str(thumbs[0].rsid.id)
+            thumbnail = GlobalVars.objects.get(pk=11).val + str(thumbs[0].rsid.id)
         else:
-            resource_uri = no_img    
-        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(resource_uri, self.subject.get_thumbnail())
+            url =  no_img
+            thumbnail = no_img
+        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, thumbnail)
     get_thumbnail_admin.short_description = 'Image'
     get_thumbnail_admin.allow_tags = True
 
@@ -1167,16 +1375,18 @@ class LocationCollection(models.Model):
     get_thumbnail.allow_tags = True    
         
     def get_thumbnail_admin(self):
-        resource_uri = GlobalVars.objects.get(pk=13).val
-        no_img = GlobalVars.objects.get(pk=12).val
+        resource_uri = GlobalVars.objects.get(pk=11)
+        no_img = GlobalVars.objects.get(pk=12).val    
         thumbs = LocationFile.objects.filter(location = self.location, thumbnail = True)
         if thumbs:
-            resource_uri += str(thumbs[0].rsid)
+            url = resource_uri + str(thumbs[0].rsid.id)
+            thumbnail = GlobalVars.objects.get(pk=13).val + str(thumbs[0].rsid.id)
         else:
-            resource_uri = no_img    
-        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(resource_uri, self.location.get_thumbnail())
+            url =  no_img
+            thumbnail = no_img
+        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, thumbnail)
     get_thumbnail_admin.short_description = 'Image'
-    get_thumbnail_admin.allow_tags = True        
+    get_thumbnail_admin.allow_tags = True       
         
     class Meta:
         verbose_name = 'Collection Item (Location)'
@@ -1198,16 +1408,18 @@ class MediaCollection(models.Model):
     get_thumbnail.allow_tags = True    
         
     def get_thumbnail_admin(self):
-        resource_uri = GlobalVars.objects.get(pk=13).val
-        no_img = GlobalVars.objects.get(pk=12).val
+        resource_uri = GlobalVars.objects.get(pk=13)
+        no_img = GlobalVars.objects.get(pk=12).val    
         thumbs = MediaFile.objects.filter(media = self.media, thumbnail = True)
         if thumbs:
-            resource_uri += str(thumbs[0].rsid)
+            url = resource_uri + str(thumbs[0].rsid.id)
+            thumbnail = GlobalVars.objects.get(pk=11).val + str(thumbs[0].rsid.id)
         else:
-            resource_uri = no_img    
-        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(resource_uri, self.media.get_thumbnail())
+            url =  no_img
+            thumbnail = no_img
+        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, thumbnail)
     get_thumbnail_admin.short_description = 'Image'
-    get_thumbnail_admin.allow_tags = True        
+    get_thumbnail_admin.allow_tags = True      
         
     class Meta:
         verbose_name = 'Collection Item (Media)'
@@ -1229,21 +1441,37 @@ class PersonOrgCollection(models.Model):
     get_thumbnail.allow_tags = True    
         
     def get_thumbnail_admin(self):
-        resource_uri = GlobalVars.objects.get(pk=13).val
-        no_img = GlobalVars.objects.get(pk=12).val
+        resource_uri = GlobalVars.objects.get(pk=11)
+        no_img = GlobalVars.objects.get(pk=12).val    
         thumbs = PersonOrgFile.objects.filter(person_org = self.person_org, thumbnail = True)
         if thumbs:
-            resource_uri += str(thumbs[0].rsid)
+            url = resource_uri + str(thumbs[0].rsid.id)
+            thumbnail = GlobalVars.objects.get(pk=13).val + str(thumbs[0].rsid.id)
         else:
-            resource_uri = no_img    
-        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(resource_uri, self.person_org.get_thumbnail())
+            url =  no_img
+            thumbnail = no_img
+        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, thumbnail)
     get_thumbnail_admin.short_description = 'Image'
-    get_thumbnail_admin.allow_tags = True        
+    get_thumbnail_admin.allow_tags = True       
         
     class Meta:
         verbose_name = 'Collection Item (Person/Organization)'
         verbose_name_plural = 'Collection Items (Person/Organization)'
-        ordering = ['order']          
+        ordering = ['order']
+
+class FileCollection(models.Model):
+    file = models.ForeignKey(File)
+    collection = models.ForeignKey(Collection)
+    notes = models.TextField(blank = True)
+    order = models.PositiveIntegerField(blank = True, default = 0)
+    
+    def __unicode__(self):
+        return self.file.title + " [Collection: " + self.collection.title + "]"
+
+    class Meta:
+        verbose_name = 'Collection Item (File)'
+        verbose_name_plural = 'Collection Items (File)'
+        ordering = ['order']        
 
 """ ENTITY MODEL FILE RELATIONS """
 
@@ -1251,37 +1479,69 @@ class SubjectFile(models.Model):
     """ Stores relations between files stored in DAM and Subjects """
 
     subject = models.ForeignKey(Subject)
-    rsid = models.IntegerField()
+    rsid = models.ForeignKey(File, db_column="rsid")
     thumbnail = models.BooleanField(default=False)
-    filetype = models.ForeignKey(MediaType)
-    collection = models.ForeignKey(Collection, blank = True, null = True)
+    
+    def get_thumbnail_admin(self):
+        url = GlobalVars.objects.get(pk=13).val + str(self.rsid.id)
+        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, self.rsid.get_thumbnail())
+    get_thumbnail_admin.short_description = 'Thumbnail'
+    get_thumbnail_admin.allow_tags = True
+
+    class Meta:
+        verbose_name = 'Object File'
+        verbose_name_plural = 'Object Files'    
     
 class LocationFile(models.Model):
     """ Stores relations between files stored in DAM and Locations """
 
     location = models.ForeignKey(Location)
-    rsid = models.IntegerField()
+    rsid = models.ForeignKey(File, db_column="rsid")
     thumbnail = models.BooleanField(default=False)
-    filetype = models.ForeignKey(MediaType)
-    collection = models.ForeignKey(Collection, blank = True, null = True)
+    
+    def get_thumbnail_admin(self):
+        url = GlobalVars.objects.get(pk=13).val + str(self.rsid.id)
+        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, self.rsid.get_thumbnail())
+    get_thumbnail_admin.short_description = 'Image'
+    get_thumbnail_admin.allow_tags = True 
+
+    class Meta:
+        verbose_name = 'Location File'
+        verbose_name_plural = 'Location Files'     
     
 class MediaFile(models.Model):
     """ Stores relations between files stored in DAM and Media """
 
     media = models.ForeignKey(Media)
-    rsid = models.IntegerField()
+    rsid = models.ForeignKey(File, db_column="rsid")
     thumbnail = models.BooleanField(default=False)
-    filetype = models.ForeignKey(MediaType)
-    collection = models.ForeignKey(Collection, blank = True, null = True)
+    
+    def get_thumbnail_admin(self):
+        url = GlobalVars.objects.get(pk=13).val + str(self.rsid.id)
+        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, self.rsid.get_thumbnail())
+    get_thumbnail_admin.short_description = 'Image'
+    get_thumbnail_admin.allow_tags = True 
+
+    class Meta:
+        verbose_name = 'Media File'
+        verbose_name_plural = 'Media Files'     
 
 class PersonOrgFile(models.Model):
     """ Stores relations between files stored in DAM and People """
 
     person_org = models.ForeignKey(PersonOrg)
-    rsid = models.IntegerField()
+    rsid = models.ForeignKey(File, db_column="rsid")
     thumbnail = models.BooleanField(default=False)
-    filetype = models.ForeignKey(MediaType)
-    collection = models.ForeignKey(Collection, blank = True, null = True)
+    
+    def get_thumbnail_admin(self):
+        url = GlobalVars.objects.get(pk=13).val + str(self.rsid.id)
+        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, self.rsid.get_thumbnail())
+    get_thumbnail_admin.short_description = 'Image'
+    get_thumbnail_admin.allow_tags = True  
+
+    class Meta:
+        verbose_name = 'Person File'
+        verbose_name_plural = 'Person Files'     
 
 """ ENTITY RELATIONS """
 
@@ -1619,28 +1879,7 @@ class Publication(MediaSubjectRelations):
     objects = PublicationManager()
     
     class Meta:
-        proxy = True
-        
-class FileManager(models.Manager):
-    def get_query_set(self):
-        return super(FileManager, self).get_query_set().filter(Q(relation_type=3))
-        
-class File(MediaSubjectRelations):
-    objects = FileManager()
-    
-    def get_thumbnail(self):
-        rs_ids = MediaProperty.objects.filter(media = self.media_id, property__property = 'Resource Space ID')
-        if rs_ids:
-            rs_id = rs_ids[0].property_value
-            url = 'http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref=' + rs_id
-            return u'<a href="{0}" target="_blank"><img src="{0}&size=thm" /></a>'.format(url)        
-        else:
-            return u'<img src="http://ur.iaas.upenn.edu/static/img/no_img.jpg" />'            
-    get_thumbnail.short_description = 'Thumbnail'
-    get_thumbnail.allow_tags = True
-    
-    class Meta:
-        proxy = True       
+        proxy = True      
         
 class Post(models.Model):
     title = models.CharField(max_length=255)

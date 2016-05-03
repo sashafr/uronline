@@ -10,7 +10,7 @@
       <a href="{% url 'mediadetail' obj.id %}" style="color:#000;">
           <div class="row" style="padding-top:10px;">
             <div class="col-md-3">
-              <h1 style="text-align: center; font-size: 400%"><span class="glyphicon glyphicon-book"></span></h1>
+              <img src="{{ obj.get_thumbnail }}" style="display: inline; margin: 0 5px;"></img>
             </div>
             <div class="col-md-9">
               <h4 class="list-group-item-heading">
@@ -61,7 +61,7 @@
       <a href="{% url 'personorgdetail' obj.id %}" style="color:#000;">
           <div class="row" style="padding-top:10px;">
             <div class="col-md-3">
-              <h1 style="text-align: center; font-size: 400%"><span class="glyphicon glyphicon-user"></span></h1>        
+              <img src="{{ obj.get_thumbnail }}" style="display: inline; margin: 0 5px;"></img>        
             </div>
             <div class="col-md-9">
               <h4 class="list-group-item-heading">
@@ -86,7 +86,7 @@
       <a href="{% url 'locationdetail' obj.id %}" style="color:#000;">
           <div class="row" style="padding-top:10px;">
             <div class="col-md-3">
-              <img src="{% get_img_thumb obj 'ml' 'thm' %}" style="display: inline; margin: 0 5px;"></img>        
+              <img src="{{ obj.get_thumbnail }}" style="display: inline; margin: 0 5px;"></img>
             </div>
             <div class="col-md-9">
               <h4 class="list-group-item-heading">

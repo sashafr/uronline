@@ -13,9 +13,9 @@ urlpatterns = patterns('',
     # Examples:
     # url(r'^$', 'uronline.views.home', name='home'),
     # url(r'^blog/', include('blog.urls')),
+    url(r'', include('base.urls')),    
     url(r'^admin/', include(admin.site.urls)),
     url(r'^bad/$', bad),
-    url(r'', include('base.urls')),
 )
 
 if settings.DEBUG:

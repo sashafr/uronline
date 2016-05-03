@@ -457,6 +457,18 @@ def subject_search_form(context, cl):
         'search_var': SEARCH_VAR
     }
     
+@register.inclusion_tag('admin/base/file/search_form.html', takes_context=True)
+def file_search_form(context, cl):
+    """ Displays an advanced search form for searching the list.
+    
+    Includes context. """
+    return {
+        'asf': context.get('asf'),
+        'cl': cl,
+        'show_result_count': cl.result_count != cl.full_result_count,
+        'search_var': SEARCH_VAR
+    }    
+    
 @register.simple_tag
 def custom_header_title(header):
     if header.startswith('title') or header.startswith('desc'):
@@ -494,8 +506,8 @@ def get_museum(subj):
         return ''
         
 @register.assignment_tag
-def get_control_fields():
-    fields = DescriptiveProperty.objects.filter(control_field=True)
+def get_control_fields(type):
+    fields = DescriptiveProperty.objects.filter(Q(control_field=True) & (Q(primary_type=type) | Q(primary_type='AL')))
     if fields:
         return fields
     return []

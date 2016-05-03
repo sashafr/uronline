@@ -20,6 +20,9 @@
                         <div class="row">
                     {% endif %}
                     <div class="col-md-4">
+                        {% if collection.thumbnail %}
+                            <img class="img-circle" src="{{ collection.thumbnail.get_thumbnail }}" alt="collection.thumbnail.caption" width="140" height="140">    
+                        {% endif %}
                         <h2><a href="{% url 'collectiondetail' collection.pk %}">{{ collection.title }}</a></h2>
                         <p>{{ collection.notes }}</p>
                         <ul>

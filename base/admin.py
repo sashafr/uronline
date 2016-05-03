@@ -23,6 +23,7 @@ from datetime import datetime
 import csv
 from suit.admin import SortableModelAdmin, SortableTabularInline
 from filer.fields.image import FilerFileField
+from django.conf import settings
 
 OPERATOR = (
     ('and', 'AND'),
@@ -376,6 +377,8 @@ def import_data(modeladmin, request, queryset):
             
 import_data.short_description = "Import data from selected CSV files"
 
+
+
 """ SPECIAL FORM FIELDS """
 
 class SubjectChoices(AutoModelSelect2Field):
@@ -393,6 +396,10 @@ class LocationChoices(AutoModelSelect2Field):
 class PersonOrgChoices(AutoModelSelect2Field):
     queryset = PersonOrg.objects
     search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',]
+    
+class FileChoices(AutoModelSelect2Field):
+    queryset = File.objects
+    search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',]    
 
 """ LIST FILTERS """
 
@@ -483,6 +490,79 @@ class AdminAdvSearchForm(forms.Form):
     
     # utilities
     dup_prop = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.all(), empty_label = "Find Objects with Multiple...")
+    
+class FileAdminAdvSearchForm(forms.Form):
+    
+    # controlled properties
+    cp1 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='MF') | Q(primary_type='AL')))
+    cst1 = forms.ChoiceField(label='', required=False, choices=CONTROL_SEARCH_TYPE)
+    cv1 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))
+    cp2 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='MF') | Q(primary_type='AL')))
+    cst2 = forms.ChoiceField(label='', required=False, choices=CONTROL_SEARCH_TYPE)
+    cv2 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))
+    cp3 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='MF') | Q(primary_type='AL')))
+    cst3 = forms.ChoiceField(label='', required=False, choices=CONTROL_SEARCH_TYPE)
+    cv3 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))     
+    
+    # free-form properties
+    fp1 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='MF') | Q(primary_type='AL')))
+    fst1 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
+    fv1 = forms.CharField(label='', required=False)
+    op1 = forms.ChoiceField(label='', required=False, choices=OPERATOR)
+    fp2 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='MF') | Q(primary_type='AL')))
+    fst2 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
+    fv2 = forms.CharField(label='', required=False)
+    op2 = forms.ChoiceField(label='', required=False, choices=OPERATOR)
+    fp3 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='MF') | Q(primary_type='AL')))
+    fst3 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
+    fv3 = forms.CharField(label='', required=False)
+    
+    # filters
+    sub = SubjectChoices(
+        label = Subject._meta.verbose_name.capitalize(),
+        required = False,
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Subject._meta.verbose_name
+            }
+        )
+    )
+    loc = LocationChoices(
+        label = Location._meta.verbose_name.capitalize(),
+        required = False,
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Location._meta.verbose_name
+            }
+        )
+    )
+    med = MediaChoices(
+        label = Media._meta.verbose_name.capitalize(),
+        required = False,
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Media._meta.verbose_name
+            }
+        )
+    )
+    po = PersonOrgChoices(
+        label = PersonOrg._meta.verbose_name.capitalize(),
+        required = False,
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % PersonOrg._meta.verbose_name
+            }
+        )
+    )
+    col = forms.ModelChoiceField(label='Collection', required=False, queryset=Collection.objects.all())
+    check_unrelated = forms.BooleanField(label='Unrelated Files Only', required=False)
+    
+    # utilities
+    dup_prop = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='MF') | Q(primary_type='AL')), empty_label = "Find Files with Multiple...")    
 
 class ControlFieldForm(ModelForm):
     """ Used on Control Field Change Form page to edit what is displayed on Control Field value public pages """
@@ -536,10 +616,10 @@ class BlogPostForm(ModelForm):
             'body': CKEditorWidget(editor_options=_ck_editor_config),
         }
 
-class SubjectMediaRelationForm(ModelForm):
+class FileForm(ModelForm):
     
-    media = MediaChoices(        
-        label = 'Media',
+    rsid = FileChoices(        
+        label = 'File',
         widget = AutoHeavySelect2Widget(
             select2_options = {
                 'width': '220px',
@@ -710,7 +790,63 @@ class RelationImportErrorForm(ModelForm):
     )    
     
     class Meta:
-          model = RelationImportError           
+          model = RelationImportError
+
+class SubjectFileAdminForm(ModelForm):
+    subject = SubjectChoices(
+        label = Subject._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Subject._meta.verbose_name
+            }
+        )
+    )  
+    
+    class Meta:
+          model = SubjectFile
+          
+class LocationFileAdminForm(ModelForm):
+    location = LocationChoices(
+        label = Location._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Location._meta.verbose_name
+            }
+        )
+    )     
+    
+    class Meta:
+          model = LocationFile
+
+class MediaFileAdminForm(ModelForm):
+    media = MediaChoices(
+        label = Media._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Media._meta.verbose_name
+            }
+        )
+    )      
+    
+    class Meta:
+          model = MediaFile
+
+class PersonOrgFileAdminForm(ModelForm):
+    person_org = PersonOrgChoices(
+        label = PersonOrg._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % PersonOrg._meta.verbose_name
+            }
+        )
+    )
+    
+    class Meta:
+          model = PersonOrgFile          
 
 """ INLINES """
 
@@ -730,7 +866,13 @@ class PersonOrgLinkedDataInline(admin.TabularInline):
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
-    extra = 1    
+    extra = 1 
+
+class FileLinkedDataInline(admin.TabularInline):
+    model = FileLinkedData
+    fields = ['source', 'link']
+    extra = 1 
+    suit_classes = 'suit-tab suit-tab-linked'    
 
 """ DESCRIPTIVE PROPERTY & CONTROLLED PROPERTY INLINES """
 
@@ -766,7 +908,70 @@ class SubjectControlPropertyInline(admin.TabularInline):
             qs = qs.filter(Q(Q(control_property_id = 170) | Q(control_property_id = 121)))
             
         return qs
+        
+class FilePropertyInline(admin.TabularInline):
+    model = FileProperty
+    fields = ['property', 'property_value', 'inline_notes', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)    
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    ordering = ('property__order',)
+    suit_classes = 'suit-tab suit-tab-general'    
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'property':
+            kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='MF') | Q(primary_type='AL')).exclude(control_field = True)
+        return super(FilePropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)        
+        
+class FileControlPropertyInline(admin.TabularInline):
+    model = FileControlProperty
+    fields = ['control_property', 'control_property_value', 'inline_notes', 'notes', 'last_mod_by'] 
+    readonly_fields = ('last_mod_by',)
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    extra = 3
+    template = 'admin/base/file/tabular.html'
+    ordering = ('control_property__order',)
+    suit_classes = 'suit-tab suit-tab-general'    
+    
+    # for control property form dropdown, only show descriptive properties marked as control_field = true
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'control_property':
+            kwargs["queryset"] = DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='MF') | Q(primary_type='AL'))
+        return super(FileControlPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs) 
 
+""" RELATION INLINES """
+
+class FileSubjectRelationsInline(admin.TabularInline):
+    model = SubjectFile
+    fields = ['subject', 'thumbnail']
+    suit_classes = 'suit-tab suit-tab-relations'
+    extra = 1
+    form = SubjectFileAdminForm
+
+class FileLocationRelationsInline(admin.TabularInline):
+    model = LocationFile
+    fields = ['location', 'thumbnail']   
+    suit_classes = 'suit-tab suit-tab-relations'
+    extra = 1
+    form = LocationFileAdminForm
+
+class FileMediaRelationsInline(admin.TabularInline):
+    model = MediaFile
+    fields = ['media', 'thumbnail']  
+    suit_classes = 'suit-tab suit-tab-relations'
+    extra = 1
+    form = MediaFileAdminForm
+
+class FilePersonOrgRelationsInline(admin.TabularInline):
+    model = PersonOrgFile
+    fields = ['person_org', 'thumbnail']
+    suit_classes = 'suit-tab suit-tab-relations'
+    extra = 1
+    form = PersonOrgFileAdminForm    
+        
 """ COLLECTION INLINES """
 
 class SubjectCollectionInline(SortableTabularInline):
@@ -836,6 +1041,14 @@ class PersonOrgCollectionEntityInline(admin.TabularInline):
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }     
+    
+class FileCollectionInline(admin.TabularInline):
+    model = FileCollection
+    fields = ['collection', 'notes', 'order']
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_classes = 'suit-tab suit-tab-collections'    
     
 """ SITE SETTINGS ETC INLINES """
 
@@ -952,6 +1165,359 @@ class ControlFieldAdmin(MPTTModelAdmin, SortableModelAdmin):
         return super(ControlFieldAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 admin.site.register(ControlField, ControlFieldAdmin)
+
+""" ARCHAEOLOGICAL ENTITY ADMIN """
+
+class FileAdmin(admin.ModelAdmin):
+    fields = ['get_thumbnail_admin', 'get_download_admin', 'title', 'notes', 'public', 'uploaded', 'upload_batch']
+    readonly_fields = ('get_thumbnail_admin', 'get_download_admin', 'title', 'uploaded', 'upload_batch')    
+    inlines = [FilePropertyInline, FileControlPropertyInline, FileSubjectRelationsInline, FileLocationRelationsInline, FileMediaRelationsInline, FilePersonOrgRelationsInline, FileCollectionInline, FileLinkedDataInline]  
+    search_fields = ['title', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3']
+    list_display = ('get_thumbnail_admin', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3', 'filetype', 'public', 'uploaded', 'upload_batch')
+    list_filter = ('filetype', 'public', 'upload_batch')
+    list_display_links = ('title1', )
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    advanced_search_form = FileAdminAdvSearchForm()
+    # actions = ['export_csv']
+    suit_form_tabs = (('general', 'File'), ('relations', 'Relations'), ('collections', 'Collections'), ('linked', 'Linked Data'))
+    fieldsets = [
+        (None, {
+            'classes': ('suit-tab', 'suit-tab-general'),
+            'fields': ['get_thumbnail_admin', 'get_download_admin', 'title', 'notes', 'public', 'uploaded', 'upload_batch']
+        }),
+    ]    
+    
+    change_list_template = 'admin/base/file/change_list.html'
+    change_form_template = 'admin/base/file/change_form.html'
+    
+    class Media:
+        # the django-select2 styles have to be added manually for some reason, otherwise they don't work
+        css = {
+            "all": ("django_select2/css/select2.min.css",)
+        }
+        
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        """ Added to allow browsing by collection """
+    
+        extra_context = extra_context or {}
+        collections = FileCollection.objects.filter(file_id = object_id)
+        collection_list = []
+        for coll in collections:
+            coll_info = {}
+            current_order = coll.order
+            lt = FileCollection.objects.filter(collection = coll.collection, order__lt = current_order).order_by('-order')
+            if lt:
+                coll_info['prev'] = lt[0].file_id
+            gt = FileCollection.objects.filter(collection = coll.collection, order__gt = current_order).order_by('order')
+            if gt:
+                coll_info['next'] = gt[0].file_id
+            if lt or gt:
+                coll_info['name'] = coll.collection.title
+            collection_list.append(coll_info)
+        extra_context['collections'] = collection_list
+        return super(FileAdmin, self).change_view(request, object_id, form_url, extra_context = extra_context)
+        
+    def response_change(self, request, obj):
+        """
+        Determines the HttpResponse for the change_view stage.
+        """
+        if request.POST.has_key("_viewnext"):
+            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
+                   {'name': force_unicode(obj._meta.verbose_name),
+                    'obj': force_unicode(obj)})
+            next = request.POST.get("next_id")
+            if next:
+                self.message_user(request, msg)
+                return HttpResponseRedirect("../%s/" % next)
+        if request.POST.has_key("_viewprev"):
+            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
+                   {'name': force_unicode(obj._meta.verbose_name),
+                    'obj': force_unicode(obj)})
+            prev = request.POST.get("prev_id")
+            if prev:
+                self.message_user(request, msg)
+                return HttpResponseRedirect("../%s/" % prev)
+        return super(FileAdmin, self).response_change(request, obj)     
+        
+    # def bulk_update(self, request, queryset):
+        # """ Redirects to a bulk update form """
+        
+        # selected = request.POST.getlist(admin.ACTION_CHECKBOX_NAME)
+        # return HttpResponseRedirect("/bulk_update_subject/?ids=%s" % ",".join(selected))
+        
+    # def export_csv(self, request, queryset):
+        # """ Temporary export solution while models are redesigned 
+        
+        # This is horribly hackish. If it isn't fixed by Dec 2015..... burn it all"""
+        # response = HttpResponse(content_type='text/csv')
+        # filename_str = '"admin_search_results_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S") + '.csv"'
+        # response['Content-Disposition'] = 'attachment; filename=' + filename_str
+        
+        # writer = csv.writer(response)
+        # titles = []
+        # rows = []
+        # for result in queryset:
+            # row = []
+            # row_dict = {}
+            # control_properties = result.subjectcontrolproperty_set.all()
+            # properties = result.subjectproperty_set.all()
+            # for each_prop in properties:
+                # prop_name = each_prop.property.property
+                # prop_value = each_prop.property_value
+                # if not (prop_name in titles):
+                    # column_index = len(titles)                        
+                    # titles.append(prop_name)
+                # else:
+                    # column_index = titles.index(prop_name)
+                    # if column_index in row_dict:
+                        # prop_value = row_dict[column_index] + '; ' + prop_value
+                # row_dict[column_index] = prop_value
+            # for each_prop in control_properties:
+                # prop_name = each_prop.control_property.property
+                # prop_value = each_prop.control_property_value.title
+                # if not (prop_name in titles):
+                    # column_index = len(titles)   
+                    # titles.append(prop_name)
+                # else:
+                    # column_index = titles.index(prop_name)
+                    # if column_index in row_dict:
+                        # prop_value = row_dict[column_index] + '; ' + prop_value
+                # row_dict[column_index] = prop_value
+            # for i in range(len(titles)):
+                # if i in row_dict:
+                    # row.append(row_dict[i])
+                # else:
+                    # row.append('')
+                    
+            # rows.append(row)
+
+        # writer.writerow(titles)
+        # for each_row in rows:
+            # writer.writerow([unicode(s).encode("utf-8") for s in each_row])
+        # return response
+        
+    # export_csv.short_description = "Export current search results to CSV"
+        
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
+        for instance in instances:
+            if isinstance(instance, FileProperty) or isinstance(instance, FileControlProperty):
+                instance.last_mod_by = request.user            
+            instance.save()
+                
+            
+    # advanced search form based on https://djangosnippets.org/snippets/2322/ and http://stackoverflow.com/questions/8494200/django-admin-custom-change-list-arguments-override-e-1 
+
+    def get_changelist(self, request, **kwargs):
+        adv_search_fields = {}
+        asf = self.advanced_search_form
+        for key in asf.fields.keys():
+            temp = self.other_search_fields.get(key, None)
+            if temp:
+                adv_search_fields[key] = temp[0]
+            else:
+                adv_search_fields[key] = ''
+        
+        class AdvChangeList(ChangeList):
+            
+            def get_query_string(self, new_params=None, remove=None):
+                """ Overriding get_query_string ensures that the admin still considers
+                the additional search fields as parameters, even tho they are popped from 
+                the request.GET """
+                
+                if new_params is None:
+                    new_params = {}
+                if remove is None:
+                    remove = []
+                p = self.params.copy()
+                for r in remove:
+                    for k in list(p):
+                        if k.startswith(r):
+                            del p[k]
+                for k, v in new_params.items():
+                    if v is None:
+                        if k in p:
+                            del p[k]
+                    else:
+                        p[k] = v
+                
+                extra_params = ''
+                for field, val in adv_search_fields.items():
+                    extra_params += '&' + field + '=' + val
+                
+                return '?%s%s' % (urlencode(sorted(p.items())), extra_params)
+                
+        return AdvChangeList
+        
+    def lookup_allowed(self, key, value):
+        if key in self.advanced_search_form.fields.keys():
+            return True
+        if key == 'attach_type':
+            return True
+        return super(FileAdmin, self).lookup_allowed(key, value)
+        
+    def changelist_view(self, request, extra_context=None, **kwargs):
+        self.other_search_fields = {}
+        asf = self.advanced_search_form
+        extra_context = {'asf': asf}
+        
+        request.GET._mutable = True
+        
+        for key in asf.fields.keys():
+            try:
+                temp = request.GET.pop(key)
+            except KeyError:
+                pass
+            else:
+                if temp != ['']:
+                    self.other_search_fields[key] = temp
+                    
+        request.GET._mutable = False
+        return super(FileAdmin, self).changelist_view(request, extra_context = extra_context)
+        
+    def get_search_results(self, request, queryset, search_term):
+        """ Performs either a simple search using the search_term or an 
+        advanced search using values taken from the AdvancedSearchForm """
+        
+        queryset, use_distinct = super(FileAdmin, self).get_search_results(request, queryset, search_term)
+        
+        # get all the fields from the adv search form
+        adv_fields = {}
+        asf = self.advanced_search_form
+        for key in asf.fields.keys():
+            temp = self.other_search_fields.get(key, None)
+            if temp:
+                adv_fields[key] = temp[0]
+            else:
+                adv_fields[key] = ''
+        
+        # NOTE: simple search has already been applied
+        
+        # RELATED TABLES FILTER
+        check_unrelated = adv_fields['check_unrelated']
+        if check_unrelated == 'on':
+            queryset = queryset.filter(subjectfile__isnull = True)
+            queryset = queryset.filter(locationfile__isnull = True)
+            queryset = queryset.filter(mediafile__isnull = True)
+            queryset = queryset.filter(personorgfile__isnull = True)
+
+        else:
+            # if check_unrelated in checked then they are looking for files with no relations so skip
+            sub = adv_fields['sub']
+            if sub != '':
+                queryset = queryset.filter(subjectfile__subject_id=sub)        
+            
+            loc = adv_fields['loc']
+            if loc != '':
+                queryset = queryset.filter(locationfile__location_id=loc)
+                
+            med = adv_fields['med']
+            if med != '':
+                queryset = queryset.filter(mediafile__media_id=med)
+
+            po = adv_fields['po']
+            if po != '':
+                queryset = queryset.filter(personorgfile__person_org_id=po)
+
+        col = adv_fields['col']
+        if col != '':
+            queryset = queryset.filter(filecollection__collection_id = col)            
+        
+        # CONTROL PROPERTY FILTER
+        for i in range(1, 4):
+            cp = adv_fields['cp' + str(i)]
+            cst = adv_fields['cst' + str(i)]
+            cv = adv_fields['cv' + str(i)]
+            
+            if cp != '' and cv != 'default' and cv != '':
+                cf = ControlField.objects.filter(pk = cv)
+                cf_desc = cf[0].get_descendants(include_self=True)
+                ccq = Q()
+                for field in cf_desc:
+                    if cst == 'exact':
+                        ccq |= Q(filecontrolproperty__control_property_value = field.id)
+                    else:
+                        ccq &= ~Q(filecontrolproperty__control_property_value = field.id)
+                        
+                queryset = queryset.filter(ccq)
+                
+        # FREE FORM PROPERTY FILTER
+        for i in range (1, 4):
+            if i != 1:
+                op = adv_fields['op' + str(i - 1)]
+            else:
+                op = ''
+            fp = adv_fields['fp' + str(i)]
+            fst = adv_fields['fst' + str(i)]
+            fv = adv_fields['fv' + str(i)]
+
+            negate = False # whether or not the query will be negated
+            kwargs = {}
+            cq = Q()
+            
+            # remove and save negation, if present
+            if fst.startswith('not'):
+                negate = True
+                fst = fst[4:]
+            
+            if not(fv == '' and fst != 'blank'):
+                
+                if fst == 'blank':
+                    #if property is Any, then skip all b/c query asks for doc with 'any' blank properties
+                    if fp == '':
+                        continue
+                
+                    # BLANK is a special case negation (essentially a double negative), so handle differently
+                    if negate:
+                        cq = Q(fileproperty__property = fp)
+                    else:
+                        cq = ~Q(fileproperty__property = fp)
+                        
+                else:
+                    kwargs = {str('fileproperty__property_value__%s' % fst) : str('%s' % fv)}
+                    
+                    # check if a property was selected and build the current query
+                    if fp == '':
+                        # if no property selected, than search thru ALL properties
+                        if negate:
+                            cq = ~Q(**kwargs)
+                        else:
+                            cq = Q(**kwargs)
+                    else:
+                        if negate:
+                            cq = Q(Q(fileproperty__property = fp) & ~Q(**kwargs))
+                        else:
+                            cq = Q(Q(fileproperty__property = fp) & Q(**kwargs))
+                            
+            # modify query set
+            if op == 'or':
+                queryset = queryset | self.model.objects.filter(cq)
+            else:
+                # if connector wasn't set, use &
+                queryset = queryset.filter(cq)
+        
+        # UTILITY FILTER
+        dup_prop = adv_fields['dup_prop']
+        if dup_prop != '':
+            dup_dp = DescriptiveProperty.objects.get(pk = dup_prop)
+            if dup_dp.control_field:
+                dups = FileControlProperty.objects.filter(control_property_id = dup_prop).values_list('file', flat = True).annotate(count = Count('control_property')).filter(count__gt = 1)
+            else:
+                dups = FileProperty.objects.filter(property_id = dup_prop).values_list('file', flat = True).annotate(count = Count('property')).filter(count__gt = 1)
+            dups_list = list(dups) # forcing queryset evaluation so next line doesn't throw a MySQLdb error
+            queryset = queryset.filter(id__in = dups_list)
+          
+        if col != '':
+            return queryset.order_by('filecollection__order').distinct(), use_distinct
+        elif queryset.ordered:
+            return queryset.distinct(), use_distinct
+        else:
+            return queryset.order_by('-uploaded').distinct(), use_distinct
+
+admin.site.register(File, FileAdmin)
 
 """ COLLECTION ADMIN """    
     
@@ -1516,18 +2082,15 @@ class LocationSubjectRelationsInline(admin.TabularInline):
     form = LocationRelationAdminForm 
         
 class FileInline(admin.TabularInline):
-    model = File
-    fields = ['get_thumbnail', 'media', 'relation_type', 'notes', 'last_mod_by']
-    readonly_fields = ('get_thumbnail', 'last_mod_by', 'relation_type')        
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
+    model = SubjectFile
+    fields = ['get_thumbnail_admin', 'rsid', 'thumbnail']
+    readonly_fields = ('get_thumbnail_admin',)        
     suit_classes = 'suit-tab suit-tab-files'
-    form = SubjectMediaRelationForm
+    form = FileForm
         
 class SubjectAdmin(admin.ModelAdmin):
     readonly_fields = ('title', 'created', 'modified', 'last_mod_by')    
-    inlines = [SubjectPropertyInline, SubjectControlPropertyInline, MediaSubjectRelationsInline, FileInline, LocationSubjectRelationsInline, SubjectCollectionEntityInline]
+    inlines = [SubjectPropertyInline, SubjectControlPropertyInline, MediaSubjectRelationsInline, LocationSubjectRelationsInline, SubjectCollectionEntityInline, FileInline]
     search_fields = ['title', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3']
     list_display = ('title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3', 'created', 'modified')
     formfield_overrides = {
@@ -1847,9 +2410,9 @@ class SubjectAdmin(admin.ModelAdmin):
         img = adv_fields['img']
         if img != 'default':
             if img == 'yes':
-                queryset = queryset.filter(mediasubjectrelations__relation_type=3)
+                queryset = queryset.filter(subjectfile__isnull = False)
             else:
-                queryset = queryset.exclude(mediasubjectrelations__relation_type=3)
+                queryset = queryset.exclude(subjectfile__isnull = True)
                 
         pub = adv_fields['pub']
         if pub != '':

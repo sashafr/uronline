@@ -60,6 +60,27 @@ body {
     text-shadow: 2px 2px 3px rgba(0,0,0,0.6);
 }
 
+.intro-header button {
+    background: none;
+    border: none;
+    outline: none;
+    text-decoration: none;
+    color: #f8f8f8;
+    text-shadow: 2px 2px 3px rgba(0,0,0,0.6);
+    cursor: pointer;
+    font-family: "Lato","Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.intro-header button:hover {
+  color: lightblue;
+}
+
+.intro-well {
+    background-color: rgba(0,0,0,0.5);
+}
+
 .intro-message {
     position: relative;
     padding-top: 20%;
