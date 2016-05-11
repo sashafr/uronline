@@ -899,15 +899,27 @@ class SubjectLinkedData(models.Model):
     subject = models.ForeignKey(Subject)
     source = models.ForeignKey(LinkedDataSource)
     link = models.URLField(blank = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
     
     class Meta:
         verbose_name = 'Linked Object Data'
-        verbose_name_plural = 'Linked Object Data' 
+        verbose_name_plural = 'Linked Object Data'
+
+class LocationLinkedData(models.Model):
+    location = models.ForeignKey(Location)
+    source = models.ForeignKey(LinkedDataSource)
+    link = models.URLField(blank = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
+    
+    class Meta:
+        verbose_name = 'Linked Location Data'
+        verbose_name_plural = 'Linked Location Data'         
 
 class MediaLinkedData(models.Model):
     media = models.ForeignKey(Media)
     source = models.ForeignKey(LinkedDataSource)
     link = models.URLField(blank = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
     
     class Meta:
         verbose_name = 'Linked Media Data'
@@ -917,6 +929,7 @@ class PersonOrgLinkedData(models.Model):
     personorg = models.ForeignKey(PersonOrg)
     source = models.ForeignKey(LinkedDataSource)
     link = models.URLField(blank = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
     
     class Meta:
         verbose_name = 'Linked Person/Organization Data'
@@ -926,6 +939,7 @@ class FileLinkedData(models.Model):
     file = models.ForeignKey(File)
     source = models.ForeignKey(LinkedDataSource)
     link = models.URLField(blank = True)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
     
     class Meta:
         verbose_name = 'Linked File Data'
@@ -1332,6 +1346,7 @@ class SubjectCollection(models.Model):
     collection = models.ForeignKey(Collection)
     notes = models.TextField(blank = True)
     order = models.PositiveIntegerField(blank = True, default = 0)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
     
     def __unicode__(self):
         return self.subject.title + " [Collection: " + self.collection.title + "]"
@@ -1365,6 +1380,7 @@ class LocationCollection(models.Model):
     collection = models.ForeignKey(Collection)
     notes = models.TextField(blank = True)
     order = models.PositiveIntegerField(blank = True, default = 0)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
     
     def __unicode__(self):
         return self.location.title + " [Collection: " + self.collection.title + "]"
@@ -1398,6 +1414,7 @@ class MediaCollection(models.Model):
     collection = models.ForeignKey(Collection)
     notes = models.TextField(blank = True)
     order = models.PositiveIntegerField(blank = True, default = 0)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
     
     def __unicode__(self):
         return self.media.title + " [Collection: " + self.collection.title + "]"
@@ -1431,6 +1448,7 @@ class PersonOrgCollection(models.Model):
     collection = models.ForeignKey(Collection)
     notes = models.TextField(blank = True)
     order = models.PositiveIntegerField(blank = True, default = 0)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
     
     def __unicode__(self):
         return self.person_org.title + " [Collection: " + self.collection.title + "]"
@@ -1464,6 +1482,7 @@ class FileCollection(models.Model):
     collection = models.ForeignKey(Collection)
     notes = models.TextField(blank = True)
     order = models.PositiveIntegerField(blank = True, default = 0)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
     
     def __unicode__(self):
         return self.file.title + " [Collection: " + self.collection.title + "]"
@@ -1481,6 +1500,7 @@ class SubjectFile(models.Model):
     subject = models.ForeignKey(Subject)
     rsid = models.ForeignKey(File, db_column="rsid")
     thumbnail = models.BooleanField(default=False)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
     
     def get_thumbnail_admin(self):
         url = GlobalVars.objects.get(pk=13).val + str(self.rsid.id)
@@ -1498,6 +1518,7 @@ class LocationFile(models.Model):
     location = models.ForeignKey(Location)
     rsid = models.ForeignKey(File, db_column="rsid")
     thumbnail = models.BooleanField(default=False)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
     
     def get_thumbnail_admin(self):
         url = GlobalVars.objects.get(pk=13).val + str(self.rsid.id)
@@ -1515,6 +1536,7 @@ class MediaFile(models.Model):
     media = models.ForeignKey(Media)
     rsid = models.ForeignKey(File, db_column="rsid")
     thumbnail = models.BooleanField(default=False)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
     
     def get_thumbnail_admin(self):
         url = GlobalVars.objects.get(pk=13).val + str(self.rsid.id)
@@ -1532,6 +1554,7 @@ class PersonOrgFile(models.Model):
     person_org = models.ForeignKey(PersonOrg)
     rsid = models.ForeignKey(File, db_column="rsid")
     thumbnail = models.BooleanField(default=False)
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
     
     def get_thumbnail_admin(self):
         url = GlobalVars.objects.get(pk=13).val + str(self.rsid.id)
@@ -1696,22 +1719,25 @@ class DataUpload(models.Model):
     LOCATION = 'L'
     MEDIA = 'M'
     PERSON_ORGANIZATION = 'PO'
+    FILE = 'F'
     ENTITY = (
         (SUBJECT, 'Object'),
         (LOCATION, 'Location'),
         (MEDIA, 'Media'),
         (PERSON_ORGANIZATION, 'Person/Organization'),
+        (FILE, 'File'),
     )
     
     name = models.CharField(max_length=255, blank=True)
     notes = models.TextField(blank=True)
-    file = FilerFileField()
-    imported = models.BooleanField(default=False, help_text='If yes, this file has already been imported into the database. If no, data has not yet been added.')
+    file = models.ForeignKey(File)
+    imported = models.BooleanField(default=False, help_text='If yes, the data in this file has already been imported into the database. If no, data has not yet been added.')
     create_on_no_match = models.BooleanField(default=False, verbose_name='Create New If No Match', help_text='Check this box if you would like to create a new Entity if a row of data does not match any exisiting Entity in the database.')
     allow_multiple = models.BooleanField(default=False, verbose_name='Allow Row to Match Multiple Entities', help_text='Check this box if you like to allow a row to match multiple entities.')
     entity = models.CharField(max_length=2, choices=ENTITY, help_text='Please select to which Entity table you would like to add this data.')    
     owner = models.ForeignKey(User)
     upload_time = models.DateTimeField(auto_now_add=True, verbose_name='Date of Upload')
+    collection = models.ForeignKey(Collection, blank=True, null=True, help_text='If you would like all matched entities to be placed in a specific collection, please select collection here.')
     
     class Meta:
         ordering = ['upload_time']
@@ -1728,11 +1754,13 @@ class Column(models.Model):
     LOCATION = 'L'
     MEDIA = 'M'
     PERSON_ORGANIZATION = 'PO'
+    FILE = 'F'
     ENTITY = (
         (SUBJECT, 'Object'),
         (LOCATION, 'Location'),
         (MEDIA, 'Media'),
         (PERSON_ORGANIZATION, 'Person/Organization'),
+        (FILE, 'File'),
     )    
 
     data_upload = models.ForeignKey(DataUpload)
@@ -1749,7 +1777,9 @@ class Column(models.Model):
     rel_entity = models.CharField(max_length=2, choices=ENTITY, blank=True, verbose_name='Related Entity', help_text='If this column is a relation, select the related entity.')
     rel_match_property = models.ForeignKey(DescriptiveProperty, blank=True, null=True, verbose_name='Relation Identifier', help_text='If this column is a relation, select the property to use to find the matching entity.')
     ready_for_import = models.BooleanField(default=False, verbose_name='Column is Ready for Import')
-    import_error = models.CharField(max_length = 255, default='Please select a Descriptive Property for this column', verbose_name='Import Status')
+    import_error = models.CharField(max_length = 255, default='Please select a "Property" for this column or check "Insert Column as Inline Note", "Insert Column as Foot Note", or "Linked Data".', verbose_name='Import Status')
+    linked_data = models.BooleanField(default=False, verbose_name='Linked Data', help_text='Check this box to indicate this column contains a URL to a linked data source.')
+    linked_data_source = models.ForeignKey(LinkedDataSource, blank=True, null=True, verbose_name='Linked Data Source', help_text='If this column contains a URL to linked data, select the linked data source.')
     
     class Meta:
         ordering = ['column_index']
@@ -1769,6 +1799,7 @@ class MatchImportError(models.Model):
     location = models.ForeignKey(Location, blank = True, null = True, verbose_name="Match to Location")
     media = models.ForeignKey(Media, blank = True, null = True, verbose_name="Match to Media")
     person = models.ForeignKey(PersonOrg, blank = True, null = True, verbose_name="Match to Person/Organization")
+    file = models.ForeignKey(File, blank = True, null = True, verbose_name="Match to File")
     batch = models.ForeignKey(UploadBatch, blank = True, null = True, verbose_name="Upload Batch")
     
     class Meta:
@@ -1789,11 +1820,13 @@ class RelationImportError(models.Model):
     subjects = models.ManyToManyField(Subject, blank = True, null = True, verbose_name="Objects", related_name="matched_subjects")
     locations = models.ManyToManyField(Location, blank = True, null = True, verbose_name="Locations", related_name="matched_locations")
     medias = models.ManyToManyField(Media, blank = True, null = True, verbose_name="Media", related_name="matched_media")
-    people = models.ManyToManyField(PersonOrg, blank = True, null = True, verbose_name="People/Organizations", related_name="matched_people")    
+    people = models.ManyToManyField(PersonOrg, blank = True, null = True, verbose_name="People/Organizations", related_name="matched_people")
+    files = models.ManyToManyField(File, blank = True, null = True, verbose_name="Files", related_name="matched_files")
     subject = models.ForeignKey(Subject, blank = True, null = True, verbose_name="Relate to Object", related_name="rel_subject")
     location = models.ForeignKey(Location, blank = True, null = True, verbose_name="Relate to Location", related_name="rel_location")
     media = models.ForeignKey(Media, blank = True, null = True, verbose_name="Relate to Media", related_name="rel_media")
     person = models.ForeignKey(PersonOrg, blank = True, null = True, verbose_name="Relate to Person/Organization", related_name="rel_people")
+    file = models.ForeignKey(File, blank = True, null = True, verbose_name="Relate to File", related_name="rel_file")
     batch = models.ForeignKey(UploadBatch, blank = True, null = True, verbose_name="Upload Batch")    
     
     class Meta:
@@ -1814,7 +1847,8 @@ class ControlFieldImportError(models.Model):
     subjects = models.ManyToManyField(Subject, blank = True, null = True, verbose_name="Objects")
     locations = models.ManyToManyField(Location, blank = True, null = True, verbose_name="Locations")
     medias = models.ManyToManyField(Media, blank = True, null = True, verbose_name="Media")
-    people = models.ManyToManyField(PersonOrg, blank = True, null = True, verbose_name="People/Organizations")    
+    people = models.ManyToManyField(PersonOrg, blank = True, null = True, verbose_name="People/Organizations")
+    files = models.ManyToManyField(File, blank = True, null = True, verbose_name = "Files")
     control_field = models.ForeignKey(ControlField, blank = True, null = True, verbose_name="Match to Controlled Term")
     batch = models.ForeignKey(UploadBatch, blank = True, null = True, verbose_name="Upload Batch")    
     
