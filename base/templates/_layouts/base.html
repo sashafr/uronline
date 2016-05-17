@@ -67,60 +67,65 @@
 
 <body class="{% block body_class %}{% endblock %}" {% block body_attributes %}{% endblock %}>
 {% block body %}
-  <!-- Prompt IE 6 users to install Chrome Frame. Remove this if you support IE 6.
-       chromium.org/developers/how-tos/chrome-frame-getting-started -->
-  <!--[if lt IE 7]>
-    <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
-  <![endif]-->  
-  
-  <!-- Header -->
-  <header>
-    {% block header %}
-    
-    <!-- Navbar -->
-    <div class="navbar navbar-default navbar-fixed-top" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="{% url 'home' %}">{% load_globals "site_title" %} Beta*</a>
-        </div>
-        <div class="navbar-collapse collapse">
-          <form action="/search" method="get" class="navbar-form navbar-left" role="form">
-              <div class="form-group">
-                  <label class="sr-only" for="general_search">Search</label>
-                  <input type="text" name="keyword" class="form-control" id="general_search" placeholder="Search {% load_globals 'site_title' %}">
-              </div>
-          </form>          
-          <ul class="nav navbar-nav navbar-right">
-            <li><a href="{% url 'search_help' %}" target="_blank">Help</a></li>
-            <!--<li><a href="{% url 'terminology' %}" target="_blank">Terminology</a></li>-->
-            <li class="dropdown">
-              <a href="{% url 'about' %}" class="dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
-              <ul class="dropdown-menu">
-                <li><a href="{% url 'about' %}">Project</a></li>
-                <li><a href="{% url 'about' %}#city">City of Ur</a></li>
-                <li><a href="{% url 'about' %}#excavation">Excavation of Ur</a></li>
-                <li><a href="{% url 'about' %}#team">Team Members</a></li>
-                <li><a href="{% url 'about' %}#support">Support</a></li>
-                <li><a href="{% url 'about' %}#developers">For Developers</a></li>
-                <li><a href="{% url 'about' %}#licensing">Licensing</a></li>                
-              </ul>
-            </li>
-            <li><a href="{% url 'news' %}">News</a></li>
-            <li><a href="{% url 'contact' %}">Contact</a></li>
-            <li><a href="{% url 'admin:index' %}">Login/Sign Up</a></li>            
-          </ul>
-        </div><!--/.nav-collapse -->
-      </div>
-    </div>    
-    {% endblock header %}
-  </header>
-  <!-- End Header -->
+<!--[if lt IE 7]>
+<p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+<![endif]-->  
+
+    <!-- Header -->
+    <header>
+        {% block header %}
+        <!-- Navbar -->
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Menu</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="{% url 'home' %}">
+                        Ur Online
+                        <small> A collaboration between the British Museum and the Penn Museum made possible with the lead support of the Leon Levy Foundation.</small>
+                    </a>
+                </div>
+                <div class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a id="input-open"><span class="glyphicon glyphicon-search"></span></a></li>
+                    </ul>
+                    <form action="/search" method="get" class="navbar-form navbar-right" role="form">
+                        <div class="form-group">
+                            <label class="sr-only" for="general_search">Search</label>
+                            <span id="search-icon" class="glyphicon glyphicon-search"></span>
+                            <input type="text" name="keyword" class="form-control" id="general_search" placeholder="Search by keyword or term">
+                            <a id="input-close"><span class="glyphicon glyphicon-remove-circle"></span></a>
+                            <button type="submit" class="btn btn-default">Search</button>
+                        </div>
+                    </form>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="{% url 'terminology' %}">Explore the Collection</a></li>
+                        <li class="dropdown">
+                            <a href="{% url 'about' %}" class="dropdown-toggle" data-toggle="dropdown">About</a>
+                            <ul class="dropdown-menu">
+                                <li><a href="{% url 'about' %}">Project</a></li>
+                                <li><a href="{% url 'about' %}#city">City of Ur</a></li>
+                                <li><a href="{% url 'about' %}#excavation">Excavation of Ur</a></li>
+                                <li><a href="{% url 'about' %}#team">Team Members</a></li>
+                                <li><a href="{% url 'about' %}#support">Support</a></li>
+                                <li><a href="{% url 'about' %}#developers">For Developers</a></li>
+                                <li><a href="{% url 'about' %}#licensing">Licensing</a></li>                
+                            </ul>
+                        </li>
+                        <li><a href="{% url 'news' %}">News</a></li>
+                        <li class="hidden"><a href="{% url 'contact' %}">Contact</a></li>
+                        <li class="hidden"><a href="{% url 'admin:index' %}">Login/Sign Up</a></li>            
+                    </ul>
+                </div><!--/.nav-collapse -->
+            </div>
+        </div>    
+        {% endblock header %}
+    </header>
+    <!-- End Header -->
 
   <!-- Body -->
   <div role="main" style="padding-bottom: 33px;">
@@ -128,79 +133,62 @@
   </div>
   <!-- End Body -->
   
-  <!-- Footer -->
-  <footer>
-    {% block footer %}
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="row">
-                    <div class="col-lg-10">
-                        <ul class="list-inline">
-                            <li>
-                                <a href="{% url 'home' %}">Home</a>
-                            </li>
-                            <li class="footer-menu-divider">&sdot;</li>
-                            <li>
-                                <a href="{% url 'about' %}">About</a>
-                            </li>
-                            <li class="footer-menu-divider">&sdot;</li>
-                            <li>
-                                <a href="{% url 'news' %}">News</a>
-                            </li>
-                            <li class="footer-menu-divider">&sdot;</li>
-                            <li>
-                                <a href="{% url 'contact' %}">Contact</a>
-                            </li>
-                            <li class="footer-menu-divider">&sdot;</li>
-                            <li>
-                                <a href="{% url 'admin:index' %}">Login/Sign Up</a>
-                            </li>                    
-                        </ul>
-                    </div>
-                    <div class="col-lg-2">
-                        <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a>
-                    </div>
-                </div>
-                <p class="copyright text-muted small">{% autoescape off %}{% load_content "footer_text" %}{% endautoescape %}</p>
+    <!-- Footer -->
+    <footer>
+        {% block footer %}
+        <div class="left">
+            <div class="footer-inner">
+                <h3>Ur Online</h3>
+                <p><strong>Ur Online</strong> offers an insight into the unique site of Ur, near Nasiriyah in southern Iraq, and one of the largest and most important cities of ancient Mesopotamia. Excavations at Ur between 1922 and 1934 by Sir Leonard Woolley, jointly sponsored by the British Museum and the Penn Museum, uncovered Ur’s famous ziggurat complex, densely packed private houses, and the spectacular Royal Graves. Half the finds from Woolley’s excavations are housed in the Iraq Museum in Baghdad, with the other half shared equally between the British Museum and the Penn Museum. Through the generosity of the Leon Levy Foundation, lead underwriter, the Kowalski Family Foundation and the Hagop Kevorkian Fund, Ur Online preserves digitally and invites in-depth exploration of the finds and records from this remarkable site.</p>
+                <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a>
+                <ul class="list-inline">
+                    <li><a href="{% url 'about' %}#developers">For Developers</a></li>
+                    <li><a href="{% url 'about' %}#licensing">Licensing</a></li>
+                    <li><a href="{% url 'contact' %}">Contact</a></li>
+                    <li><a href="{% url 'admin:index' %}">Login/Register</a></li>                
+                </ul>
             </div>
-        </div>    
-    </div>
-    {% endblock footer %}
-  </footer>
-  <!-- End Footer -->
-
-
-  <!-- JavaScript at the bottom for fast page loading -->
-
-  <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
-  {% block cdn_js %}
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-  <script>window.jQuery || document.write('<script src="{{ STATIC_URL }}js/libs/jquery-1.9.1.min.js"><\/script>')</script>
-  <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
-  {% endblock cdn_js %}
-
-  <!-- scripts concatenated and minified via django-compressor -->
-  {% compress js %}
-  {% block js %}
-  <script src="{% static 'js/main.js' %}"></script>
-  {% endblock js %}
-  {% endcompress %}
-  <!-- end scripts -->
-
-  <!-- Asynchronous Google Analytics snippet. Change UA-XXXXX-X to be your site's ID.
+        </div>
+        <div class="right">
+            <div class="footer-inner">
+                <img src="http://placehold.it/350x150">
+                <img src="http://placehold.it/350x150">
+                <img src="http://placehold.it/350x150">
+            </div>
+        </div>
+        {% endblock footer %}
+    </footer>
+    <!-- End Footer -->
+    
+    
+    <!-- JavaScript at the bottom for fast page loading -->
+    <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
+    {% block cdn_js %}
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="{{ STATIC_URL }}js/libs/jquery-1.9.1.min.js"><\/script>')</script>
+    <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+    {% endblock cdn_js %}
+    
+    <!-- scripts concatenated and minified via django-compressor -->
+    {% compress js %}
+    {% block js %}
+    <script src="{% static 'js/main.js' %}"></script>
+    {% endblock js %}
+    {% endcompress %}
+    <!-- end scripts -->
+    <script src="{% static 'lightbox/js/lightbox.min.js' %}"></script>
+    
+    <!-- Asynchronous Google Analytics snippet. Change UA-XXXXX-X to be your site's ID.
        mathiasbynens.be/notes/async-analytics-snippet -->
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-    ga('create', 'UA-51841138-1', 'upenn.edu');
-    ga('send', 'pageview');
-  </script>
-  
-  <script src="{% static 'lightbox/js/lightbox.min.js' %}"></script>
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-51841138-1', 'upenn.edu');
+        ga('send', 'pageview');
+    </script>
   
 {% endblock %} <!-- End Body Block -->
 </body>
