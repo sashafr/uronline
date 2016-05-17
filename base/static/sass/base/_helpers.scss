@@ -1,0 +1,26 @@
+@-webkit-keyframes fadeIn {
+  0%    { opacity: 0; }
+  100%  { opacity: 1; } 
+}
+
+@-moz-keyframes fadeIn {
+  0%    { opacity: 0; }
+  100%  { opacity: 1; } 
+}
+
+@-ms-keyframes fadeIn {
+  0%    { opacity: 0; }
+  100%  { opacity: 1; } 
+}
+
+@keyframes fadeIn {
+  0%    { opacity: 0; }
+  100%  { opacity: 1; } 
+}
+
+.fade-in {
+    -webkit-animation: fadeIn 1s 1 forwards;                // A sample helper that fades something in, nice for page animations onLoad
+    -moz-animation: fadeIn 1s 1 forwards;
+    -o-animation: fadeIn 1s 1 forwards;
+    animation: fadeIn 1s 1 forwards; 
+}
