@@ -8,60 +8,60 @@
 <!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
 <head>
-  <meta charset="utf-8">
-
-  <!-- Use the .htaccess and remove these lines to avoid edge case issues.
+    <meta charset="utf-8">
+    
+    <!-- Use the .htaccess and remove these lines to avoid edge case issues.
        More info: h5bp.com/i/378 -->
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-
-  <!-- SEO meta tags - Override these on pages extending this template if you want dif values -->
-  <title>{% block site_title %}{% load_globals 'site_title' %}{% endblock %} | {% block page_title %}{% endblock %}</title>
-  <meta name="description" content="{% block meta_description %}{% load_globals 'site_description' %}{% endblock %}">
-  <meta name="author" content="{% block meta_author %}{% load_globals 'site_author' %}{% endblock %}">
-  <meta name="og:title" content="{% block fb_title %}{% load_globals 'facebook_title' %}{% endblock %}">
-  <meta name="og:type" content="{% block fb_type %}website{% endblock %}">
-  <meta name="og:image" content="{% block fb_image %}{% static 'img/favicon.jpg' %}{% endblock %}">  
-  <meta name="og:url" content="{% block fb_url %}{% load_globals 'facebook_url' %}{% endblock %}">  
-  <meta name="og:description" content="{% block fb_desc %}{% load_globals 'facebook_description' %}{% endblock %}">  
-  <meta name="twitter:card" content="{% block twitter_card %}summary{% endblock %}">  
-  <meta name="twitter:url" content="{% block twitter_url %}{% load_globals 'twitter_url' %}{% endblock %}">  
-  <meta name="twitter:title" content="{% block twitter_title %}{% load_globals 'twitter_title' %}{% endblock %}">  
-  <meta name="twitter:description" content="{% block twitter_desc %}{% load_globals 'twitter_description' %}{% endblock %}">  
-  <meta name="twitter:image" content="{% block twitter_image %}{% static 'img/favicon.jpg' %}{% endblock %}">  
-  <!-- End SEO meta tags -->
-  
-  <!-- Mobile viewport optimized: h5bp.com/viewport -->
-  <meta name="viewport" content="width=device-width">
-
-  {% block meta %}
-  {% endblock %}
-  
-  <!-- FavIcon -->
-  <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
-  <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
-  <!-- End FavIcon -->
-
-  {% compress css %}
-  <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
-  <link rel="stylesheet" href="{% static 'css/main.css' %}">
-  {% block css %}{% endblock %}
-  {% endcompress %}
-  
-  <link rel="stylesheet" href="{% static 'lightbox/css/lightbox.css' %}">
-  <!-- End Styles -->
-
-  <!-- Custom Fonts -->
-  <link href="{% static 'font-awesome-4.1.0/css/font-awesome.min.css' %}" rel="stylesheet" type="text/css">
-  <link href="http://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
-  <link rel="stylesheet" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />
-  <!-- More ideas for your <head> here: h5bp.com/d/head-Tips -->
-
-  <!-- All JavaScript at the bottom, except this Modernizr build.
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <!-- SEO meta tags - Override these on pages extending this template if you want dif values -->
+    <title>{% block site_title %}{% load_globals 'site_title' %}{% endblock %} | {% block page_title %}{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}{% load_globals 'site_description' %}{% endblock %}">
+    <meta name="author" content="{% block meta_author %}{% load_globals 'site_author' %}{% endblock %}">
+    <meta name="og:title" content="{% block fb_title %}{% load_globals 'facebook_title' %}{% endblock %}">
+    <meta name="og:type" content="{% block fb_type %}website{% endblock %}">
+    <meta name="og:image" content="{% block fb_image %}{% static 'img/favicon.jpg' %}{% endblock %}">  
+    <meta name="og:url" content="{% block fb_url %}{% load_globals 'facebook_url' %}{% endblock %}">  
+    <meta name="og:description" content="{% block fb_desc %}{% load_globals 'facebook_description' %}{% endblock %}">  
+    <meta name="twitter:card" content="{% block twitter_card %}summary{% endblock %}">  
+    <meta name="twitter:url" content="{% block twitter_url %}{% load_globals 'twitter_url' %}{% endblock %}">  
+    <meta name="twitter:title" content="{% block twitter_title %}{% load_globals 'twitter_title' %}{% endblock %}">  
+    <meta name="twitter:description" content="{% block twitter_desc %}{% load_globals 'twitter_description' %}{% endblock %}">  
+    <meta name="twitter:image" content="{% block twitter_image %}{% static 'img/favicon.jpg' %}{% endblock %}">  
+    <!-- End SEO meta tags -->
+    
+    <!-- Mobile viewport optimized: h5bp.com/viewport -->
+    <meta name="viewport" content="width=device-width">
+    
+    {% block meta %}
+    {% endblock %}
+    
+    <!-- FavIcon -->
+    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+    <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+    <!-- End FavIcon -->
+    
+    {% compress css %}
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    {% block css %}{% endblock %}
+    {% endcompress %}
+    
+    <link rel="stylesheet" href="{% static 'lightbox/css/lightbox.css' %}">
+    <!-- End Styles -->
+    
+    <!-- Custom Fonts -->
+    <link href="{% static 'font-awesome-4.1.0/css/font-awesome.min.css' %}" rel="stylesheet" type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=Lato:400,300,300italic,400italic,700italic,700|Vollkorn:400,400italic,700,700italic' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />
+    <!-- More ideas for your <head> here: h5bp.com/d/head-Tips -->
+    
+    <!-- All JavaScript at the bottom, except this Modernizr build.
        Modernizr enables HTML5 elements & feature detects for optimal performance.
        Create your own custom Modernizr build: www.modernizr.com/download/ -->
-  {% compress js %}
-  <script src="{% static 'js/libs/modernizr-2.6.2-respond-1.1.0.min.js' %}"></script>
-  {% endcompress %}
+    {% compress js %}
+    <script src="{% static 'js/libs/modernizr-2.6.2-respond-1.1.0.min.js' %}"></script>
+    {% endcompress %}
   
 </head>
 
@@ -85,27 +85,28 @@
                         <span class="icon-bar"></span>
                     </button>
                     <a class="navbar-brand" href="{% url 'home' %}">
-                        Ur Online
-                        <small> A collaboration between the British Museum and the Penn Museum made possible with the lead support of the Leon Levy Foundation.</small>
+                        <b>Ur</b> Online
+                        <small class="hidden-xs hidden-sm"> A collaboration between the British Museum and the Penn Museum made possible with the lead support of the Leon Levy Foundation.</small>
                     </a>
                 </div>
                 <div class="navbar-collapse collapse">
-                    <ul class="nav navbar-nav navbar-right">
+                    <ul class="nav navbar-nav navbar-right hidden-xs">
                         <li><a id="input-open"><span class="glyphicon glyphicon-search"></span></a></li>
                     </ul>
-                    <form action="/search" method="get" class="navbar-form navbar-right" role="form">
+                    <form action="/search" method="get" class="navbar-form navbar-right hidden-xs" role="form">
                         <div class="form-group">
                             <label class="sr-only" for="general_search">Search</label>
                             <span id="search-icon" class="glyphicon glyphicon-search"></span>
-                            <input type="text" name="keyword" class="form-control" id="general_search" placeholder="Search by keyword or term">
+                            <input type="text" name="keyword" class="form-control" id="general-search" placeholder="Search by keyword">
                             <a id="input-close"><span class="glyphicon glyphicon-remove-circle"></span></a>
                             <button type="submit" class="btn btn-default">Search</button>
                         </div>
                     </form>
                     <ul class="nav navbar-nav navbar-right">
-                        <li><a href="{% url 'terminology' %}">Explore the Collection</a></li>
+                        <li><a href="{% url 'terminology' %}" class="{% if request.get_full_path == '/terminology/' %}active{% endif %}">Explore the Collection</a></li>
+                        <li class="visible-xs"><a href="/search">Search All Objects</a></li>
                         <li class="dropdown">
-                            <a href="{% url 'about' %}" class="dropdown-toggle" data-toggle="dropdown">About</a>
+                            <a href="{% url 'about' %}" class="dropdown-toggle {% if request.get_full_path == '/about/' %}active{% endif %}" data-toggle="dropdown">About</a>
                             <ul class="dropdown-menu">
                                 <li><a href="{% url 'about' %}">Project</a></li>
                                 <li><a href="{% url 'about' %}#city">City of Ur</a></li>
@@ -116,9 +117,7 @@
                                 <li><a href="{% url 'about' %}#licensing">Licensing</a></li>                
                             </ul>
                         </li>
-                        <li><a href="{% url 'news' %}">News</a></li>
-                        <li class="hidden"><a href="{% url 'contact' %}">Contact</a></li>
-                        <li class="hidden"><a href="{% url 'admin:index' %}">Login/Sign Up</a></li>            
+                        <li><a href="{% url 'news' %}" class="{% if request.get_full_path == '/news/' %}active{% endif %}">News</a></li>
                     </ul>
                 </div><!--/.nav-collapse -->
             </div>
@@ -127,11 +126,10 @@
     </header>
     <!-- End Header -->
 
-  <!-- Body -->
-  <div role="main" style="padding-bottom: 33px;">
-    <div id="content_window">{% block content %}{% endblock %}</div>
-  </div>
-  <!-- End Body -->
+    <main role="main">
+        
+        {% block content %}{% endblock %}
+    </main>
   
     <!-- Footer -->
     <footer>
@@ -140,20 +138,20 @@
             <div class="footer-inner">
                 <h3>Ur Online</h3>
                 <p><strong>Ur Online</strong> offers an insight into the unique site of Ur, near Nasiriyah in southern Iraq, and one of the largest and most important cities of ancient Mesopotamia. Excavations at Ur between 1922 and 1934 by Sir Leonard Woolley, jointly sponsored by the British Museum and the Penn Museum, uncovered Ur’s famous ziggurat complex, densely packed private houses, and the spectacular Royal Graves. Half the finds from Woolley’s excavations are housed in the Iraq Museum in Baghdad, with the other half shared equally between the British Museum and the Penn Museum. Through the generosity of the Leon Levy Foundation, lead underwriter, the Kowalski Family Foundation and the Hagop Kevorkian Fund, Ur Online preserves digitally and invites in-depth exploration of the finds and records from this remarkable site.</p>
-                <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a>
+                <a rel="license" class="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a>
                 <ul class="list-inline">
                     <li><a href="{% url 'about' %}#developers">For Developers</a></li>
                     <li><a href="{% url 'about' %}#licensing">Licensing</a></li>
                     <li><a href="{% url 'contact' %}">Contact</a></li>
-                    <li><a href="{% url 'admin:index' %}">Login/Register</a></li>                
+                    <li class="hidden-xs"><a href="{% url 'admin:index' %}">Login/Register</a></li>                
                 </ul>
             </div>
         </div>
         <div class="right">
             <div class="footer-inner">
-                <img src="http://placehold.it/350x150">
-                <img src="http://placehold.it/350x150">
-                <img src="http://placehold.it/350x150">
+                <a href="http://www.britishmuseum.org/" target="_blank"><img src="http://placehold.it/350x150"></a>
+                <a href="http://www.penn.museum/" target="_blank"><img src="http://placehold.it/350x150"></a>
+                <a href="http://leonlevyfoundation.org/" target="_blank"><img src="http://placehold.it/350x150"></a>
             </div>
         </div>
         {% endblock footer %}
@@ -171,8 +169,8 @@
     
     <!-- scripts concatenated and minified via django-compressor -->
     {% compress js %}
-    {% block js %}
     <script src="{% static 'js/main.js' %}"></script>
+    {% block js %}
     {% endblock js %}
     {% endcompress %}
     <!-- end scripts -->

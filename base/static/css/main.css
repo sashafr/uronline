@@ -24,4 +24,9 @@
   -o-animation: fadeIn 1s 1 forwards;
   animation: fadeIn 1s 1 forwards; }
 
+header .navbar {
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.75); }
+
 /*# sourceMappingURL=main.css.map */
