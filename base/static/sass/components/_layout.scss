@@ -7,3 +7,20 @@ body {
 main {
     background: white;
 }
+section {
+    margin: 20px 0 40px;
+    
+    &:last-of-type {
+        margin-bottom: 100px;
+    }
+}
+hr {
+    margin-top: 30px;
+    margin-bottom: 40px;
+}
+
+.img-thumbnail {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+}

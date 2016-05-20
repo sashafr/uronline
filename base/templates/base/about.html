@@ -6,8 +6,6 @@
 {% block page_title %}About{% endblock %}
 <!-- End Metadata -->
 
-{% block body_attributes %}data-spy="scroll" data-target="#myScrollspy"{% endblock %}
-
 {% block pageheader %}
     <div class="page-header">
         <div class="container page-header-content">
@@ -22,61 +20,35 @@
     <!-- Body Sections-->
     <div class="container">
         <div class="row">
-            <div class="col-xs-3 hideonsmall" id="myScrollspy">
-                <ul class="nav nav-tabs nav-stacked" data-spy="affix" data-offset-top="125">
-                    <li><h4><a href="#project">The Project</a></h4></li>
-                    <li><h4><a href="#city">The City</a></h4></li>
-                    <li><h4><a href="#excavation">The Excavation</a></h4></li>
-                    <li><h4><a href="#team">The Team</a></h4></li>
-                    <li><h4><a href="#support">Our Supporters</a></h4></li>
-                    <li><h4><a href="#developers">For Developers</a></h4></li>
-                    <li><h4><a href="#licensing">Licensing</a></h4></li>
-                </ul>
-            </div>
             <div class="col-md-8">
-                <div class="content-section-b" id="project">
-                    <div class="row">
-                        <h2 class="section-heading">About the Project</h2>
-                        <div style="font-size: 16px; font-weight: 400; margin-bottom: 20px;">{{ project.val|safe }}</div>
-                    </div>
-                </div>
-                <div class="content-section-b" id="city">
-                    <div class="row">
-                        <h2 class="section-heading">About the City of Ur</h2>
-                        <div style="font-size: 16px; font-weight: 400; margin-bottom: 20px;">{{ site.val|safe }}</div>
-                    </div>
-                </div>
-                <div class="content-section-b" id="excavation">
-                    <div class="row">
-                        <h2 class="section-heading">About the Excavation of Ur</h2>
-                        <div style="font-size: 16px; font-weight: 400; margin-bottom: 20px;">{{ excavation.val|safe }}</div>
-                    </div>
-                </div>
-                <div class="content-section-b" id="team">
-                    <div class="row">
-                        <h2 class="section-heading">About the Team Members</h2>
-                        <div style="font-size: 16px; font-weight: 400; margin-bottom: 20px;">{{ team.val|safe }}</div>
-                    </div>
-                </div>
-                <div class="content-section-b" id="support">
-                    <div class="row">
-                        <h2 class="section-heading">About Our Supporters</h2>
-                        <div style="font-size: 16px; font-weight: 400; margin-bottom: 20px;">{{ support.val|safe }}</div>
-                    </div>
-                </div>
-                <div class="content-section-b" id="developers">
-                    <div class="row">
-                        <h2 class="section-heading">About the Development</h2>
-                        <div style="font-size: 16px; font-weight: 400; margin-bottom: 20px;">{{ dev.val|safe }}</div>
-                    </div>
-                </div>
-                <div class="content-section-b" id="licensing">
-                    <div class="row">
-                        <h2 class="section-heading">Licensing</h2>
-                        <div style="font-size: 16px; font-weight: 400; margin-bottom: 20px;">{{ lic.val|safe }}</div>
-                    </div>
-                </div>                
-                
+                <section id="project">
+                    <h2>About the Project</h2>
+                    {{ project.val|safe }}
+                </section>
+                <section id="city">
+                    <h2>About the City of Ur</h2>
+                    {{ site.val|safe }}
+                </section>
+                <section id="excavation">
+                    <h2>About the Excavation of Ur</h2>
+                    {{ excavation.val|safe }}
+                </section>
+                <section id="team">
+                    <h2>About the Team Members</h2>
+                    {{ team.val|safe }}
+                </section>
+                <section id="support">
+                    <h2>About Our Supporters</h2>
+                    {{ support.val|safe }}
+                </section>
+                <section id="developers">
+                    <h2>About the Development</h2>
+                    {{ dev.val|safe }}
+                </section>
+                <section id="licensing">
+                    <h2>Licensing</h2>
+                    {{ lic.val|safe }}
+                </section>                
             </div>
         </div>
     </div>
