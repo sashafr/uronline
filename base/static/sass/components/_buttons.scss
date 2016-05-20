@@ -7,6 +7,12 @@
     transition: 0.5s all;
     font-family: $serif;
     font-style: italic;
+    position: relative;
+    top: 0;
+
+    &:hover, &:focus, &:active {
+        top: -10px;
+    }
 
     &.btn-default {
         background: $gold;

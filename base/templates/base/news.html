@@ -50,18 +50,16 @@
 </script>
 {% endblock %}
 
-{% block content %}
-
-    <!-- Banner -->
-    <div class="banner">
-      <div class="container">
-        <div class="row">
-          <div class="col-lg-12">
-            <h2 class="text-center">News</h2>
-          </div>
+{% block pageheader %}
+    <div class="page-header">
+        <div class="container page-header-content">
+            <h1>News</h1>
         </div>
-      </div>
-    </div> <!-- End Banner -->
+        <div class="overlay"></div>
+    </div>
+{% endblock %}
+
+{% block content %}
     
     <!-- Body Sections-->
     <div class="container">
@@ -111,7 +109,7 @@
             <div class="col-md-4">
 
                 <!-- News Roll Well -->
-                <div class="well" style="margin-top:50px;">
+                <div class="well">
                     <div class="newsroom_widget">
                         <h2>Related News</h2>
                         <div class="newsfeed_box">

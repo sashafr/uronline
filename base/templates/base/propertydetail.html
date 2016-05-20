@@ -7,12 +7,20 @@
 {% block page_title %}Property Detail{% endblock %}
 <!-- End Metadata -->
 
+{% block pageheader %}
+    <div class="page-header">
+        <div class="container page-header-content">
+            <h1>{{ property.property }}</h1>
+        </div>
+        <div class="overlay"></div>
+    </div>
+{% endblock %}
+
 {% block content %}
-    <div class="content-section-b" style="padding-top: 80px;">
+    <div class="content-section-b">
         <div class="container">
             <div class="row">
                 <div class="col-sm-8">
-                    <h3>{{ property.property }}</h3>
                     <p>{{ property.notes }}</p>
                     <div class="row">
                         <div class="col-sm-8"></div>

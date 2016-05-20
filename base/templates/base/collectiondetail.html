@@ -46,16 +46,18 @@
 </style>
 {% endblock %}
 
+{% block pageheader %}
+    <div class="page-header">
+        <div class="container page-header-content">
+            <h1>{{ collection.title }}</h1>
+        </div>
+        <div class="overlay"></div>
+    </div>
+{% endblock %}
+
 {% block content %}
-    <div class="content-section-b" style="padding-top: 80px;">
+    <div class="content-section-b">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <h1 id="top" style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
-                        {{ collection.title }}
-                    </h1>
-                </div>
-            </div>
             <div class="row">
                 <div class="col-lg-10">
                     <div class="row">

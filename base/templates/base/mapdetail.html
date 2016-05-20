@@ -6,14 +6,18 @@
 {% block page_title %}Map Detail{% endblock %}
 <!-- End Metadata -->
 
+{% block pageheader %}
+    <div class="page-header">
+        <div class="container page-header-content">
+            <h1>Map of {{ location.title}} <small>{{ current_map.notes }}</small></h1>
+        </div>
+        <div class="overlay"></div>
+    </div>
+{% endblock %}
+
 {% block content %}
-    <div class="content-section-b" style="padding-top: 80px;">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <h1 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">Map of {{ location.title }}<br><small>{{ current_map.notes }}</small></h1>
-                </div>            
-            </div>        
+    <div class="content-section-b">
+        <div class="container">      
             <div class="row">
                 <div class="col-md-8">
                     <img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ rsid.property_value }}&size=scr" alt="{{ current_map.notes }}"></img>

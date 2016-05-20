@@ -6,20 +6,28 @@
 {% block page_title %}Object Detail{% endblock %}
 <!-- End Metadata -->
 
+{% block pageheader %}
+    <div class="page-header">
+        <div class="container page-header-content">
+            <h1>{% for n in gen_properties|slice:":1" %}{{ n.property_value }}{% endfor %}</h1>
+        </div>
+        <div class="overlay"></div>
+    </div>
+{% endblock %}
+
 {% block content %}
-    <div class="content-section-b" style="padding-top: 80px;">
+    <div class="content-section-b">
         <div class="container">
             <div class="row">
                 <div class="col-md-9">
                     <div class="row">
-                        <h3>{% for n in gen_properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}</h3>
                         <ul class="nav nav-tabs">
                             <li class="active"><a href="#general" data-toggle="tab">General</a></li>
                             <li><a href="#archival" data-toggle="tab">Archival</a></li>
                             <li><a href="#conservation" data-toggle="tab">Conservation/Analysis</a></li>
                         </ul>
                         <div class="tab-content">
-                            <div id="general" class="tab-pane active" style="margin-top: 20px;">
+                            <div id="general" class="tab-pane active">
                                 {% if property_count > 1 %}
                                     <table class="table table-striped">
                                         {% for cp in control_properties %}

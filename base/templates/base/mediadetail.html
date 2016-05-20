@@ -6,8 +6,17 @@
 {% block page_title %}Media Detail{% endblock %}
 <!-- End Metadata -->
 
+{% block pageheader %}
+    <div class="page-header">
+        <div class="container page-header-content">
+            <h1>Media Detail</h1>
+        </div>
+        <div class="overlay"></div>
+    </div>
+{% endblock %}
+
 {% block content %}
-    <div class="content-section-b" style="padding-top: 80px;">
+    <div class="content-section-b">
         <div class="container">
             <div class="row">
                 <div class="col-md-9">
@@ -77,7 +86,7 @@
                 <div class="col-md-3">
                     <div class="row">
                         <div class="col-sm-11">
-                            <div class="well" style="margin-top: 50px;">
+                            <div class="well">
                                 {% if media.medialocationrelations_set.all %}
                                 <h4>Related Contexts</h4>
                                 {% for location_relation in media.medialocationrelations_set.all|slice:":5" %}

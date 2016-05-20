@@ -46,22 +46,18 @@
 </style>
 {% endblock %}
 
+{% block pageheader %}
+    <div class="page-header">
+        <div class="container page-header-content">
+            <h1>{{ term.title }}</h1>
+        </div>
+        <div class="overlay"></div>
+    </div>
+{% endblock %}
+
 {% block content %}
-    <div class="content-section-b" style="padding-top: 80px;">
+    <div class="content-section-b">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <h1 id="top" style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
-                        <a href="{% url 'propertydetail' term.type.id %}"><small>{{ term.type.property }}: </small></a>
-                        {% if term.get_ancestors %}
-                            {% for anc in term.get_ancestors %}
-                                <a href="{% url 'termdetail' anc.id %}" ><small>{{ anc.title }}</small></a><small> > </small>
-                            {% endfor %}
-                        {% endif %}
-                        {{ term.title }}
-                    </h1>
-                </div>
-            </div>
             <div class="row">
                 <div class="col-lg-10">
                     <div class="row">

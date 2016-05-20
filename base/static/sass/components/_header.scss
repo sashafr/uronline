@@ -171,6 +171,7 @@ header {
 
                 &:hover, &:focus, &:active {
                     background: darken($gold, 10%);
+                    top: 0;
                 }
             }
         }

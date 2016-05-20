@@ -31,6 +31,9 @@
             }
         }
     }
+    &.bottomless {
+        margin-bottom: 0;
+    }
     &.expanded {
         min-height: 700px;
     }
@@ -49,10 +52,33 @@
         position: relative;
 
         h1 {
-            margin: 0;
+            margin: 65px 0 0;
             font-size: 5.4rem;
+            font-weight: 300;
             color: white;
             text-shadow: 0 0 5px rgba(0,0,0,0.5);
+
+            & + p {
+                margin-top: 20px;
+            }
+        }
+        p {
+            margin: 0;
+            font-size: 2.1rem;
+            line-height: 1.8;
+            color: white;
+        }
+        a:not(.btn) {
+            color: white;
+            font-weight: 700;
+            border-bottom: 1px dotted white;
+            transition: 0.5s all;
+    
+            &:hover, &:focus, &:active {
+                color: white;
+                text-decoration: none;
+                opacity: 0.65;
+            }
         }
     }
 }
