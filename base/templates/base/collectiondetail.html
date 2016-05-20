@@ -6,46 +6,6 @@
 {% block page_title %}{{ collection.title }}{% endblock %}
 <!-- End Metadata -->
 
-{% block body_attributes %}data-spy="scroll" data-target="#myScrollspy"{% endblock %}
-
-{% block css %}
-<style type="text/css">
-    /* Custom Styles */
-    ul.nav-tabs{
-        width: 200px;
-        margin-top: 50px;
-        border-radius: 4px;
-        border: 1px solid #ddd;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.067);
-    }
-    ul.nav-tabs li{
-        margin: 0;
-        border-top: 1px solid #ddd;
-    }
-    ul.nav-tabs li:first-child{
-        border-top: none;
-    }
-    ul.nav-tabs li a{
-        margin: 0;
-        padding: 8px 16px;
-        border-radius: 0;
-    }
-    ul.nav-tabs li.active a, ul.nav-tabs li.active a:hover{
-        background: #EDF3FE;
-        border: 1px solid #EDF3FE;
-    }
-    ul.nav-tabs li:first-child a{
-        border-radius: 4px 4px 0 0;
-    }
-    ul.nav-tabs li:last-child a{
-        border-radius: 0 0 4px 4px;
-    }
-    ul.nav-tabs.affix{
-        top: 30px; /* Set the top position of pinned element */
-    }
-</style>
-{% endblock %}
-
 {% block pageheader %}
     <div class="page-header">
         <div class="container page-header-content">
@@ -68,122 +28,14 @@
                         </div>
                     </div>
                     
-                    {% if subjects %}
-                    <div class="row" id="subjects">
-                        <div class="col-lg-12">
-                            <div class="row">
-                                <div class="col-sm-10">
-                                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
-                                        Objects
-                                        <small>Export: </small>
-                                        <a class="subj-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=subject&format=json"><small>JSON</small></a>
-                                        <small> - </small>
-                                        <a class="subj-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=subject&format=xml"><small>XML</small></a>
-                                        <small> - </small>
-                                        <a class="subj-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=subject&format=csv"><small>CSV</small></a>
-                                    </h3>
-                                </div>
-                            </div>
-                            <div id="subj-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
-                                <p>Exporting large queries may take several minutes, please do not leave this page until the download completes.</p>
-                            </div>
-                            {% render_table subject_table %}
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    {% if locations %}
-                    <div class="row" id="locations">
-                        <div class="col-lg-12">
-                            <div class="row">
-                                <div class="col-sm-10">
-                                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
-                                        Locations
-                                        <small>Export: </small>
-                                        <a class="loc-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=location&format=json"><small>JSON</small></a>
-                                        <small> - </small>
-                                        <a class="loc-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=location&format=xml"><small>XML</small></a>
-                                        <small> - </small>
-                                        <a class="loc-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=location&format=csv"><small>CSV</small></a>
-                                    </h3>
-                                </div>
-                            </div>
-                            <div id="loc-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
-                                <p>Exporting large queries may take several minutes, please do not leave this page until the download completes.</p>
-                            </div>
-                            {% render_table location_table %}
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    {% if media %}
-                    <div class="row" id="media">
-                        <div class="col-lg-12">
-                            <div class="row">
-                                <div class="col-sm-10">
-                                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
-                                        Media
-                                        <small>Export: </small>
-                                        <a class="med-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=media&format=json"><small>JSON</small></a>
-                                        <small> - </small>
-                                        <a class="med-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=media&format=xml"><small>XML</small></a>
-                                        <small> - </small>
-                                        <a class="med-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=media&format=csv"><small>CSV</small></a>
-                                    </h3>
-                                </div>
-                            </div>
-                            <div id="med-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
-                                <p>Exporting large queries may take several minutes, please do not leave this page until the download completes.</p>
-                            </div>
-                            {% render_table media_table %}
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    {% if people %}
-                    <div class="row" id="people">
-                        <div class="col-lg-12">
-                            <div class="row">
-                                <div class="col-sm-10">
-                                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
-                                        People
-                                        <small>Export: </small>
-                                        <a class="po-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=people&format=json"><small>JSON</small></a>
-                                        <small> - </small>
-                                        <a class="po-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=people&format=xml"><small>XML</small></a>
-                                        <small> - </small>
-                                        <a class="po-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=people&format=csv"><small>CSV</small></a>
-                                    </h3>
-                                </div>
-                            </div>
-                            <div id="po-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
-                                <p>Exporting large queries may take several minutes, please do not leave this page until the download completes.</p>
-                            </div>
-                            {% render_table people_table %}
-                        </div>
-                    </div>
-                    {% endif %}                    
-                                       
+                    <div id="flipbook">
+                        {% for s in subjects %}
+                            {% if s.get_thumbnail != 'http://ur.iaas.upenn.edu/static/img/no_img.jpg' %}
+                                <div><img src="{{ s.get_thumbnail }}" alt="{{ s.subject }}" /></div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>                                       
                 </div>
-                {% if show_contents == 'true' %}
-                <div class="col-xs-2 hideonsmall" id="myScrollspy">
-                    <ul class="nav nav-tabs nav-stacked" data-spy="affix" data-offset-top="125">
-                        {% if subjects %}
-                            <li><a href="#subjects">Objects</a></li>
-                        {% endif %}
-                        {% if locations %}
-                            <li><a href="#locations">Locations</a></li>
-                        {% endif %}                        
-                        {% if media %}
-                            <li><a href="#media">Media</a></li>
-                        {% endif %}
-                        {% if people %}
-                            <li><a href="#people">People</a></li>
-                        {% endif %}
-                        <li><a href="#top">Back to Top</a></li>
-                    </ul>                    
-                </div>
-                {% endif %}
             </div>  
         </div>
     </div>
@@ -195,18 +47,10 @@
 
   <script type="text/javascript">
     $(document).ready(function(){
-        $('.subj-ex').click(function() {
-            $('#subj-ex-warning').show();
-        })
-        $('.loc-ex').click(function() {
-            $('#loc-ex-warning').show();
-        })        
-        $('.med-ex').click(function() {
-            $('#med-ex-warning').show();
-        })  
-        $('.po-ex').click(function() {
-            $('#po-ex-warning').show();
-        })          
+	    $("#flipbook").turn({
+            height: 500,
+            autoCenter: true
+        });
     });
   </script>
 

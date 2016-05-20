@@ -171,7 +171,6 @@
     {% block cdn_js %}
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <script>window.jQuery || document.write('<script src="{{ STATIC_URL }}js/libs/jquery-1.9.1.min.js"><\/script>')</script>
-    <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
     {% endblock cdn_js %}
     
     <!-- scripts concatenated and minified via django-compressor -->
@@ -182,6 +181,8 @@
     {% endcompress %}
     <!-- end scripts -->
     <script src="{% static 'lightbox/js/lightbox.min.js' %}"></script>
+    <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'turnjs/turn.min.js' %}"></script>
     
     <!-- Asynchronous Google Analytics snippet. Change UA-XXXXX-X to be your site's ID.
        mathiasbynens.be/notes/async-analytics-snippet -->
