@@ -10,6 +10,7 @@
     <div class="page-header">
         <div class="container page-header-content">
             <h1>{{ collection.title }}</h1>
+            <p>{% if collection.notes and collection.notes != '' %}{{ collection.notes }}{% endif %}</p>
         </div>
         <div class="overlay"></div>
     </div>
@@ -19,22 +20,31 @@
     <div class="content-section-b">
         <div class="container">
             <div class="row">
-                <div class="col-lg-10">
-                    <div class="row">
-                        <div class="col-lg-12">
-                            {% if collection.notes and collection.notes != '' %}
-                                {{ collection.notes }}
-                            {% endif %}
+                <div class="col-md-12">
+                    <div class="flipbook-container">
+                        <div id="flipbook">
+                            {% for s in subjects %}
+                                {% if s.get_thumbnail != 'http://ur.iaas.upenn.edu/static/img/no_img.jpg' %}
+                                    <div><img src="{{ s.get_thumbnail }}" alt="{{ s.subject }}" /></div>
+                                {% endif %}
+                            {% endfor %}
+                            {% for s in locations %}
+                                {% if s.get_thumbnail != 'http://ur.iaas.upenn.edu/static/img/no_img.jpg' %}
+                                    <div><img src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ s. }}" alt="{{ s.subject }}" /></div>
+                                {% endif %}
+                            {% endfor %}
+                            {% for s in media %}
+                                {% if s.get_thumbnail != 'http://ur.iaas.upenn.edu/static/img/no_img.jpg' %}
+                                    <div><img src="{{ s.get_thumbnail }}" alt="{{ s.subject }}" /></div>
+                                {% endif %}
+                            {% endfor %}
+                            {% for s in people %}
+                                {% if s.get_thumbnail != 'http://ur.iaas.upenn.edu/static/img/no_img.jpg' %}
+                                    <div><img src="{{ s.get_thumbnail }}" alt="{{ s.subject }}" /></div>
+                                {% endif %}
+                            {% endfor %}
                         </div>
                     </div>
-                    
-                    <div id="flipbook">
-                        {% for s in subjects %}
-                            {% if s.get_thumbnail != 'http://ur.iaas.upenn.edu/static/img/no_img.jpg' %}
-                                <div><img src="{{ s.get_thumbnail }}" alt="{{ s.subject }}" /></div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>                                       
                 </div>
             </div>  
         </div>
@@ -49,7 +59,9 @@
     $(document).ready(function(){
 	    $("#flipbook").turn({
             height: 500,
-            autoCenter: true
+            gradients: true,
+            acceleration: true,
+            page: 2
         });
     });
   </script>

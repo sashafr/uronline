@@ -1,0 +1,44 @@
+#flipbook {
+    height: 400px;
+    margin-left: 0 !important;
+    box-shadow: 0 0 10px rgba(0,0,0,0.15);
+
+    .page {
+        background: #A6A8AB;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-user-select: none;  /* Chrome all / Safari all */
+        -moz-user-select: none;     /* Firefox all */
+        -ms-user-select: none;      /* IE 10+ */
+        user-select: none;
+
+        &.odd {
+            background: -webkit-gradient(linear, right top, left top, color-stop(0.95, $lightgray), color-stop(1, #cacaca));
+            background-image: -webkit-linear-gradient(right, $lightgray 95%, #dadada 100%);
+            background-image: -moz-linear-gradient(right, $lightgray 95%, #cacaca 100%);
+            background-image: -ms-linear-gradient(right, $lightgray 95%, #cacaca 100%);
+            background-image: -o-linear-gradient(right, $lightgray 95%, #cacaca 100%);
+            background-image: linear-gradient(right, $lightgray 95%, #cacaca 100%);
+        }
+        &.even {
+            background: -webkit-gradient(linear, left top, right top, color-stop(0.95, $lightgray), color-stop(1, #dadada));
+            background-image: -webkit-linear-gradient(left, $lightgray 95%, #dadada 100%);
+            background-image: -moz-linear-gradient(left, $lightgray 95%, #dadada 100%);
+            background-image: -ms-linear-gradient(left, $lightgray 95%, #dadada 100%);
+            background-image: -o-linear-gradient(left, $lightgray 95%, #dadada 100%);
+            background-image: linear-gradient(left, $lightgray 95%, #dadada 100%);
+        }
+
+        img {
+            max-width: 88%;
+            height: auto;
+            max-height: 80%;
+        }
+    }
+}
+
+.flipbook-container {
+    position: relative;
+    margin-bottom: 80px;
+}
