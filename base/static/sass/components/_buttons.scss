@@ -1,0 +1,36 @@
+.btn {
+    padding: 12px 20px;
+    border-radius: 0;
+    border: 0;
+    font-size: 1.8rem;
+    margin: 0 10px 20px;
+    transition: 0.5s all;
+    font-family: $serif;
+    font-style: italic;
+
+    &.btn-default {
+        background: $gold;
+        color: white;
+
+        &:hover, &:focus, &:active {
+            background: darken($gold, 10%);
+        }
+    }
+    &.btn-primary {
+        background: $orange;
+        color: white;
+
+        &:hover, &:focus, &:active {
+            background: darken($orange, 10%);
+        }
+    }
+    &.btn-lg {
+        font-size: 2.4rem;
+        padding: 20px 28px;
+    }
+
+    > span {
+        font-style: normal;
+        margin-left: 10px;
+    }
+}

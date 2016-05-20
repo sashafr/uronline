@@ -1,0 +1,58 @@
+.page-header {
+    background-image: url(../img/backgrounds/background-03@2x.jpg);
+    background-size: cover;
+    min-height: 300px;
+    padding-top: 120px;
+    margin: -20px 0 60px;
+    border: none;
+    padding-bottom: 0;
+    position: relative;
+
+    &.homepage {
+        background-image: url(../img/backgrounds/background-01@2x.jpg);
+        min-height: 700px;
+        margin-bottom: 0;
+        text-align: center;
+
+        .page-header-content {
+            h1 {
+                font-weight: 300;
+                margin: 150px 0 50px !important;
+                font-size: 7.2rem;
+    
+                @media screen and #{$screen-xs} {
+                    margin: 75px 0 35px !important;
+                    font-size: 6.0rem;
+                }
+    
+                strong {
+                    color: $gold;
+                }
+            }
+        }
+    }
+    &.expanded {
+        min-height: 700px;
+    }
+
+    .overlay {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0,0,0,0.35);
+        z-index: 0;
+    }
+    .page-header-content {
+        z-index: 1;
+        position: relative;
+
+        h1 {
+            margin: 0;
+            font-size: 5.4rem;
+            color: white;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+    }
+}

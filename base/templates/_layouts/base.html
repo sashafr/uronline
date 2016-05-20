@@ -127,7 +127,12 @@
     <!-- End Header -->
 
     <main role="main">
-        
+        {% block pageheader %}
+            <div class="page-header">
+                <h1></h1>
+                <div class="overlay"></div>
+            </div>
+        {% endblock %}
         {% block content %}{% endblock %}
     </main>
   

@@ -6,113 +6,14 @@
 {% block page_title %}Home{% endblock %}
 <!-- End Metadata -->
 
-{% block content %}
-
-  
-  <!-- Intro Header -->
-  <div class="intro-header">
-  
-    <div class="container">
-    
-      <div class="row">
-        <div class="col-md-3">
-            <div class="intro-message intro-well">
-                <h3>Search Objects</h3>  
-                <form action="/search" method="get" class="form-inline" role="form">
-                    <div class="form-group col-lg-8 col-lg-offset-2">
-                        <label class="sr-only" for="general_search">Search</label>
-                        <input type="hidden" name="models" value="base.subject" />
-                        <input type="text" name="keyword" class="form-control" id="general_search"  placeholder="Enter search terms">
-                        <button type="submit">Advanced Object Search</button>
-                    </div>
-                </form>
-                <div class="clearfix"></div>
-            </div>          
+{% block pageheader %}
+    <div class="page-header homepage">
+        <div class="page-header-content">
+            <h1>Explore the ancient <strong>City of Ur</strong></h1>
+            <a class="btn btn-default btn-lg" href="{% url 'terminology' %}">Browse the collection <span>&rarr;</span></a>
+            <a class="btn btn-primary btn-lg" href="/search">Search all objects <span>&rarr;</span></a>
         </div>
-        <div class="col-md-3">
-            <div class="intro-message intro-well">
-                <h3>Search Locations</h3>  
-                <form action="/search" method="get" class="form-inline" role="form">
-                    <div class="form-group col-lg-8 col-lg-offset-2">
-                        <label class="sr-only" for="general_search">Search</label>
-                        <input type="hidden" name="models" value="base.location" />
-                        <input type="text" name="keyword" class="form-control" id="general_search"  placeholder="Enter search terms">
-                       <button type="submit">Advanced Location Search</button>                        
-                    </div>
-                </form>
-                <div class="clearfix"></div>
-            </div>          
-        </div>
-        <div class="col-md-3">
-            <div class="intro-message intro-well">
-                <h3>Search Media</h3>  
-                <form action="/search" method="get" class="form-inline" role="form">
-                    <div class="form-group col-lg-8 col-lg-offset-2">
-                        <label class="sr-only" for="general_search">Search</label>
-                        <input type="hidden" name="models" value="base.media" />
-                        <input type="text" name="keyword" class="form-control" id="general_search"  placeholder="Enter search terms">
-                       <button type="submit">Advanced Media Search</button>                        
-                    </div>
-                </form>
-                <div class="clearfix"></div>
-            </div>          
-        </div>
-        <div class="col-md-3">
-            <div class="intro-message intro-well">
-                <h3>Search People</h3>  
-                <form action="/search" method="get" class="form-inline" role="form">
-                    <div class="form-group col-lg-8 col-lg-offset-2">
-                        <label class="sr-only" for="general_search">Search</label>
-                        <input type="hidden" name="models" value="base.personorg" />
-                        <input type="text" name="keyword" class="form-control" id="general_search"  placeholder="Enter search terms">
-                       <button type="submit">Advanced People Search</button>                        
-                    </div>
-                </form>
-                <div class="clearfix"></div>
-            </div>          
-        </div>        
-      </div>
+        <div class="overlay"></div>
     </div>
-  </div>
-  <!-- End Intro Header -->
-  
-  <!-- Features -->
-  <div class="content-section-a">
-      <div class="container">
-          <div class="row">
-              <div class="col-lg-5 col-sm-6">
-                <hr class="section-heading-spacer">
-                <div class="clearfix"></div>
-                <h2 class="section-heading">Try Our New Search Tool - "Browse By Location"</h2>
-                <p class="lead">Explore the site of Ur as you step through Woolley's original contexts.</p>
-                <a class="btn btn-default btn-lg" type="button" href="{% url 'mapdetail' 2 %}?mapid=186002"><span class="network-name">Begin your journey...</span></a>
-              </div>
-              <div class="col-lg-5 col-lg-offset-2 col-sm-6">
-                  <img class="img-responsive" src="{% static 'img/map.jpg' %}" alt="Plan of the Royal Graves of Ur.">
-              </div>
-          </div>
-      </div>
-  </div>     
-  <!-- End Features -->
-  
 {% endblock %}
 
-<!-- Homepage Unique JS -->
-{% block js %}
-
-  <script>
-    $(document).ready(function() {
-      $("[rel='popover']").popover();
-    });
-    
-    $('#play-button').click(function () {
-      $('#slider').carousel('cycle');
-    });
-    
-    $('#pause-button').click(function () {
-      $('#slider').carousel('pause');
-    });
-  </script>
-
-{% endblock %}
-<!-- End Homepage Unique JS -->
