@@ -90,10 +90,26 @@
     padding-bottom: 60px;
 
     h1 {
-        font-weight: 400;
+        font-weight: 300;
+        font-size: 4.8rem;
 
         strong {
             color: $gold;
+        }
+    }
+
+    .list-group-item {
+        border: none;
+        border-top: 1px solid #ddd;
+        padding: 15px;
+
+        h2 {
+            margin: 10px 0 10px;
+            color: $black;
+        }
+        p {
+            font-family: $sans-serif;
+            color: $black;
         }
     }
 }
