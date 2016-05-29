@@ -1,0 +1,50 @@
+.filters {
+    border-radius: 0;
+    border: 0;
+    padding: 19px 19px 11px;
+
+    > div {
+        margin: -20px -20px 0;
+        padding: 6px 20px;
+        color: white;
+    }
+    ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+
+        li {
+            padding: 5px 0;
+
+            &:first-of-type {
+                margin-top: 8px;
+            }
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+    }
+
+    .badge {
+        margin-right: 8px;
+        background: white;
+        font-size: 1.1rem;
+        font-weight: 400;
+        color: gray;
+        margin-top: -2px;
+    }
+}
+.collapse-button {
+    float: right;
+}
+
+#ot_facetname {
+    background: #12AF9E;
+}
+#m_facetname {
+    background: #07302C;
+}
+#muse_facetname {
+    background: #EA6C22;
+}

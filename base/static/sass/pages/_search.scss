@@ -88,8 +88,34 @@
 }
 .results {
     padding-bottom: 60px;
+
+    h1 {
+        font-weight: 400;
+
+        strong {
+            color: $gold;
+        }
+    }
 }
 
+#sort-export {
+    margin-top: -69px;
+
+    form > * {
+        display: inline-block;
+        width: 140px !important;
+        margin-left: 10px;
+    }
+
+    .btn {
+        border: 2px solid gray;
+        font-size: 1.4rem;
+        font-style: normal;
+        color: gray;
+        background: white;
+        padding: 8px 16px;
+    }
+}
 #advancedsearch {
     margin-bottom: 40px;
 }
@@ -98,6 +124,10 @@
 }
 #search {
     margin-top: 20px;
+
+    @media screen and #{$screen-xs} {
+
+    }
 }
 #searchCollapse {
     margin-top: 20px;
