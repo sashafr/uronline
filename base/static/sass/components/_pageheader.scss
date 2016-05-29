@@ -8,6 +8,10 @@
     padding-bottom: 0;
     position: relative;
 
+    &.search {
+        background-image: url(../img/backgrounds/background-02@2x.jpg);
+    }
+
     &.homepage {
         background-image: url(../img/backgrounds/background-01@2x.jpg);
         min-height: 700px;

@@ -43,6 +43,7 @@
     
     {% compress css %}
     <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'bootstrap-select/css/bootstrap-select.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     {% block css %}{% endblock %}
     {% endcompress %}
@@ -182,6 +183,7 @@
     <!-- end scripts -->
     <script src="{% static 'lightbox/js/lightbox.min.js' %}"></script>
     <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'bootstrap-select/js/bootstrap-select.min.js' %}"></script>
     <script src="{% static 'turnjs/turn.min.js' %}"></script>
     
     <!-- Asynchronous Google Analytics snippet. Change UA-XXXXX-X to be your site's ID.
