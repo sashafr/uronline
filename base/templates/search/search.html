@@ -144,10 +144,17 @@
                             <div class="text-center">
                                 <ul class="pager">
                                     {% if page.has_previous %}
-                                        <li><a href="?{{ request.GET.urlencode }}&amp;page={{ page.previous_page_number }}">&laquo; Previous</a></li>
+                                        <li class="previous"><a href="?{{ request.GET.urlencode }}&amp;page={{ page.previous_page_number }}">&laquo; Previous</a></li>
+                                    {% else %}
+                                        <li class="previous disabled"><a href="#" disabled>&laquo; Previous</a></li>
                                     {% endif %}
+                                    <span class="current">
+                                        &nbsp;Page {{ page.number }} of {{ page.paginator.num_pages }}
+                                    </span>
                                     {% if page.has_next %}
-                                        <li><a href="?{{ request.GET.urlencode }}&amp;page={{ page.next_page_number }}">Next &raquo;</a></li>
+                                        <li class="next"><a href="?{{ request.GET.urlencode }}&amp;page={{ page.next_page_number }}">Next &raquo;</a></li>
+                                    {% else %}
+                                        <li class="next disabled"><a href="#" disabled>Next &raquo;</a></li>
                                     {% endif %}
                                 </ul>
                             </div>
