@@ -12,6 +12,7 @@ urlpatterns = patterns('base.views',
     url(r'^$', 'home', name='home'),
     url(r'^map/(?P<location_id>\d+)/$', 'mapdetail', name='mapdetail'),
     url(r'^about/', 'about', name='about'),
+    url(r'^sample/', 'sample', name='sample'),
     url(r'^search/', FacetedSearchView(
         form_class = AdvModelSearchForm,
         searchqueryset = sqs

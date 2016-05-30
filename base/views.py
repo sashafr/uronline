@@ -465,7 +465,11 @@ def about(request):
     lic = get_object_or_404(SiteContent, variable='about_lic')
     
     return render(request, 'base/about.html', {'project': project, 'site': site, 'excavation': excavation, 'team': team, 'support': support, 'dev': dev, 'lic': lic })
-    
+
+def sample(request):
+	
+    return render(request, 'base/sample.html')
+
 def update_index(request):
     t = tasks.index_update()
     return HttpResponse(t.task_id)
