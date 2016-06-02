@@ -8,10 +8,10 @@ main {
     background: white;
 }
 section {
-    margin: 20px 0 40px;
+    padding: 20px 0 40px;
     
     &:last-of-type {
-        margin-bottom: 100px;
+        padding-bottom: 100px;
     }
 }
 hr {

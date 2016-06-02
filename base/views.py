@@ -531,6 +531,13 @@ def terminology(request):
     cntl_props = DescriptiveProperty.objects.filter(control_field = True, visible = True).order_by('order')
 
     return render(request, 'base/terminology.html', {'cntl_props': cntl_props})
+
+def browse(request):
+
+    collections = Collection.objects.filter(public = True)
+    cntl_props = DescriptiveProperty.objects.filter(control_field = True, visible = True).order_by('order')
+
+    return render(request, 'base/browse.html', {'cntl_props': cntl_props, 'collections': collections})
     
 def collections(request):
 
