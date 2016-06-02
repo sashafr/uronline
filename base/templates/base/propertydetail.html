@@ -17,55 +17,32 @@
 {% endblock %}
 
 {% block content %}
-    <div class="content-section-b">
+    <section>
         <div class="container">
             <div class="row">
                 <div class="col-sm-8">
                     <p>{{ property.notes }}</p>
-                    <div class="row">
-                        <div class="col-sm-8"></div>
-                        <div class="dropdown col-sm-4">
-                            {% if property.facet %}
-                                <a class="btn btn-default" type="button" href="{% url 'export_control_property_details' property.id %}">
-                                    Export
-                                </a>                            
-                                <button class="btn btn-default" id="collapse-all">Expand All</button>
-                            {% else %}                        
-                                <button class="btn btn-default" type="button" >
-                                    <a href="{% url 'export_property_details' property.id %}?o={{ order }}&type={{ type }}">Export</a>
-                                </button>
-                                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
-                                    Order By:
-                                    <span class="caret"></span>
-                                </button>
-                                <ul class="dropdown-menu" role="menu">
-                                    <li><a href="{% url 'propertydetail' property.id %}?o=property_value">Property(Asc)</a></li>
-                                    <li><a href="{% url 'propertydetail' property.id %}?o=-property_value">Property(Desc)</a></li>
-                                    <li><a href="{% url 'propertydetail' property.id %}?o=count">Count(Asc)</a></li>
-                                    <li><a href="{% url 'propertydetail' property.id %}?o=-count">Count(Desc)</a></li>
-                                </ul>
-                            {% endif %}
-                        </div>                        
-                    </div>
                     {% if all_objs %}
                         {% if property.facet %}
-                        <div class="row">
-                            <ul style="list-style-type: none;">
+                            <table class="table table-striped">
+                                <tbody>
                                 {% recursetree all_objs %}
-                                    <li>
-                                        <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ property.id }}:{{ node.id }}" data-toggle="popover" data-html="true" data-content="{{ node.definition }}"><span style="font-size: 18px; font-weight: 500; margin-top: 10px; margin-bottom: 10px; ">{{ node.title }} ({{ node.count_subj_instances }})</span></a>
+                                    <tr>
+                                        <td width="800">
+                                            <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ property.id }}:{{ node.id }}" data-toggle="popover" data-html="true" data-content="{{ node.definition }}"><span class="badge">{{ node.count_subj_instances }}</span>&nbsp;&nbsp;{{ node.title }}</a>
                                         {% if not node.is_leaf_node %}
-                                            <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse" style="color: #555;">  + Expand</a>
-                                            <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
-                                                <ul>
+                                            <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse">  + Expand</a>
+                                            <table class="table table-striped table-bordered collapse collapse-unit" style="margin: 10px 0;" id="{{ node.id }}-collapse">
+                                                <tbody>
                                                     {{ children }}
-                                                </ul>
-                                            </div>
+                                                </tbody>
+                                            </table>
                                         {% endif %}
-                                    </li>
+                                        </td>
+                                    </tr>
                                 {% endrecursetree %}
-                            </ul>
-                        </div>
+                                </tbody>
+                            </table>
                         {% else %}                    
                             <table class="table table-striped">
                                 <thead>
@@ -93,22 +70,37 @@
                     {% endif %}
                 </div>
                 <div class="col-sm-4">
-                    <div class="well" style="margin-top: 50px;">
-                        <h4>Linked Data</h4>
-                            {% if linked_data %}
-                              <ul style="list-style-type: none;">
-                                {% for link in linked_data %}
-                                    <li>
-                                        <a href="{{ link.link }}">{{ link.source.title }}</a>
-                                    </li>
-                                {% endfor %}
-                              </ul>
-                            {% endif %}
+                    <div class="well filters">
+                        <div><h5>Linked Data</h5></div>
+                        {% if linked_data %}
+                          <ul class="list-unstyled">
+                            {% for link in linked_data %}
+                                <li>
+                                    <a href="{{ link.link }}">{{ link.source.title }}</a>
+                                </li>
+                            {% endfor %}
+                          </ul>
+                        {% endif %}
                     </div>
+                    {% if property.facet %}
+                        <a class="btn btn-default btn-block" type="button" href="{% url 'export_control_property_details' property.id %}">Export this Property</a>                            
+                    {% else %}                        
+                        <a class="btn btn-default btn-block" href="{% url 'export_property_details' property.id %}?o={{ order }}&type={{ type }}">Export</a>
+                        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
+                            Order By:
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu">
+                            <li><a href="{% url 'propertydetail' property.id %}?o=property_value">Property(Asc)</a></li>
+                            <li><a href="{% url 'propertydetail' property.id %}?o=-property_value">Property(Desc)</a></li>
+                            <li><a href="{% url 'propertydetail' property.id %}?o=count">Count(Asc)</a></li>
+                            <li><a href="{% url 'propertydetail' property.id %}?o=-count">Count(Desc)</a></li>
+                        </ul>
+                    {% endif %}
                 </div>
             </div>  
         </div>
-    </div>
+    </section>
 {% endblock %}
 
 {% block js %}
