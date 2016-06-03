@@ -9,7 +9,7 @@
         {% if obj.get_type == 'media' %}
             <a href="{% url 'mediadetail' obj.id %}">
                 <div class="row">
-                    <div class="col-md-3">
+                    <div class="col-md-3 text-center">
                         <img src="{{ obj.get_thumbnail }}" />
                     </div>
                     <div class="col-md-9">
@@ -22,7 +22,7 @@
         {% elif obj.get_type == 'subject' %}
             <a href="{% url 'subjectdetail' obj.id %}">
                 <div class="row">
-                    <div class="col-md-3">
+                    <div class="col-md-3 text-center">
                         <img src="{{ obj.get_thumbnail }}" />
                     </div>
                     <div class="col-md-9">
@@ -34,7 +34,7 @@
         {% elif obj.get_type == 'person_org' %}
             <a href="{% url 'personorgdetail' obj.id %}">
                 <div class="row">
-                    <div class="col-md-3">
+                    <div class="col-md-3 text-center">
                         <img src="{{ obj.get_thumbnail }}" />        
                     </div>
                     <div class="col-md-9">
@@ -46,7 +46,7 @@
         {% else %}
             <a href="{% url 'locationdetail' obj.id %}">
                 <div class="row">
-                    <div class="col-md-3">
+                    <div class="col-md-3 text-center">
                         <img src="{{ obj.get_thumbnail }}" />
                     </div>
                     <div class="col-md-9">

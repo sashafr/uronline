@@ -7,7 +7,7 @@
 <!-- End Metadata -->
 
 {% block pageheader %}
-    <div class="page-header">
+    <div class="page-header detail">
         <div class="container page-header-content">
             <h1>Media Detail</h1>
         </div>
@@ -16,45 +16,43 @@
 {% endblock %}
 
 {% block content %}
-    <div class="content-section-b">
+    <section>
         <div class="container">
             <div class="row">
-                <div class="col-md-9">
-                    <div class="row">
-                        <table class="table table-striped">
-                            {% for property in properties %}
-                                <tr>
-                                    <td>
-                                        <a href="{% url 'propertydetail' property.property.id %}?type=m" data-toggle="popover" data-html="true" data-content="{{ property.property.notes }}">{{ property.property }}:</a>
-                                    </td>
-                                    <td>
-                                        {{ property.property_value|safe }}
-                                    </td>
-                                </tr>
+                <div class="col-md-8">
+
+                    <table class="table table-striped">
+                        {% for property in properties %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'propertydetail' property.property.id %}?type=m" data-toggle="popover" data-html="true" data-content="{{ property.property.notes }}">{{ property.property }}:</a>
+                                </td>
+                                <td>
+                                    {{ property.property_value|safe }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                    {% if images %}
+                        <hr />
+                        <h3>Files</h3>
+                        <ul class="enlarge">
+                            {% for image in images %}
+                            <li style="border: 1px solid #ddd; border-radius: 4px; margin: 10px; padding: 10px;">
+                                <a data-lightbox="image-{{ image }}" href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">
+                                    <img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt="">
+                                </a>
+                                <p style="text-align: center;">
+                                {% if request.GET.isfile != 'true' %}
+                                {% img_id_from_rsref image as img_id %}
+                                <a href="{% url 'mediadetail' img_id %}?isfile=true">View Details</a> | 
+                                {% endif %}
+                                <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">Download</a></p>
+                            </li>
                             {% endfor %}
-                        </table>
-                        {% if images %}
-                            <hr />
-                            <h3>Files</h3>
-                            <ul class="enlarge">
-                                {% for image in images %}
-                                <li style="border: 1px solid #ddd; border-radius: 4px; margin: 10px; padding: 10px;">
-                                    <a data-lightbox="image-{{ image }}" href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">
-                                        <img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt="">
-                                    </a>
-                                    <p style="text-align: center;">
-                                    {% if request.GET.isfile != 'true' %}
-                                    {% img_id_from_rsref image as img_id %}
-                                    <a href="{% url 'mediadetail' img_id %}?isfile=true">View Details</a> | 
-                                    {% endif %}
-                                    <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">Download</a></p>
-                                </li>
-                                {% endfor %}
-                            </ul>                            
-                        {% endif %}
-                    </div>
+                        </ul>                            
+                    {% endif %}
                     {% if related_objects %}
-                    <div class="row">
                         <div class="well">
                             <h3>Related Objects</h3>
                             <ul class="list-group">
@@ -80,49 +78,50 @@
                                 {% endfor %}
                             </ul>
                         </div>
+                    {% endif %}
+
+                </div>
+                <div class="col-md-4">
+                    
+                    {% if media.medialocationrelations_set.all %}
+                    <div class="well filters">
+                        
+                        <div id="ot_facetname"><h5>Related Contexts</h5></div>
+                        {% for location_relation in media.medialocationrelations_set.all|slice:":5" %}
+                            <p>{% get_loc_ancestors location_relation.location as location_tree %}
+                            {% for loc in location_tree %}
+                                {% if forloop.counter0 > 0 %} >> {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
+                            {% endfor %}
+                            {% if location_relation.notes %}: {{ location_relation.notes }}{% endif %}</p>
+                        {% endfor %}
+                        {% if media.medialocationrelations_set.all|slice:"5:" %}
+                        <div class="collapse" id="mediaLocCollapse">
+                        {% for location_relation in media.medialocationrelations_set.all|slice:"5:" %}
+                            <p>{% get_loc_ancestors location_relation.location as location_tree %}
+                            {% for loc in location_tree %}
+                                {% if forloop.counter0 > 0 %} >> {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
+                            {% endfor %}
+                            {% if location_relation.notes %}: {{ location_relation.notes }}{% endif %}</p>
+                        {% endfor %}
+                        </div>
+                        <h4><a data-toggle="collapse" id="mediaCollapse" href="#mediaLocCollapse">See More</a></h4>                                
+                        {% endif %}
                     </div>
                     {% endif %}
-                </div>
-                <div class="col-md-3">
-                    <div class="row">
-                        <div class="col-sm-11">
-                            <div class="well">
-                                {% if media.medialocationrelations_set.all %}
-                                <h4>Related Contexts</h4>
-                                {% for location_relation in media.medialocationrelations_set.all|slice:":5" %}
-                                    <p>{% get_loc_ancestors location_relation.location as location_tree %}
-                                    {% for loc in location_tree %}
-                                        {% if forloop.counter0 > 0 %} >> {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
-                                    {% endfor %}
-                                    {% if location_relation.notes %}: {{ location_relation.notes }}{% endif %}</p>
-                                {% endfor %}
-                                {% if media.medialocationrelations_set.all|slice:"5:" %}
-                                <div class="collapse" id="mediaLocCollapse">
-                                {% for location_relation in media.medialocationrelations_set.all|slice:"5:" %}
-                                    <p>{% get_loc_ancestors location_relation.location as location_tree %}
-                                    {% for loc in location_tree %}
-                                        {% if forloop.counter0 > 0 %} >> {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
-                                    {% endfor %}
-                                    {% if location_relation.notes %}: {{ location_relation.notes }}{% endif %}</p>
-                                {% endfor %}
-                                </div>
-                                <h4 style="text-align: right;"><a data-toggle="collapse" id="mediaCollapse" href="#mediaLocCollapse">See More</a></h4>                                
-                                {% endif %}
-                                <hr />                                
-                                {% endif %}
-                                <h4>Linked Resources</h4>
-                                {% for web in related_web %}
-                                    <p>
-                                        <a target="_blank" href="{{ web.link }}">{{ web.source.title }}</a>
-                                    </p>
-                                {% endfor %}                                
-                            </div>
-                        </div>
-                    </div>
+
+                    {% if related_web %}
+                    <div class="well filters">
+                        <div id="ot_facetname"><h5>Linked Resources</h5></div>
+                        {% for web in related_web %}
+                            <p><a target="_blank" href="{{ web.link }}">{{ web.source.title }}</a></p>
+                        {% endfor %}
+                    </div>              
+                    {% endif %}
+
                 </div>                
             </div>  
         </div>
-    </div>
+    </section>
 {% endblock %}
 
 {% block js %}

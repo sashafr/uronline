@@ -4,11 +4,11 @@
 {% load mptt_tags %}
 
 <!-- Metadata -->
-{% block page_title %}Property Detail{% endblock %}
+{% block page_title %}{{ property.property }} - Property Detail{% endblock %}
 <!-- End Metadata -->
 
 {% block pageheader %}
-    <div class="page-header">
+    <div class="page-header detail">
         <div class="container page-header-content">
             <h1>{{ property.property }}</h1>
         </div>
@@ -69,33 +69,36 @@
                         <p>There are currently no values for this property.</p>
                     {% endif %}
                 </div>
+                
                 <div class="col-sm-4">
-                    <div class="well filters">
-                        <div><h5>Linked Data</h5></div>
-                        {% if linked_data %}
-                          <ul class="list-unstyled">
+                    {% if linked_data %}
+                        <div class="well filters padding">
+                            <h3>Linked Data</h3>
+                            <ul class="list-unstyled">
                             {% for link in linked_data %}
                                 <li>
                                     <a href="{{ link.link }}">{{ link.source.title }}</a>
                                 </li>
                             {% endfor %}
-                          </ul>
-                        {% endif %}
-                    </div>
+                            </ul>
+                        </div>
+                    {% endif %}
                     {% if property.facet %}
-                        <a class="btn btn-default btn-block" type="button" href="{% url 'export_control_property_details' property.id %}">Export this Property</a>                            
-                    {% else %}                        
-                        <a class="btn btn-default btn-block" href="{% url 'export_property_details' property.id %}?o={{ order }}&type={{ type }}">Export</a>
-                        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
-                            Order By:
-                            <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu" role="menu">
-                            <li><a href="{% url 'propertydetail' property.id %}?o=property_value">Property(Asc)</a></li>
-                            <li><a href="{% url 'propertydetail' property.id %}?o=-property_value">Property(Desc)</a></li>
-                            <li><a href="{% url 'propertydetail' property.id %}?o=count">Count(Asc)</a></li>
-                            <li><a href="{% url 'propertydetail' property.id %}?o=-count">Count(Desc)</a></li>
-                        </ul>
+                        <a class="btn btn-default btn-gray btn-block" type="button" href="{% url 'export_control_property_details' property.id %}">Export this Property</a>                            
+                    {% else %}
+                        <div class="dropdown">
+                            <button class="btn btn-gray btn-block btn-default dropdown-toggle" type="button" data-toggle="dropdown">
+                                Order By:
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu" role="menu">
+                                <li><a href="{% url 'propertydetail' property.id %}?o=property_value&type={{ type }}">Property(Asc)</a></li>
+                                <li><a href="{% url 'propertydetail' property.id %}?o=-property_value&type={{ type }}">Property(Desc)</a></li>
+                                <li><a href="{% url 'propertydetail' property.id %}?o=count&type={{ type }}">Count(Asc)</a></li>
+                                <li><a href="{% url 'propertydetail' property.id %}?o=-count&type={{ type }}">Count(Desc)</a></li>
+                            </ul>
+                        </div>
+                        <a class="btn btn-default btn-gray btn-block" href="{% url 'export_property_details' property.id %}?o={{ order }}&type={{ type }}">Export this Property</a>
                     {% endif %}
                 </div>
             </div>  

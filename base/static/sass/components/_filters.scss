@@ -3,11 +3,21 @@
     border: 0;
     padding: 19px 19px 11px;
 
+    &.padding {
+        padding: 30px;
+    }
+
     > div {
         margin: -20px -20px 0;
         padding: 6px 20px;
         color: white;
         background: $teal;
+    }
+    h3 {
+        margin: 0 0 10px;
+    }
+    hr {
+        margin: 30px -30px;
     }
     ul {
         list-style: none;
