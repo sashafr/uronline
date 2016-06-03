@@ -129,7 +129,7 @@
         font-style: normal;
         color: gray;
         background: white;
-        padding: 8px 16px;
+        padding: 8px 30px 8px 12px;
     }
 }
 #advancedsearch {
@@ -137,6 +137,9 @@
 }
 #basicsearch {
     margin-top: 40px;
+}
+#export {
+    padding: 8px 12px;
 }
 #search {
     margin-top: 20px;

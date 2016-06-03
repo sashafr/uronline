@@ -8,6 +8,16 @@
     background-size: cover;
     background-position: center center;
 
+    &.browse-block-id-19 .browse-block-title { background: #12AF9E; }
+    &.browse-block-id-105 .browse-block-title { background: #106158; }
+    &.browse-block-id-12 .browse-block-title { background: #07302C; }
+    &.browse-block-id-46 .browse-block-title { background: #FBCC7C; }
+    &.browse-block-id-114 .browse-block-title { background: #F7B32E; }
+    &.browse-block-id-121 .browse-block-title { background: #F19029; }
+    &.browse-block-id-59 .browse-block-title { background: #EA6C22; }
+    &.browse-block-id-150 .browse-block-title { background: #BD4F2A; }
+
+
     &.browse-block-lg {
         height: 300px;
     }
@@ -36,6 +46,14 @@
         .badge {
             float: left;
             background: white;
+        }
+    }
+    .browse-block-title-inverted {
+        h4 {
+            color: white;
+        }
+        .arrow {
+            color: white;
         }
     }
 

@@ -20,14 +20,14 @@
             <h2>Browse by Category</h2>
             <div class="row">
                 <div class="col-md-6">
-                    <p>Ur Online is organized by a number of <a href="{% url 'terminology' %}">different terminology</a>, from different materials and techniques to objects (like figurines) and culture. Items are also organized by the season&mdash;when the object was excavated&mdash;and the museum that houses the object today.</p>
+                    <p>Ur Online is organized by a number of <a href="{% url 'terminology' %}">different terminology</a>, from different materials and techniques to objects (like figurines) and culture. Items are also organized by the season&mdash;when the object was excavated&mdash;and the museum that houses the object today.</p><br />
                 </div>
             </div>
             <div class="row">
                 {% for prop in cntl_props %}
                     <div class="col-md-4 col-lg-3">
-                        <a class="browse-block" href="{% url 'propertydetail' prop.pk %}" style="background-image:url(https://placehold.it/350x250)">
-                            <div class="browse-block-title">
+                        <a class="browse-block browse-block-id-{{ prop.id }}" href="{% url 'propertydetail' prop.pk %}" style="background-image:url(https://placehold.it/350x250)">
+                            <div class="browse-block-title browse-block-title-inverted">
                                 <span class="badge"></span>
                                 <h4>{{ prop.property }}</h4>
                                 <span class="arrow">&rarr;</span>

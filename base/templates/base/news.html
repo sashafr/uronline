@@ -61,69 +61,71 @@
 
 {% block content %}
     
-    <!-- Body Sections-->
-    <div class="container">
-
-        <div class="row">
-
-            <!-- Blog Entries Column -->
-            <div class="col-md-8">
-                
-                {% for post in posts.object_list %}
-                    <!-- Blog Post -->
-                    <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
-                    <h5>Posted by {{ post.author.username }} on {{ post.created|date }}</h5>
-                    <p>
-                        {{ post.body|truncatewords:50 }}
-                        <a href="{{ post.get_absolute_url }}">Read More &raquo;</a>
-                    </p>
-                    <hr>
-                {% endfor %}
-
-                <!-- Pager -->
-                {% if posts.object_list and posts.paginator.num_pages > 1 %}
-                    <ul class="pager">
-                        {% if posts.has_previous %}
-                            <li class="previous"><a href="?page={{ posts.previous_page_number }}">&larr; Older</a></li>
-                        {% else %}
-                            <li class="previous disabled"><a href="#" disabled>&larr; Older</a></li>
-                        {% endif %}
-                        <span class="current">
-                            &nbsp;Page {{ posts.number }} of {{ posts.paginator.num_pages }}
-                        </span>
-                        {% if posts.has_next %}
-                            <li class="next"><a href="?page={{ posts.next_page_number }}">Newer &rarr;</a></li>
-                        {% else %}
-                            <li class="next disabled"><a href="#" disabled>Newer &rarr;</a></li>
-                        {% endif %}
-                    </ul>
-                {% endif %}
-
-            </div>
-
-            <!-- Blog Sidebar Widgets Column -->
-            <div class="col-md-4">
-
-                <!-- News Roll Well -->
-                <div class="well news">
-                    <h3><a href="http://www.britishmuseum.org/blog.aspx" class="rsswidget" title="Latest news from the British Museum">British Museum Blog</a></h3>
-                    <div id="BM-feed"></div>
-                    <a href="http://blog.britishmuseum.org/feed/" class="rss icon" title="Latest news from the British Museum">Get the British Museum News Feed</a>
-                </div>                        
-                <div class="well news">
-                    <h3><a href="http://www.penn.museum/blog/tag/ur/" class="rsswidget" title="Latest news from the Penn Museum">Penn Museum Blog</a></h3>
-                    <div id="PM-feed"></div>
-                    <a href="http://www.penn.museum/blog/feed/" class="rss icon" title="Latest news from the Penn Museum">Get the Penn Museum News Feed</a>
+    <section>
+        <!-- Body Sections-->
+        <div class="container">
+    
+            <div class="row">
+    
+                <!-- Blog Entries Column -->
+                <div class="col-md-8">
+                    
+                    {% for post in posts.object_list %}
+                        <!-- Blog Post -->
+                        <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
+                        <h5>Posted by {{ post.author.username }} on {{ post.created|date }}</h5>
+                        <p>
+                            {{ post.body|truncatewords:50 }}
+                            <a href="{{ post.get_absolute_url }}">Read More &raquo;</a>
+                        </p>
+                        <hr>
+                    {% endfor %}
+    
+                    <!-- Pager -->
+                    {% if posts.object_list and posts.paginator.num_pages > 1 %}
+                        <ul class="pager">
+                            {% if posts.has_previous %}
+                                <li class="previous"><a href="?page={{ posts.previous_page_number }}">&larr; Older</a></li>
+                            {% else %}
+                                <li class="previous disabled"><a href="#" disabled>&larr; Older</a></li>
+                            {% endif %}
+                            <span class="current">
+                                &nbsp;Page {{ posts.number }} of {{ posts.paginator.num_pages }}
+                            </span>
+                            {% if posts.has_next %}
+                                <li class="next"><a href="?page={{ posts.next_page_number }}">Newer &rarr;</a></li>
+                            {% else %}
+                                <li class="next disabled"><a href="#" disabled>Newer &rarr;</a></li>
+                            {% endif %}
+                        </ul>
+                    {% endif %}
+    
                 </div>
-                <div class="well news">
-                    <h3><a href="https://github.com/sashafr/uronline/commits/master" class="rsswidget" title="Updates to UrOnline Code">Updates to UrOnline code</a></h3>
-                    <div id="Git-feed"></div>
-                    <a href="https://github.com/sashafr/uronline/commits/master.atom" class="rss icon" title="Updates to UrOnline Code">Get Code Updates</a>
+    
+                <!-- Blog Sidebar Widgets Column -->
+                <div class="col-md-4">
+    
+                    <!-- News Roll Well -->
+                    <div class="well news">
+                        <h3><a href="http://www.britishmuseum.org/blog.aspx" class="rsswidget" title="Latest news from the British Museum">British Museum Blog</a></h3>
+                        <div id="BM-feed"></div>
+                        <a href="http://blog.britishmuseum.org/feed/" class="rss icon" title="Latest news from the British Museum">Get the British Museum News Feed</a>
+                    </div>                        
+                    <div class="well news">
+                        <h3><a href="http://www.penn.museum/blog/tag/ur/" class="rsswidget" title="Latest news from the Penn Museum">Penn Museum Blog</a></h3>
+                        <div id="PM-feed"></div>
+                        <a href="http://www.penn.museum/blog/feed/" class="rss icon" title="Latest news from the Penn Museum">Get the Penn Museum News Feed</a>
+                    </div>
+                    <div class="well news">
+                        <h3><a href="https://github.com/sashafr/uronline/commits/master" class="rsswidget" title="Updates to UrOnline Code">Updates to UrOnline code</a></h3>
+                        <div id="Git-feed"></div>
+                        <a href="https://github.com/sashafr/uronline/commits/master.atom" class="rss icon" title="Updates to UrOnline Code">Get Code Updates</a>
+                    </div>
                 </div>
             </div>
-        </div>
-        <!-- /.row -->
-    </div>    
+            <!-- /.row -->
+        </div>  
+    </section>
     
     <!-- End Body Sections-->
     

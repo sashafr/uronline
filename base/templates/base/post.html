@@ -60,39 +60,41 @@
 
 {% block content %}
     
-    <!-- Body Sections-->
-    <div class="container">
-        <div class="row">
-            <!-- Blog Entries Column -->
-            <div class="col-md-8">
-                <!-- Post Content -->
-                <p>{{ post.body }}</p>
-
-            </div>
-
-            <!-- Blog Sidebar Widgets Column -->
-            <div class="col-md-4">
-
-                <!-- News Roll Well -->
-                <div class="well news">
-                    <h3><a href="http://www.britishmuseum.org/blog.aspx" class="rsswidget" title="Latest news from the British Museum">British Museum Blog</a></h3>
-                    <div id="BM-feed"></div>
-                    <a href="http://blog.britishmuseum.org/feed/" class="rss icon" title="Latest news from the British Museum">Get the British Museum News Feed</a>
-                </div>                        
-                <div class="well news">
-                    <h3><a href="http://www.penn.museum/blog/tag/ur/" class="rsswidget" title="Latest news from the Penn Museum">Penn Museum Blog</a></h3>
-                    <div id="PM-feed"></div>
-                    <a href="http://www.penn.museum/blog/feed/" class="rss icon" title="Latest news from the Penn Museum">Get the Penn Museum News Feed</a>
+    <section>
+        <!-- Body Sections-->
+        <div class="container">
+            <div class="row">
+                <!-- Blog Entries Column -->
+                <div class="col-md-8">
+                    <!-- Post Content -->
+                    <p>{{ post.body }}</p>
+    
                 </div>
-                <div class="well news">
-                    <h3><a href="https://github.com/sashafr/uronline/commits/master" class="rsswidget" title="Updates to UrOnline Code">Updates to UrOnline code</a></h3>
-                    <div id="Git-feed"></div>
-                    <a href="https://github.com/sashafr/uronline/commits/master.atom" class="rss icon" title="Updates to UrOnline Code">Get Code Updates</a>
+    
+                <!-- Blog Sidebar Widgets Column -->
+                <div class="col-md-4">
+    
+                    <!-- News Roll Well -->
+                    <div class="well news">
+                        <h3><a href="http://www.britishmuseum.org/blog.aspx" class="rsswidget" title="Latest news from the British Museum">British Museum Blog</a></h3>
+                        <div id="BM-feed"></div>
+                        <a href="http://blog.britishmuseum.org/feed/" class="rss icon" title="Latest news from the British Museum">Get the British Museum News Feed</a>
+                    </div>                        
+                    <div class="well news">
+                        <h3><a href="http://www.penn.museum/blog/tag/ur/" class="rsswidget" title="Latest news from the Penn Museum">Penn Museum Blog</a></h3>
+                        <div id="PM-feed"></div>
+                        <a href="http://www.penn.museum/blog/feed/" class="rss icon" title="Latest news from the Penn Museum">Get the Penn Museum News Feed</a>
+                    </div>
+                    <div class="well news">
+                        <h3><a href="https://github.com/sashafr/uronline/commits/master" class="rsswidget" title="Updates to UrOnline Code">Updates to UrOnline code</a></h3>
+                        <div id="Git-feed"></div>
+                        <a href="https://github.com/sashafr/uronline/commits/master.atom" class="rss icon" title="Updates to UrOnline Code">Get Code Updates</a>
+                    </div>
                 </div>
             </div>
-        </div>
-        <!-- /.row -->
-    </div>    
+            <!-- /.row -->
+        </div>   
+    </section>
     
     <!-- End Body Sections-->
     

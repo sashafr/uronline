@@ -126,7 +126,7 @@
                 <h1><strong>{{ page.paginator.count }}</strong> Results</h1>
                 <div id="sort-export" class="pull-right">
                     <form method="get" action=".">
-                        {{ form.order|add_class:"selectpicker" }}
+                        {{ form.order|add_class:"selectpicker"|attr:"id:sortby" }}
                         <input type="submit" class="btn btn-default" id="export" value="Export Results">
                     </form>
                 </div>
@@ -262,6 +262,9 @@
         $('.collapse-button').on('click', function(){
             var txt = $(this).next().hasClass('in') ? '+' : '-';
             $(this).text(txt)
+        });
+        $('#sortby').on('changed.bs.select', function (e) {
+            $('form').submit();
         });
 
         $('#searchCollapse').on('click tap', function(){
