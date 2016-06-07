@@ -128,7 +128,7 @@
         <div class="results">
             <div class="container">
                 <h1><strong>{{ page.paginator.count }}</strong> Results</h1>
-                <div id="sort-export" class="pull-right">
+                <div id="sort-export" class="pull-right hidden-xs hidden-sm">
                     <form method="get" action=".">
                         {{ form.order|add_class:"selectpicker"|attr:"id:sortby" }}
                         <input type="submit" class="btn btn-default" id="export" value="Export Results">
