@@ -58,12 +58,16 @@
                             <label>{{ form.material.label }}</label>
                             {{ form.material|add_class:"selectpicker" }}
                         </div>
+                        <div class="col-sm-3 visible-sm">
+                            <label>Museum</label>
+                            {{ form.museum|add_class:"selectpicker"|attr:"title:All museums" }}
+                        </div>
                     </div>
 
                     <hr>
 
                     <div class="row">
-                        <div class="col-sm-3 col-sm-offset-1">
+                        <div class="col-sm-3 col-sm-offset-2 col-md-offset-1">
                             <label>{{ form.property.label }}</label>
                             {{ form.property|add_class:"selectpicker" }}
                         </div>
@@ -77,7 +81,7 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-sm-1">
+                        <div class="col-sm-2 col-md-1">
                             <label>{{ form.op.label }}</label>
                             {{ form.op|add_class:"selectpicker mini" }}
                         </div>
@@ -95,7 +99,7 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-sm-1">
+                        <div class="col-sm-2 col-md-1">
                             <label>{{ form.op2.label }}</label>
                             {{ form.op2|add_class:"selectpicker mini" }}
                         </div>
@@ -137,7 +141,8 @@
                         {% for result in page.object_list %}
                             {% include 'search/_result_object.html' %}
                         {% empty %}
-                            <p>No results found.</p>
+                            <h1 class="text-center">No results found!</h1>
+                            <h4 class="text-center"><em>Try broadening or adjusting your search criteria.</em></h4>
                         {% endfor %}
     
                         {% if page.has_previous or page.has_next %}
@@ -241,8 +246,12 @@
         {% else %}
             <div class="results">
                 <div class="container">
-                    <h1 class="text-center">No results found!</h1>
-                    <h4 class="text-center"><em>Try broadening or adjusting your search criteria.</em></h4>
+                    <div class="row">
+                        <div class="col-lg-8 col-lg-offset-2">
+                            <h1 class="text-center">Search the collection above</h1>
+                            <h4 class="text-center"><em>Not sure what to search for? How about <a href="/search/?keyword=rams&models=base.subject&object_type=56&museum=&unum=&museum_num=&material=&property=&search_type=contains&q=&op=and&property2=&search_type2=contains&q2=&op2=and&property3=&search_type3=contains&q3=">figural objects of rams</a>, explore the <a href="/search/?keyword=&models=base.personorg&object_type=&museum=&unum=&museum_num=&material=&property=&search_type=contains&q=&op=and&property2=&search_type2=contains&q2=&op2=and&property3=&search_type3=contains&q3=">people involved in the excavations</a>, or daily objects used for <a href="/search/?order=3&selected_facets=facet_prop_19:113">gaming and fun</em> in Ur.</em></h4>
+                        </div>
+                    </div>
                 </div>
             </div>
         {% endif %}
