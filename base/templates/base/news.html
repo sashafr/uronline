@@ -10,7 +10,6 @@
 <script type="text/javascript">
     var BMfeedURI = "http://blog.britishmuseum.org/feed/";
     var PMfeedURI = "http://www.penn.museum/blog/feed/";
-    var GitFeedURI = "https://github.com/sashafr/uronline/commits/master.atom";
     
     google.load("feeds", "1");
     function doFeed(feedURI, feedDomID){
@@ -44,7 +43,6 @@
     function initialize() {
         doFeed(BMfeedURI,"BM-feed");
         doFeed(PMfeedURI,"PM-feed");
-        doFeed(GitFeedURI,"Git-feed");
     }
     google.setOnLoadCallback(initialize);
 </script>
@@ -115,11 +113,6 @@
                         <h3><a href="http://www.penn.museum/blog/tag/ur/" class="rsswidget" title="Latest news from the Penn Museum">Penn Museum Blog</a></h3>
                         <div id="PM-feed"></div>
                         <a href="http://www.penn.museum/blog/feed/" class="rss icon" title="Latest news from the Penn Museum">Get the Penn Museum News Feed</a>
-                    </div>
-                    <div class="well news">
-                        <h3><a href="https://github.com/sashafr/uronline/commits/master" class="rsswidget" title="Updates to UrOnline Code">Updates to UrOnline code</a></h3>
-                        <div id="Git-feed"></div>
-                        <a href="https://github.com/sashafr/uronline/commits/master.atom" class="rss icon" title="Updates to UrOnline Code">Get Code Updates</a>
                     </div>
                 </div>
             </div>
