@@ -25,3 +25,38 @@
         margin: 20px 0;
     }
 }
+
+#files {
+    .enlarge-file {
+        position: relative;
+
+        &:hover, &:focus, &:active {
+            span {
+                opacity: 1;
+            }
+        }
+
+        a {
+            height: 150px;
+            background: $lightgray;
+            overflow: hidden;
+            display: flex;
+        }
+        span {
+            position: absolute;
+            font-size: 4.8rem;
+            color: white;
+            opacity: 0.5;
+            top: 50%;
+            left: 50%;
+            margin-top: -25px;
+            margin-left: -25px;
+            transition: 0.5s all;
+        }
+        
+        img {
+            width: 100%;
+            height: auto;
+        }
+    }
+}

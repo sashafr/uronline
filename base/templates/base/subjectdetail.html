@@ -171,15 +171,17 @@
                         </div> 
                     {% if files %}
                         <div id="files">
-                            <ul class="enlarge">
-                                <div class="row">
+                            <hr />
+                            <ul class="list-unstyled">
+                                <div class="row enlarge">
                                 {% for key, file_group in files.items %}
                                     {% for file in file_group %}
-                                        <li class="enlarge-file">
+                                        <div class="enlarge-file col-sm-4 col-md-3">
                                             <a data-lightbox="subject-file" href="{% load_globals 'image_uri' %}{{ file.rsid.id }}" data-title="{{ file.rsid.caption }}">
+                                                <span class="glyphicon glyphicon-search"></span>
                                                 <img class="img-responsive" src="{% load_globals 'thumbnail_uri' %}{{ file.rsid.id }}">
                                             </a>
-                                        </li>
+                                        </div>
                                     {% endfor %}
                                 {% endfor %}
                                 </div>
@@ -188,39 +190,42 @@
                     {% endif %}                    
                 </div>
                 <div class="col-md-4">
-                    <div class="well">
-                        <div class="img-table">
-                            <ul class="enlarge">
-                                <li>
-                                    <img class="img-responsive" src="{{ subject.get_thumbnail }}">
-                                </li>
-                            </ul>
-                        </div>
-                        <hr />
-                        <h4>Context</h4>
-                        {% for location_relation in subject.locationsubjectrelations_set.all %}
-                            <p>{% get_loc_ancestors location_relation.location as location_tree %}
-                            {% has_spec_context location_tree as spec_context %}
-                            {% if spec_context %}{{ spec_context }}{% endif %}
-                            {% for loc in location_tree %}
-                                {% if forloop.counter0 > 0 %} >> {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
+                    {% if subject.get_thumbnail != 'http://ur.iaas.upenn.edu/static/img/no_img.jpg' %}
+                        <img class="img-responsive img-full-width" src="{% load_globals 'image_uri' %}{{ subject.get_thumbnail }}">
+                    {% endif %}
+                    <div class="well filters">
+                    
+                        {% if subject.locationsubjectrelations_set.all %}
+                            <h3>Context</h3>
+                            {% for location_relation in subject.locationsubjectrelations_set.all %}
+                                <p>{% get_loc_ancestors location_relation.location as location_tree %}
+                                {% has_spec_context location_tree as spec_context %}
+                                {% if spec_context %}{{ spec_context }}{% endif %}
+                                {% for loc in location_tree %}
+                                    {% if forloop.counter0 > 0 %} >> {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
+                                {% endfor %}
+                                {% if location_relation.notes %}: {{ location_relation.notes }}{% endif %}</p>
                             {% endfor %}
-                            {% if location_relation.notes %}: {{ location_relation.notes }}{% endif %}</p>
-                        {% endfor %}
-                        <hr />
-                        <h4>References</h4>
-                        {% for media_relation in related_media %}
-                            <p>
-                                <a href="{% url 'mediadetail' media_relation.media.id %}">{% get_bib_ref media_relation.media %}{% if media_relation.notes %}, {{ media_relation.notes }}{% endif %}.</a>
-                            </p>
-                        {% endfor %}
-                        <hr />
-                        <h4>Linked Resources</h4>
-                        {% for web in related_web %}
-                            <p>
-                                <a href="{{ web.link }}">{{ web.source.title }}</a>
-                            </p>
-                        {% endfor %}
+                            <hr />
+                        {% endif %}
+
+                        {% if related_media %}
+                            <h3>References</h3>
+                            {% for media_relation in related_media %}
+                                <p>
+                                    <a href="{% url 'mediadetail' media_relation.media.id %}">{% get_bib_ref media_relation.media %}{% if media_relation.notes %}, {{ media_relation.notes }}{% endif %}.</a>
+                                </p>
+                            {% endfor %}
+                            <hr />
+                        {% endif %}
+                        {% if related_web %}
+                            <h3>Linked Resources</h3>
+                            {% for web in related_web %}
+                                <p>
+                                    <a href="{{ web.link }}">{{ web.source.title }}</a>
+                                </p>
+                            {% endfor %}
+                        {% endif %}
                     </div>
                 </div>                    
             </div>

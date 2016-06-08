@@ -53,31 +53,30 @@
                         </ul>                            
                     {% endif %}
                     {% if related_objects %}
-                        <div class="well">
-                            <h3>Related Objects</h3>
-                            <ul class="list-group">
-                                {% for object_relation in related_objects %}
-                                    <a href="{% url 'subjectdetail' object_relation.subject.id %}"><li class="list-group-item">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <img class="img-responsive" src="{% get_img_thumb object_relation.subject 'ms' 'thm' %}" alt=""></img>    
-                                            </div>
-                                            <div class="col-md-9">
-                                                <table class="table table-striped">
-                                                    {% get_visible_subj_props object_relation.subject as subject_props %}
-                                                    {% for subject_prop in subject_props %}
-                                                        <tr>
-                                                            <td>{{ subject_prop.property }}</td>
-                                                            <td>{{ subject_prop.property_value }}</td>
-                                                        </tr>
-                                                    {% endfor %}
-                                                </table>
-                                            </div>
+                        <hr />
+                        <h3>Related Objects</h3>
+                        <ul class="list-group">
+                            {% for object_relation in related_objects %}
+                                <a href="{% url 'subjectdetail' object_relation.subject.id %}"><li class="list-group-item">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <img class="img-responsive" src="{% get_img_thumb object_relation.subject 'ms' 'thm' %}" alt=""></img>    
                                         </div>
-                                    </li></a>
-                                {% endfor %}
-                            </ul>
-                        </div>
+                                        <div class="col-md-9">
+                                            <table class="table table-striped">
+                                                {% get_visible_subj_props object_relation.subject as subject_props %}
+                                                {% for subject_prop in subject_props %}
+                                                    <tr>
+                                                        <td>{{ subject_prop.property }}</td>
+                                                        <td>{{ subject_prop.property_value }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </table>
+                                        </div>
+                                    </div>
+                                </li></a><br/>
+                            {% endfor %}
+                        </ul>
                     {% endif %}
 
                 </div>
@@ -86,7 +85,7 @@
                     {% if media.medialocationrelations_set.all %}
                     <div class="well filters">
                         
-                        <div id="ot_facetname"><h5>Related Contexts</h5></div>
+                        <h3>Related Contexts</h3>
                         {% for location_relation in media.medialocationrelations_set.all|slice:":5" %}
                             <p>{% get_loc_ancestors location_relation.location as location_tree %}
                             {% for loc in location_tree %}
@@ -95,7 +94,7 @@
                             {% if location_relation.notes %}: {{ location_relation.notes }}{% endif %}</p>
                         {% endfor %}
                         {% if media.medialocationrelations_set.all|slice:"5:" %}
-                        <div class="collapse" id="mediaLocCollapse">
+                        <span class="collapse" id="mediaLocCollapse">
                         {% for location_relation in media.medialocationrelations_set.all|slice:"5:" %}
                             <p>{% get_loc_ancestors location_relation.location as location_tree %}
                             {% for loc in location_tree %}
@@ -103,7 +102,7 @@
                             {% endfor %}
                             {% if location_relation.notes %}: {{ location_relation.notes }}{% endif %}</p>
                         {% endfor %}
-                        </div>
+                        </span>
                         <h4><a data-toggle="collapse" id="mediaCollapse" href="#mediaLocCollapse">See More</a></h4>                                
                         {% endif %}
                     </div>
@@ -111,7 +110,7 @@
 
                     {% if related_web %}
                     <div class="well filters">
-                        <div id="ot_facetname"><h5>Linked Resources</h5></div>
+                        <h3>Linked Resources</h3>
                         {% for web in related_web %}
                             <p><a target="_blank" href="{{ web.link }}">{{ web.source.title }}</a></p>
                         {% endfor %}
