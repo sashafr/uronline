@@ -43,7 +43,7 @@ footer {
         }
     }
     .footer-inner {
-        padding: 30px 50px;
+        padding: 30px 50px 40px;
     }
     .left {
         background: url(../img/backgrounds/footer-bg@2x.jpg);
@@ -68,15 +68,21 @@ footer {
         }
         p {
             font-family: $serif;
-            font-size: 1.6rem;
+            font-size: 1.8rem;
             color: white;
-            line-height: 1.8;
+            line-height: 2.1;
             max-width: 800px;
             margin-bottom: 20px;
 
             @media screen and #{$screen-xs} {
-                font-size: 1.4rem;
-                line-height: 2.1;
+                font-size: 1.6rem;
+                line-height: 1.8;
+            }
+
+            a {
+                font-weight: 500;
+                color: white;
+                border-bottom: 1px dotted white;
             }
         }
     }
