@@ -15,6 +15,7 @@ urlpatterns = patterns('base.views',
     url(r'^about/ancient-ur/', 'ancientur', name='ancientur'),
     url(r'^about/excavations/', 'excavations', name='excavations'),
     url(r'^about/woolleys-excavations/', 'woolley', name='woolley'),
+    url(r'^about/cast-of-characters/', 'characters', name='characters'),
     url(r'^developers/', 'developers', name='developers'),
     url(r'^sample/', 'sample', name='sample'),
     url(r'^search/', FacetedSearchView(

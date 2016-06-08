@@ -482,6 +482,10 @@ def woolley(request):
 	
     return render(request, 'base/woolley.html')
 
+def characters(request):
+	
+    return render(request, 'base/characters.html')
+
 def developers(request):
 	
     return render(request, 'base/developers.html')
