@@ -26,6 +26,14 @@
             background: darken($gold, 10%);
         }
     }
+    &.btn-info {
+        background: lighten($teal, 10%);
+        color: white;
+
+        &:hover, &:focus, &:active {
+            background: darken($teal, 10%);
+        }
+    }
     &.btn-primary {
         background: $orange;
         color: white;
