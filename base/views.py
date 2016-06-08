@@ -470,6 +470,22 @@ def sample(request):
 	
     return render(request, 'base/sample.html')
 
+def ancientur(request):
+	
+    return render(request, 'base/ancientur.html')
+
+def excavations(request):
+	
+    return render(request, 'base/excavations.html')
+
+def woolley(request):
+	
+    return render(request, 'base/woolley.html')
+
+def developers(request):
+	
+    return render(request, 'base/developers.html')
+
 def update_index(request):
     t = tasks.index_update()
     return HttpResponse(t.task_id)

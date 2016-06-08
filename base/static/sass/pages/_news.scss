@@ -30,3 +30,21 @@
         }
     }
 }
+
+.news-list {
+    font-size: 1.6rem;
+    line-height: 2.1;
+
+    a {
+        color: $teal;
+        font-weight: 700;
+        border-bottom: 1px dotted $teal;
+        transition: 0.5s all;
+
+        &:hover, &:focus, &:active {
+            color: $teal;
+            text-decoration: none;
+            opacity: 0.65;
+        }
+    }
+}
