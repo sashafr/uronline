@@ -418,6 +418,7 @@ class Subject(models.Model):
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
     last_mod_by = models.ForeignKey(User, blank = True)
     upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
+    public = models.BooleanField(default = True)     
     
     # the following fields are set using the Result Properties values
     title1 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('subj_title1'))
@@ -512,7 +513,8 @@ class Location(MPTTModel):
     last_mod_by = models.ForeignKey(User, blank = True)
     type = models.ForeignKey(ObjectType, blank = True, null = True)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
-    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
+    public = models.BooleanField(default = True)     
     
     # the following fields are set using the Result Properties values
     title1 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('loc_title1'))
@@ -614,7 +616,8 @@ class Media(models.Model):
     last_mod_by = models.ForeignKey(User)
     type = models.ForeignKey(MediaType, blank = True, null = True, related_name = "MIME_type")
     bib_type = models.ForeignKey(MediaType, blank = True, null = True, related_name = "citation_type")
-    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
+    public = models.BooleanField(default = True)     
     
     # the following fields are set using the Result Properties values
     title1 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('med_title1'))
@@ -693,7 +696,8 @@ class PersonOrg(models.Model):
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
     last_mod_by = models.ForeignKey(User)
-    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)    
+    upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
+    public = models.BooleanField(default = True)     
 
     # the following fields are set using the Result Properties values
     title1 = models.TextField(blank = True, default = '(none)', verbose_name = get_display_field_header('po_title1'))
@@ -1588,7 +1592,7 @@ class MediaSubjectRelations(models.Model):
 
     media = models.ForeignKey(Media)
     subject = models.ForeignKey(Subject)
-    relation_type = models.ForeignKey(Relations)
+    relation_type = models.ForeignKey(Relations, blank = True, null = True)
     notes = models.TextField(blank = True, help_text = "Please use this field for specific page or plate information, etc, referring to where this object is mentioned in this media item.")
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
@@ -1607,7 +1611,7 @@ class MediaPersonOrgRelations(models.Model):
 
     media = models.ForeignKey(Media)
     person_org = models.ForeignKey(PersonOrg)
-    relation_type = models.ForeignKey(Relations)
+    relation_type = models.ForeignKey(Relations, blank = True, null = True)
     notes = models.TextField(blank = True, help_text = "Please use this field for specific page or plate information, etc, referring to where this Person/Organization is mentioned in this media item.")
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
@@ -1626,7 +1630,7 @@ class MediaLocationRelations(models.Model):
 
     media = models.ForeignKey(Media)
     location = models.ForeignKey(Location)
-    relation_type = models.ForeignKey(Relations)
+    relation_type = models.ForeignKey(Relations, blank = True, null = True)
     notes = models.TextField(blank = True, help_text = "Please use this field for specific page or plate information, etc, referring to where this location is mentioned in this media item.")
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
@@ -1664,7 +1668,7 @@ class LocationPersonOrgRelations(models.Model):
 
     location = models.ForeignKey(Location)
     person_org = models.ForeignKey(PersonOrg)
-    relation_type = models.ForeignKey(Relations)
+    relation_type = models.ForeignKey(Relations, blank = True, null = True)
     notes = models.TextField(blank = True, help_text = "Please use this field for specific page or plate information, etc, referring to where this Person/Organization is mentioned in this media item.")
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
@@ -1683,7 +1687,7 @@ class SubjectPersonOrgRelations(models.Model):
 
     subject = models.ForeignKey(Subject)
     person_org = models.ForeignKey(PersonOrg)
-    relation_type = models.ForeignKey(Relations)
+    relation_type = models.ForeignKey(Relations, blank = True, null = True)
     notes = models.TextField(blank = True, help_text = "Please use this field for specific page or plate information, etc, referring to where this Person/Organization is mentioned in this media item.")
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
@@ -1738,6 +1742,7 @@ class DataUpload(models.Model):
     owner = models.ForeignKey(User)
     upload_time = models.DateTimeField(auto_now_add=True, verbose_name='Date of Upload')
     collection = models.ForeignKey(Collection, blank=True, null=True, help_text='If you would like all matched entities to be placed in a specific collection, please select collection here.')
+    private = models.BooleanField(default=False, verbose_name='Set to Private', help_text='Check this box to set all matched and created entities to private.')
     
     class Meta:
         ordering = ['upload_time']
@@ -1772,6 +1777,7 @@ class Column(models.Model):
     property = models.ForeignKey(DescriptiveProperty, blank=True, null=True)
     insert_as_inline = models.BooleanField(default=False, verbose_name='Insert Column as Inline Note', help_text='Check this box to insert data from this column as an inline note for another column.')
     insert_as_footnote = models.BooleanField(default=False, verbose_name='Insert Column as Foot Note', help_text='Check this box to insert data from this column as a foot note for another column.')
+    insert_as_relnote = models.BooleanField(default=False, verbose_name='Insert Column as Note on Relation', help_text='Check this box to insert data from this column as a note on a relation.')
     title_for_note = models.CharField(max_length = 255, blank=True, verbose_name='Name of Column For Note', help_text='Use this field to indicate the name of the column for which this column is a note.')
     relation = models.BooleanField(default=False, help_text='Check this box to indicate this column is a relation to another entity.')
     rel_entity = models.CharField(max_length=2, choices=ENTITY, blank=True, verbose_name='Related Entity', help_text='If this column is a relation, select the related entity.')
@@ -1780,6 +1786,8 @@ class Column(models.Model):
     import_error = models.CharField(max_length = 255, default='Please select a "Property" for this column or check "Insert Column as Inline Note", "Insert Column as Foot Note", or "Linked Data".', verbose_name='Import Status')
     linked_data = models.BooleanField(default=False, verbose_name='Linked Data', help_text='Check this box to indicate this column contains a URL to a linked data source.')
     linked_data_source = models.ForeignKey(LinkedDataSource, blank=True, null=True, verbose_name='Linked Data Source', help_text='If this column contains a URL to linked data, select the linked data source.')
+    skip_if_prop_exists = models.BooleanField(default=False, verbose_name='Disallow Multiple Values', help_text='Check this box to indicate you would like the data from this column TO BE SKIPPED if the entity already has a value for this property (only valid for free-form properties).')
+    loc_parent = models.BooleanField(default=False, verbose_name='Location Parent', help_text='Check this box if this row is a NEW location and this column indicates the parent of the location.')
     
     class Meta:
         ordering = ['column_index']
@@ -1815,7 +1823,8 @@ class RelationImportError(models.Model):
     
     data_upload = models.ForeignKey(DataUpload)
     row = models.IntegerField()
-    column = models.ForeignKey(Column, blank=True, null=True)    
+    column = models.ForeignKey(Column, blank=True, null=True)
+    relnote = models.TextField(blank=True, null=True, verbose_name="Notes on Relation")
     error_text = models.TextField()
     subjects = models.ManyToManyField(Subject, blank = True, null = True, verbose_name="Objects", related_name="matched_subjects")
     locations = models.ManyToManyField(Location, blank = True, null = True, verbose_name="Locations", related_name="matched_locations")
@@ -1850,7 +1859,9 @@ class ControlFieldImportError(models.Model):
     people = models.ManyToManyField(PersonOrg, blank = True, null = True, verbose_name="People/Organizations")
     files = models.ManyToManyField(File, blank = True, null = True, verbose_name = "Files")
     control_field = models.ForeignKey(ControlField, blank = True, null = True, verbose_name="Match to Controlled Term")
-    batch = models.ForeignKey(UploadBatch, blank = True, null = True, verbose_name="Upload Batch")    
+    batch = models.ForeignKey(UploadBatch, blank = True, null = True, verbose_name="Upload Batch")
+    cf_notes = models.TextField()
+    cf_inline_notes = models.TextField()
     
     class Meta:
         ordering = ['row', 'column']
