@@ -570,11 +570,13 @@ def termdetail(request, term_id):
     # get the parameters
     term = get_object_or_404(ControlField, pk=term_id)
     sub_coll_id = request.GET.get('subcol', '')
-    loc_coll_id = request.GET.get('loccol', '')    
+    loc_coll_id = request.GET.get('loccol', '')
+    po_coll_id = request.GET.get('pocol', '')
     
     show_contents = 'false'
     sub_col_title = ''
     loc_col_title = ''
+    po_col_title = ''
     
     # linked data
     linked_data = ControlFieldLinkedData.objects.filter(control_field_id=term_id)
@@ -582,7 +584,9 @@ def termdetail(request, term_id):
     # objects
     subjects = Subject.objects.filter(subjectcontrolproperty__control_property_value__in = term.get_descendants(include_self = True)).distinct()
     # locations
-    locations = Location.objects.filter(locationcontrolproperty__control_property_value__in = term.get_descendants(include_self = True)).distinct()    
+    locations = Location.objects.filter(locationcontrolproperty__control_property_value__in = term.get_descendants(include_self = True)).distinct()
+    # people
+    people = PersonOrg.objects.filter(personorgcontrolproperty__control_property_value__in = term.get_descendants(include_self = True)).distinct()      
     
     # collections that include the selected objects
     scs = SubjectCollection.objects.filter(subject__in = subjects)
@@ -590,6 +594,9 @@ def termdetail(request, term_id):
     # collections that include the selected locations
     lcs = LocationCollection.objects.filter(location__in = locations)
     location_collections = Collection.objects.filter(locationcollection__in = lcs).distinct()     
+    # collections that include the selected people
+    pcs = PersonOrgCollection.objects.filter(person_org__in = people)
+    people_collections = Collection.objects.filter(personorgcollection__in = pcs).distinct()         
     
     # if a specific collection was requested, get only objects in selected collection
     if sub_coll_id != '' and sub_coll_id != '0':
@@ -606,20 +613,31 @@ def termdetail(request, term_id):
             locations = locations.filter(locationcollection__collection = selected_cols[0])
             loc_col = Collection.objects.filter(pk=loc_coll_id)
             if loc_col:
-                loc_col_title = loc_col[0].title                
+                loc_col_title = loc_col[0].title
+    # if a specific collection was requested, get only people in selected collection
+    if po_coll_id != '' and po_coll_id != '0':
+        selected_cols = Collection.objects.filter(pk=po_coll_id)
+        if selected_cols:
+            people = people.filter(personorgcollection__collection = selected_cols[0])
+            po_col = Collection.objects.filter(pk=po_coll_id)
+            if po_col:
+                po_col_title = po_col[0].title                 
     
     # create the object table
     subject_table = SubjectTable(subjects, prefix='subj-')
     RequestConfig(request).configure(subject_table)
     # create the location table
     location_table = LocationTable(locations, prefix='loc-')
-    RequestConfig(request).configure(location_table)    
+    RequestConfig(request).configure(location_table)
+    # create the people table
+    people_table = PersonOrgTable(people, prefix='po-')
+    RequestConfig(request).configure(people_table)    
     
     # determine if menu is needed
-    if linked_data or subjects or locations or term.get_siblings_same_type or term.get_children_same_type:
+    if linked_data or subjects or locations or people or term.get_siblings_same_type or term.get_children_same_type:
         show_contents = 'true'
     
-    return render(request, 'base/termdetail.html', {'term': term, 'subjects': subjects, 'locations': locations, 'linked_data': linked_data, 'show_contents': show_contents, 'subject_table': subject_table, 'location_table': location_table, 'subject_collections': subject_collections, 'location_collections': location_collections, 'sub_col': sub_coll_id, 'loc_col': loc_coll_id, 'sub_col_title': sub_col_title, 'loc_col_title': loc_col_title })
+    return render(request, 'base/termdetail.html', {'term': term, 'subjects': subjects, 'locations': locations, 'people': people, 'linked_data': linked_data, 'show_contents': show_contents, 'subject_table': subject_table, 'location_table': location_table, 'people_table': people_table, 'subject_collections': subject_collections, 'location_collections': location_collections, 'people_collections': people_collections, 'sub_col': sub_coll_id, 'loc_col': loc_coll_id, 'po_col': po_coll_id, 'sub_col_title': sub_col_title, 'loc_col_title': loc_col_title, 'po_col_title': po_col_title })
     
 def termdetailexport (request, term_id):
     
@@ -653,13 +671,27 @@ def termdetailexport (request, term_id):
             selected_cols = Collection.objects.filter(pk=coll_id)
             if selected_cols:
                 qs = qs.filter(locationcollection__collection = selected_cols[0])
-                filename += '_collection-' + format_filename(selected_cols[0].title)        
+                filename += '_collection-' + format_filename(selected_cols[0].title)
+
+    # people export
+    if entity == 'person':
+        filename += '_people_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        qs = PersonOrg.objects.filter(personorgcontrolproperty__control_property_value__in = term.get_descendants(include_self = True))
+        
+        # if a specific collection was requested, get only people in selected collection
+        if coll_id != '' and coll_id != '0':
+            selected_cols = Collection.objects.filter(pk=coll_id)
+            if selected_cols:
+                qs = qs.filter(personorgcollection__collection = selected_cols[0])
+                filename += '_collection-' + format_filename(selected_cols[0].title)                
                 
     if qs:
         # json
         if format == 'json':
             if entity == 'location':
                 serializer = LocationSerializer(qs, many=True)
+            elif entity == 'person':
+                serializer = PersonOrgSerializer(qs, many=True)
             else:
                 serializer = SubjectSerializer(qs, many=True)
             response = JSONResponse(serializer.data)
@@ -670,6 +702,8 @@ def termdetailexport (request, term_id):
         elif format == 'xml':
             if entity == 'location':
                 serializer = LocationSerializer(qs, many=True)
+            elif entity == 'person':
+                serializer = PersonOrgSerializer(qs, many=True)                
             else:
                 serializer = SubjectSerializer(qs, many=True)
             response = XMLResponse(serializer.data)
@@ -697,6 +731,8 @@ def termdetailexport (request, term_id):
                 # controlled properties
                 if entity == 'location':
                     cps = result.locationcontrolproperty_set.all()
+                elif entity == 'person':
+                    cps = result.personorgcontrolproperty_set.all()
                 else:
                     cps = result.subjectcontrolproperty_set.all()
                 for each_prop in cps:
@@ -715,6 +751,8 @@ def termdetailexport (request, term_id):
                 # free-form properties
                 if entity == 'location':
                     ps = result.locationproperty_set.all()
+                elif entity == 'person':
+                    ps = result.personorgproperty_set.all()
                 else:
                     ps = result.subjectproperty_set.all()                
                 for each_prop in ps:

@@ -538,6 +538,16 @@ def get_control_prop_vals(control_prop, current_val, include_blank = 1):
         result_list += ">" + indent + result.title + "</option>"
     return result_list
     
+@register.simple_tag
+def get_prop_vals(entity):
+    # build the set of properties for this entity
+    results = DescriptiveProperty.objects.filter(Q(primary_type=entity) | Q(primary_type='AL'))
+    result_list = ''
+    for result in results:
+        result_list += "<option value='" + str(result.id) + "'"
+        result_list += ">" + result.property + "</option>"
+    return result_list
+    
 @register.assignment_tag
 def get_loc_ancestors(location):
     return location.get_ancestors(include_self = True)
