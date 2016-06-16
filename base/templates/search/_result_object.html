@@ -4,60 +4,114 @@
 
 {% if obj.id %}
 <ul class="list-group" id="accordion">
-    <li class="list-group-item">
+  <li class="list-group-item">
   
-        {% if obj.get_type == 'media' %}
-            <a href="{% url 'mediadetail' obj.id %}">
-                <div class="row">
-                    <div class="col-md-3 text-center">
-                        <img src="{{ obj.get_thumbnail }}" />
-                    </div>
-                    <div class="col-md-9">
-                        <h2>{% load_result_display_fields result.get_additional_fields 'med_title' %}</h2>
-                        <p>{% load_result_display_fields result.get_additional_fields 'med_desc' %}</p>
-                    </div>
-                </div>
-            </a>
+    {% if obj.get_type == 'media' %}
+      <a href="{% url 'mediadetail' obj.id %}" style="color:#000;">
+          <div class="row" style="padding-top:10px;">
+            <div class="col-md-3">
+              <img src="{{ obj.get_thumbnail }}" style="display: inline; margin: 0 5px;"></img>
+            </div>
+            <div class="col-md-9">
+              <h4 class="list-group-item-heading">
+                {% load_result_display_fields result.get_additional_fields 'med_title' %}
+              </h4>
+              <p>
+                {% load_result_display_fields result.get_additional_fields 'med_desc' %}
+                <br/>
+                <a class="panel-title" data-toggle="collapse" data-parent="#accordion" href="#collapsemed{{ obj.id }}">
+                  Preview...
+                </a>
+              </p>
+            </div>
+          </div>
+      </a>
+      <div id="collapsemed{{ obj.id }}" class="panel-collapse collapse">
+        <table class="table table-striped">
+          {% get_result_details result.get_additional_fields %}
+        </table>
+      </div>
       
-        {% elif obj.get_type == 'subject' %}
-            <a href="{% url 'subjectdetail' obj.id %}">
-                <div class="row">
-                    <div class="col-md-3 text-center">
-                        <img src="{{ obj.get_thumbnail }}" />
-                    </div>
-                    <div class="col-md-9">
-                        <h2>{% load_result_display_fields result.get_additional_fields 'subj_title' %}</h2>
-                        <p>{% load_result_display_fields result.get_additional_fields 'subj_desc' %}</p>
-                    </div>
-                </div>
-            </a>
-        {% elif obj.get_type == 'person_org' %}
-            <a href="{% url 'personorgdetail' obj.id %}">
-                <div class="row">
-                    <div class="col-md-3 text-center">
-                        <img src="{{ obj.get_thumbnail }}" />        
-                    </div>
-                    <div class="col-md-9">
-                        <h2>{% load_result_display_fields result.get_additional_fields 'po_title' %}</h2>
-                        <p>{% load_result_display_fields result.get_additional_fields 'po_desc' %}</p>
-                    </div>
-                </div>
-            </a>
-        {% else %}
-            <a href="{% url 'locationdetail' obj.id %}">
-                <div class="row">
-                    <div class="col-md-3 text-center">
-                        <img src="{{ obj.get_thumbnail }}" />
-                    </div>
-                    <div class="col-md-9">
-                        <h2>{% load_result_display_fields result.get_additional_fields 'loc_title' %}</h2>
-                        <p>{% load_result_display_fields result.get_additional_fields 'loc_desc' %}</p>
-                    </div>
-                </div>
-            </a>   
-        {% endif %}
-    </li>
+    {% elif obj.get_type == 'subject' %}
+      <a href="{% url 'subjectdetail' obj.id %}" style="color:#000;">
+          <div class="row" style="padding-top:10px;">
+            <div class="col-md-3">
+              <img src="{{ obj.get_thumbnail }}" style="display: inline; margin: 0 5px;"></img>        
+            </div>
+            <div class="col-md-9">
+              <h4 class="list-group-item-heading">
+                {% load_result_display_fields result.get_additional_fields 'subj_title' %}
+              </h4>
+              <p>
+                {% load_result_display_fields result.get_additional_fields 'subj_desc' %}
+                <br/>
+                <a class="panel-title" data-toggle="collapse" data-parent="#accordion" href="#collapsesub{{ obj.id }}">
+                  Preview...
+                </a>
+              </p>
+            </div>
+          </div>
+      </a>
+      <div id="collapsesub{{ obj.id }}" class="panel-collapse collapse">
+        <table class="table table-striped">
+          {% get_result_details result.get_additional_fields %}
+        </table>
+      </div>
+    {% elif obj.get_type == 'person_org' %}
+      <a href="{% url 'personorgdetail' obj.id %}" style="color:#000;">
+          <div class="row" style="padding-top:10px;">
+            <div class="col-md-3">
+              <img src="{{ obj.get_thumbnail }}" style="display: inline; margin: 0 5px;"></img>        
+            </div>
+            <div class="col-md-9">
+              <h4 class="list-group-item-heading">
+                {% load_result_display_fields result.get_additional_fields 'po_title' %}
+              </h4>
+              <p>
+                {% load_result_display_fields result.get_additional_fields 'po_desc' %}
+                <br/>
+                <a class="panel-title" data-toggle="collapse" data-parent="#accordion" href="#collapsepo{{ obj.id }}">
+                  Preview...
+                </a>
+              </p>
+            </div>
+          </div>
+      </a>
+      <div id="collapsepo{{ obj.id }}" class="panel-collapse collapse">
+        <table class="table table-striped">
+           {% get_result_details result.get_additional_fields %}
+        </table>
+      </div>
+    {% else %}
+      <a href="{% url 'locationdetail' obj.id %}" style="color:#000;">
+          <div class="row" style="padding-top:10px;">
+            <div class="col-md-3">
+              <img src="{{ obj.get_thumbnail }}" style="display: inline; margin: 0 5px;"></img>
+            </div>
+            <div class="col-md-9">
+              <h4 class="list-group-item-heading">
+                {% load_result_display_fields result.get_additional_fields 'loc_title' %}
+              </h4>
+              <p>
+                {% load_result_display_fields result.get_additional_fields 'loc_desc' %}
+                <br/>
+                <a class="panel-title" data-toggle="collapse" data-parent="#accordion" href="#collapsepo{{ obj.id }}">
+                  Preview...
+                </a>
+              </p>
+            </div>
+          </div>
+      </a>
+      <div id="collapsesub{{ obj.id }}" class="panel-collapse collapse">
+        <table class="table table-striped">
+          {% get_result_details result.get_additional_fields %}
+        </table>
+      </div>      
+    {% endif %}
+    
+  </li>
 </ul>
 
 {% endif %}
+ 
 {% endwith %}

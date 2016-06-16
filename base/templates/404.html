@@ -3,15 +3,28 @@
 {% load base_tags %}
 
 <!-- Metadata -->
-{% block page_title %}Page Not Found{% endblock %}
+{% block page_title %}Page Not Found :({% endblock %}
 <!-- End Metadata -->
 
-{% block pageheader %}
-    <div class="page-header expanded bottomless">
-        <div class="container page-header-content">
-            <h1>Page not found</h1>
-            <p>Sorry, we couldn't find the page you are looking for. It looks like this was the result of either a mistyped address or an out-of-date link. Perhaps try <a href="{% url 'home' %}">going back to the home page</a> to find what you're looking for.</p>
+{% block content %}
+    <div class="content-section-b" style="padding-top: 80px;">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-5 col-lg-offset-1 col-sm-push-6 col-sm-6">
+                    <hr class="section-heading-spacer">
+                    <div class="clearfix"></div>
+                    <h2 class="section-heading">You can't haz this page :(</h2>
+                    <p class="lead">Sorry, we couldn't find the page you are looking for. It looks like this was the result of either:</p>
+                    <ul>
+                        <li>a mistyped address</li>
+                        <li>an out-of-date link</li>
+                    </ul>
+                    <p>We did find this kitten though. He thinks you should try <a href="{% url 'home' %}">going back to the home page</a>.</p>
+                </div>
+                <div class="col-lg-5 col-sm-pull-6 col-sm-6">
+                    <img class="img-responsive" src="{% static 'img/404cat.jpg' %}" alt="Here's a consolation kitty.">
+                </div>                
+            </div>
         </div>
-        <div class="overlay"></div>
     </div>
 {% endblock %}
