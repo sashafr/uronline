@@ -3,37 +3,125 @@
 {% load base_tags %}
 
 <!-- Metadata -->
-{% block page_title %}The Ur Online Project{% endblock %}
+{% block page_title %}About{% endblock %}
 <!-- End Metadata -->
 
-{% block pageheader %}
-    <div class="page-header">
-        <div class="container page-header-content">
-            <h1>The Ur Online Project</h1>
-        </div>
-        <div class="overlay"></div>
-    </div>
+{% block body_attributes %}data-spy="scroll" data-target="#myScrollspy"{% endblock %}
+
+{% block css %}
+<style type="text/css">
+    /* Custom Styles */
+    ul.nav-tabs{
+        width: 200px;
+        margin-top: 50px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.067);
+    }
+    ul.nav-tabs li{
+        margin: 0;
+        border-top: 1px solid #ddd;
+    }
+    ul.nav-tabs li:first-child{
+        border-top: none;
+    }
+    ul.nav-tabs li a{
+        margin: 0;
+        padding: 8px 16px;
+        border-radius: 0;
+    }
+    ul.nav-tabs li.active a, ul.nav-tabs li.active a:hover{
+        color: #fff;
+        background: #0088cc;
+        border: 1px solid #0088cc;
+    }
+    ul.nav-tabs li:first-child a{
+        border-radius: 4px 4px 0 0;
+    }
+    ul.nav-tabs li:last-child a{
+        border-radius: 0 0 4px 4px;
+    }
+    ul.nav-tabs.affix{
+        top: 30px; /* Set the top position of pinned element */
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 
+    <!-- Banner -->
+    <div class="banner fixed">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-12">
+            <h2 class="text-center">About {% load_globals 'site_title' %}</h2>
+          </div>
+        </div>
+      </div>
+    </div> 
+    <!-- End Banner -->
+
     <!-- Body Sections-->
-    <section>
-        <div class="container" id="template">
-            <div class="row">
-                <div class="col-md-8">
-                    <p>Ur was one of the first cities in human history. As such, it is incredibly important not only to archaeologists and historians, but to people all over our modern urbanized world. Fabled as the city of the Sumerian moon god Nanna and the home of the biblical patriarch Abraham, Ur witnessed thousands of years of human activity. Once supplied with water by by the Euphrates, it was eventually abandoned because the river meandered too far away. It now sits some 6 miles southwest of the Euphrates in southern Iraq. The excavations at Ur (now Tell al-Muqayyar) remain key to much of our understanding of the ancient Near East.</p>
-                    <p>The site of Ur has fascinated modern travelers and archaeologists since the 17th century, but no extended excavations occurred until the early 20th century. In the wake of World War I, the British Museum and Penn Museum formed a partnership to excavate at Ur under the direction of Charles Leonard Woolley. Ur was the first archaeological site to be excavated under a permit from the Department of Antiquities of the new nation of Iraq. That permit agreed that half of the artifacts recovered would go to the future Iraq National Museum, and the other half would be divided between London and Philadelphia.</p>
-                    <img src="{% static 'img/objects/object01.jpg' %}" class="pull-right" alt="Field photograph from Woolley's excavations" />
-                    <p>Woolley's excavations at Ur yielded tens of thousands of artifacts, photographs, letters, reports, and other documents which today remain divided among the three museums. When the Iraq National Museum in Baghdad was looted in 2003 it raised alarms over preserving important cultural heritage, and prompted the British Museum and the Penn Museum to investigate their own holdings from Ur in an effort to assist the Iraq National Museum to determine what was missing from their collection. This investigation showed that records at both museums were incomplete; the looting showed that artifacts and records could be lost at any time to theft, environmental damage, or being misplaced. And it was also a reminder that artifacts and records from one site were divided across the globe. </p>
-                    <p>Now the two museums are making sure their records are complete and up to date. Ur was well published for its day, but there is still an enormous amount of data that is unpublished&mdash;letters from the field, notes, original photos, as well as information on thousands of artifacts. And all of this information should be public, to expand knowledge of the ancient Near East and to make research into the site easier and more efficient.</p>
-                    <p>This project digitally reunites these artifacts and their records in one virtual place, preserving them and making them widely available. This increases the number of visitors and researchers who can engage with them but also means that they remain separate when they were originally together at the same site. Digital technology has advanced enough to make archaeological data accessible and linked, and to preserve it for the future.</p>    
-                    <hr/>
-                    <p>Through the generosity of the Leon Levy Foundation, lead underwriter, the Kowalski Family Foundation and the Hagop Kevorkian Fund, Ur Online preserves digitally and invites in-depth exploration of the finds and records from this remarkable site.</p>
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-3 hideonsmall" id="myScrollspy">
+                <ul class="nav nav-tabs nav-stacked" data-spy="affix" data-offset-top="125">
+                    <li><h4><a href="#project">The Project</a></h4></li>
+                    <li><h4><a href="#city">The City</a></h4></li>
+                    <li><h4><a href="#excavation">The Excavation</a></h4></li>
+                    <li><h4><a href="#team">The Team</a></h4></li>
+                    <li><h4><a href="#support">Our Supporters</a></h4></li>
+                    <li><h4><a href="#developers">For Developers</a></h4></li>
+                    <li><h4><a href="#licensing">Licensing</a></h4></li>
+                </ul>
+            </div>
+            <div class="col-md-8">
+                <div class="content-section-b" id="project">
+                    <div class="row">
+                        <h2 class="section-heading">About the Project</h2>
+                        <div style="font-size: 16px; font-weight: 400; margin-bottom: 20px;">{{ project.val|safe }}</div>
+                    </div>
                 </div>
+                <div class="content-section-b" id="city">
+                    <div class="row">
+                        <h2 class="section-heading">About the City of Ur</h2>
+                        <div style="font-size: 16px; font-weight: 400; margin-bottom: 20px;">{{ site.val|safe }}</div>
+                    </div>
+                </div>
+                <div class="content-section-b" id="excavation">
+                    <div class="row">
+                        <h2 class="section-heading">About the Excavation of Ur</h2>
+                        <div style="font-size: 16px; font-weight: 400; margin-bottom: 20px;">{{ excavation.val|safe }}</div>
+                    </div>
+                </div>
+                <div class="content-section-b" id="team">
+                    <div class="row">
+                        <h2 class="section-heading">About the Team Members</h2>
+                        <div style="font-size: 16px; font-weight: 400; margin-bottom: 20px;">{{ team.val|safe }}</div>
+                    </div>
+                </div>
+                <div class="content-section-b" id="support">
+                    <div class="row">
+                        <h2 class="section-heading">About Our Supporters</h2>
+                        <div style="font-size: 16px; font-weight: 400; margin-bottom: 20px;">{{ support.val|safe }}</div>
+                    </div>
+                </div>
+                <div class="content-section-b" id="developers">
+                    <div class="row">
+                        <h2 class="section-heading">About the Development</h2>
+                        <div style="font-size: 16px; font-weight: 400; margin-bottom: 20px;">{{ dev.val|safe }}</div>
+                    </div>
+                </div>
+                <div class="content-section-b" id="licensing">
+                    <div class="row">
+                        <h2 class="section-heading">Licensing</h2>
+                        <div style="font-size: 16px; font-weight: 400; margin-bottom: 20px;">{{ lic.val|safe }}</div>
+                    </div>
+                </div>                
+                
             </div>
         </div>
-    </section>
+    </div>
     <!-- End Body Sections-->
     
 {% endblock %}

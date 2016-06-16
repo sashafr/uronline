@@ -8,198 +8,214 @@
 <!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
 <head>
-    <meta charset="utf-8">
-    
-    <!-- Use the .htaccess and remove these lines to avoid edge case issues.
+  <meta charset="utf-8">
+
+  <!-- Use the .htaccess and remove these lines to avoid edge case issues.
        More info: h5bp.com/i/378 -->
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    
-    <!-- SEO meta tags - Override these on pages extending this template if you want dif values -->
-    <title>{% block page_title %}{% endblock %} - {% block site_title %}{% load_globals 'site_title' %}{% endblock %}</title>
-    <meta name="description" content="{% block meta_description %}{% load_globals 'site_description' %}{% endblock %}">
-    <meta name="author" content="{% block meta_author %}{% load_globals 'site_author' %}{% endblock %}">
-    <meta name="og:title" content="{% block fb_title %}{% load_globals 'facebook_title' %}{% endblock %}">
-    <meta name="og:type" content="{% block fb_type %}website{% endblock %}">
-    <meta name="og:image" content="{% block fb_image %}{% static 'img/favicon.jpg' %}{% endblock %}">  
-    <meta name="og:url" content="{% block fb_url %}{% load_globals 'facebook_url' %}{% endblock %}">  
-    <meta name="og:description" content="{% block fb_desc %}{% load_globals 'facebook_description' %}{% endblock %}">  
-    <meta name="twitter:card" content="{% block twitter_card %}summary{% endblock %}">  
-    <meta name="twitter:url" content="{% block twitter_url %}{% load_globals 'twitter_url' %}{% endblock %}">  
-    <meta name="twitter:title" content="{% block twitter_title %}{% load_globals 'twitter_title' %}{% endblock %}">  
-    <meta name="twitter:description" content="{% block twitter_desc %}{% load_globals 'twitter_description' %}{% endblock %}">  
-    <meta name="twitter:image" content="{% block twitter_image %}{% static 'img/favicon.jpg' %}{% endblock %}">  
-    <!-- End SEO meta tags -->
-    
-    <!-- Mobile viewport optimized: h5bp.com/viewport -->
-    <meta name="viewport" content="width=device-width">
-    
-    {% block meta %}
-    {% endblock %}
-    
-    <!-- FavIcon -->
-    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
-    <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
-    <!-- End FavIcon -->
-    
-    {% compress css %}
-    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'bootstrap-select/css/bootstrap-select.min.css' %}">
-    <link rel="stylesheet" href="{% static 'turnjs/jquery.ui.css' %}">
-    <link rel="stylesheet" href="{% static 'turnjs/jquery.ui.html4.css' %}">
-    <link rel="stylesheet" href="{% static 'css/main.css' %}">
-    {% block css %}{% endblock %}
-    {% endcompress %}
-    
-    <link rel="stylesheet" href="{% static 'lightbox/css/lightbox.css' %}">
-    <!-- End Styles -->
-    
-    <!-- Custom Fonts -->
-    <link href="{% static 'font-awesome-4.1.0/css/font-awesome.min.css' %}" rel="stylesheet" type="text/css">
-    <link href='https://fonts.googleapis.com/css?family=Lato:400,300,300italic,400italic,700italic,700|Vollkorn:400,400italic,700,700italic' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />
-    <!-- More ideas for your <head> here: h5bp.com/d/head-Tips -->
-    
-    <!-- All JavaScript at the bottom, except this Modernizr build.
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <!-- SEO meta tags - Override these on pages extending this template if you want dif values -->
+  <title>{% block site_title %}{% load_globals 'site_title' %}{% endblock %} | {% block page_title %}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{% load_globals 'site_description' %}{% endblock %}">
+  <meta name="author" content="{% block meta_author %}{% load_globals 'site_author' %}{% endblock %}">
+  <meta name="og:title" content="{% block fb_title %}{% load_globals 'facebook_title' %}{% endblock %}">
+  <meta name="og:type" content="{% block fb_type %}website{% endblock %}">
+  <meta name="og:image" content="{% block fb_image %}{% static 'img/favicon.jpg' %}{% endblock %}">  
+  <meta name="og:url" content="{% block fb_url %}{% load_globals 'facebook_url' %}{% endblock %}">  
+  <meta name="og:description" content="{% block fb_desc %}{% load_globals 'facebook_description' %}{% endblock %}">  
+  <meta name="twitter:card" content="{% block twitter_card %}summary{% endblock %}">  
+  <meta name="twitter:url" content="{% block twitter_url %}{% load_globals 'twitter_url' %}{% endblock %}">  
+  <meta name="twitter:title" content="{% block twitter_title %}{% load_globals 'twitter_title' %}{% endblock %}">  
+  <meta name="twitter:description" content="{% block twitter_desc %}{% load_globals 'twitter_description' %}{% endblock %}">  
+  <meta name="twitter:image" content="{% block twitter_image %}{% static 'img/favicon.jpg' %}{% endblock %}">  
+  <!-- End SEO meta tags -->
+  
+  <!-- Mobile viewport optimized: h5bp.com/viewport -->
+  <meta name="viewport" content="width=device-width">
+
+  {% block meta %}
+  {% endblock %}
+  
+  <!-- FavIcon -->
+  <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+  <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+  <!-- End FavIcon -->
+  
+  <!-- Styles -->
+  {# use the CDN to get bootstrap css. can not be inside compress css block #}
+  {% block cdn_css %}
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.2/css/bootstrap.min.css">
+  {% endblock cdn_css %}
+
+  {% compress css %}
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% block css %}{% endblock %}
+  {% endcompress %}
+  
+  <link rel="stylesheet" href="{% static 'lightbox/css/lightbox.css' %}">
+  <!-- End Styles -->
+
+  <!-- Custom Fonts -->
+  <link href="{% static 'font-awesome-4.1.0/css/font-awesome.min.css' %}" rel="stylesheet" type="text/css">
+  <link href="http://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />
+  <!-- More ideas for your <head> here: h5bp.com/d/head-Tips -->
+
+  <!-- All JavaScript at the bottom, except this Modernizr build.
        Modernizr enables HTML5 elements & feature detects for optimal performance.
        Create your own custom Modernizr build: www.modernizr.com/download/ -->
-    {% compress js %}
-    <script src="{% static 'js/libs/modernizr-2.6.2-respond-1.1.0.min.js' %}"></script>
-    {% endcompress %}
+  {% compress js %}
+  <script src="{% static 'js/libs/modernizr-2.6.2-respond-1.1.0.min.js' %}"></script>
+  {% endcompress %}
   
 </head>
 
 <body class="{% block body_class %}{% endblock %}" {% block body_attributes %}{% endblock %}>
 {% block body %}
-<!--[if lt IE 7]>
-<p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
-<![endif]-->  
+  <!-- Prompt IE 6 users to install Chrome Frame. Remove this if you support IE 6.
+       chromium.org/developers/how-tos/chrome-frame-getting-started -->
+  <!--[if lt IE 7]>
+    <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+  <![endif]-->  
+  
+  <!-- Header -->
+  <header>
+    {% block header %}
+    
+    <!-- Navbar -->
+    <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="{% url 'home' %}">{% load_globals "site_title" %} Beta*</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <form action="/search" method="get" class="navbar-form navbar-left" role="form">
+              <div class="form-group">
+                  <label class="sr-only" for="general_search">Search</label>
+                  <input type="text" name="keyword" class="form-control" id="general_search" placeholder="Search {% load_globals 'site_title' %}">
+              </div>
+          </form>          
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="{% url 'search_help' %}" target="_blank">Help</a></li>
+            <!--<li><a href="{% url 'terminology' %}" target="_blank">Terminology</a></li>-->
+            <li class="dropdown">
+              <a href="{% url 'about' %}" class="dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="{% url 'about' %}">Project</a></li>
+                <li><a href="{% url 'about' %}#city">City of Ur</a></li>
+                <li><a href="{% url 'about' %}#excavation">Excavation of Ur</a></li>
+                <li><a href="{% url 'about' %}#team">Team Members</a></li>
+                <li><a href="{% url 'about' %}#support">Support</a></li>
+                <li><a href="{% url 'about' %}#developers">For Developers</a></li>
+                <li><a href="{% url 'about' %}#licensing">Licensing</a></li>                
+              </ul>
+            </li>
+            <li><a href="{% url 'news' %}">News</a></li>
+            <li><a href="{% url 'contact' %}">Contact</a></li>
+            <li><a href="{% url 'admin:index' %}">Login/Sign Up</a></li>            
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>    
+    {% endblock header %}
+  </header>
+  <!-- End Header -->
 
-    <!-- Header -->
-    <header>
-        {% block header %}
-        <!-- Navbar -->
-        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
-            <div class="container-fluid">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                        <span class="sr-only">Menu</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a class="navbar-brand" href="{% url 'home' %}">
-                        <b>Ur</b> Online
-                        <small class="hidden-xs hidden-sm"> A collaboration between the British Museum and the Penn Museum made possible with the lead support of the Leon Levy Foundation.</small>
-                    </a>
+  <!-- Body -->
+  <div role="main" style="padding-bottom: 33px;">
+    <div id="content_window">{% block content %}{% endblock %}</div>
+  </div>
+  <!-- End Body -->
+  
+  <!-- Footer -->
+  <footer>
+    {% block footer %}
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="row">
+                    <div class="col-lg-10">
+                        <ul class="list-inline">
+                            <li>
+                                <a href="{% url 'home' %}">Home</a>
+                            </li>
+                            <li class="footer-menu-divider">&sdot;</li>
+                            <li>
+                                <a href="{% url 'about' %}">About</a>
+                            </li>
+                            <li class="footer-menu-divider">&sdot;</li>
+                            <li>
+                                <a href="{% url 'news' %}">News</a>
+                            </li>
+                            <li class="footer-menu-divider">&sdot;</li>
+                            <li>
+                                <a href="{% url 'contact' %}">Contact</a>
+                            </li>
+                            <li class="footer-menu-divider">&sdot;</li>
+                            <li>
+                                <a href="{% url 'admin:index' %}">Login/Sign Up</a>
+                            </li>                    
+                        </ul>
+                    </div>
+                    <div class="col-lg-2">
+                        <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a>
+                    </div>
                 </div>
-                <div class="navbar-collapse collapse">
-                    <ul class="nav navbar-nav navbar-right hidden-xs">
-                        <li><a id="input-open"><span class="glyphicon glyphicon-search"></span></a></li>
-                    </ul>
-                    <form action="/search" method="get" class="navbar-form navbar-right hidden-xs" role="form">
-                        <div class="form-group">
-                            <label class="sr-only" for="general_search">Search</label>
-                            <span id="search-icon" class="glyphicon glyphicon-search"></span>
-                            <input type="text" name="keyword" class="form-control" id="general-search" placeholder="Search by keyword">
-                            <a id="input-close"><span class="glyphicon glyphicon-remove-circle"></span></a>
-                            <button type="submit" class="btn btn-default">Search</button>
-                        </div>
-                    </form>
-                    <ul class="nav navbar-nav navbar-right">
-                        <li><a href="{% url 'browse' %}" class="{% if request.get_full_path == '/browse/' or request.get_full_path == '/terminology/' or request.get_full_path == '/search/' %}active{% endif %}">Explore the Collection</a></li>
-                        <li class="visible-xs"><a href="/search">Search All Objects</a></li>
-                        <li class="dropdown">
-                            <a href="{% url 'about' %}" class="dropdown-toggle {% if request.get_full_path == '/about/' %}active{% endif %}" data-toggle="dropdown">About</a>
-                            <ul class="dropdown-menu">
-                                <li><a href="{% url 'about' %}">The Ur Online Project</a></li>
-                                <li><a href="{% url 'ancientur' %}">Ancient Ur</a></li>
-                                <li><a href="{% url 'excavations' %}">Excavations at Ur</a></li>
-                                <li><a href="{% url 'woolley' %}">Woolley's Excavations</a></li>
-                                <li><a href="{% url 'characters' %}">Cast of Characters</a></li>
-                                <li><a href="{% url 'developers' %}">For Developers</a></li>
-                            </ul>
-                        </li>
-                        <li><a href="{% url 'news' %}" class="{% if '/news' in request.get_full_path %}active{% endif %}">News</a></li>
-                    </ul>
-                </div><!--/.nav-collapse -->
+                <p class="copyright text-muted small">{% autoescape off %}{% load_content "footer_text" %}{% endautoescape %}</p>
             </div>
         </div>    
-        {% endblock header %}
-    </header>
-    <!-- End Header -->
+    </div>
+    {% endblock footer %}
+  </footer>
+  <!-- End Footer -->
 
-    <main role="main">
-        {% block pageheader %}
-            <div class="page-header">
-                <div class="container page-header-content">
-                    <h1></h1>
-                </div>
-                <div class="overlay"></div>
-            </div>
-        {% endblock %}
-        {% block content %}{% endblock %}
-    </main>
-  
-    <!-- Footer -->
-    <footer>
-        {% block footer %}
-        <div class="left">
-            <div class="footer-inner">
-                <h3>Ur Online</h3>
-                <p><strong>Ur Online</strong> offers an insight into the unique site of Ur, near Nasiriyah in southern Iraq, and one of the largest and most important cities of ancient Mesopotamia. Excavations at Ur between 1922 and 1934 by Sir Leonard Woolley, jointly sponsored by the British Museum and the Penn Museum, uncovered Ur’s famous ziggurat complex, densely packed private houses, and the spectacular Royal Graves. Half the finds from Woolley’s excavations are housed in the Iraq Museum in Baghdad, with the other half shared equally between the British Museum and the Penn Museum. Through the generosity of the Leon Levy Foundation, lead underwriter, the Kowalski Family Foundation and the Hagop Kevorkian Fund, Ur Online preserves digitally and invites in-depth exploration of the finds and records from this remarkable site.  <a href="{% url 'about' %}">Learn more about the project.</a></p>
-                <a rel="license" class="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a>
-                <ul class="list-inline">
-                    <li><a href="{% url 'developers' %}#developers">For Developers</a></li>
-                    <li><a href="{% url 'developers' %}#licensing">Licensing</a></li>
-                    <li><a href="{% url 'contact' %}">Contact</a></li>
-                    <li class="hidden-xs"><a href="{% url 'admin:index' %}">Login/Register</a></li>                
-                </ul>
-            </div>
-        </div>
-        <div class="right">
-            <div class="footer-inner">
-                <a href="http://www.britishmuseum.org/" target="_blank"><img src="{% static 'img/logos/logo-bm@2x.jpg' %}"></a>
-                <a href="http://www.penn.museum/" target="_blank"><img src="{% static 'img/logos/logo-pm@2x.jpg' %}"></a>
-                <a href="http://leonlevyfoundation.org/" target="_blank"><img src="{% static 'img/logos/logo-llf@2x.jpg' %}"></a>
-            </div>
-        </div>
-        {% endblock footer %}
-    </footer>
-    <!-- End Footer -->
-    
-    
-    <!-- JavaScript at the bottom for fast page loading -->
-    <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
-    {% block cdn_js %}
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="{{ STATIC_URL }}js/libs/jquery-1.9.1.min.js"><\/script>')</script>
-    {% endblock cdn_js %}
-    
-    <!-- scripts concatenated and minified via django-compressor -->
-    {% compress js %}
-    <script src="{% static 'js/main.js' %}"></script>
-    {% block js %}
-    {% endblock js %}
-    {% endcompress %}
-    <!-- end scripts -->
-    <script src="{% static 'lightbox/js/lightbox.min.js' %}"></script>
-    <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
-    <script src="{% static 'bootstrap-select/js/bootstrap-select.min.js' %}"></script>
-    <script src="{% static 'turnjs/jquery-ui-1.8.20.custom.min.js' %}"></script>
-    <script src="{% static 'turnjs/jquery.mousewheel.min.js' %}"></script>
-    <script src="{% static 'turnjs/turn.min.js' %}"></script>
-    
-    <!-- Asynchronous Google Analytics snippet. Change UA-XXXXX-X to be your site's ID.
+
+  <!-- JavaScript at the bottom for fast page loading -->
+
+  <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
+  {% block cdn_js %}
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script>window.jQuery || document.write('<script src="{{ STATIC_URL }}js/libs/jquery-1.9.1.min.js"><\/script>')</script>
+  <script type="text/javascript">
+    $.each(document.styleSheets, function(i,sheet){
+      if(sheet.href=='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.2/css/bootstrap.min.css') {
+        var rules = sheet.rules ? sheet.rules : sheet.cssRules;
+        if (rules.length == 0) {
+          $('<link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap.min.css' %}" />').appendTo('head');
+        }
+     }
+    })
+  </script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.2/js/bootstrap.min.js"></script>
+  {% endblock cdn_js %}
+
+  <!-- scripts concatenated and minified via django-compressor -->
+  {% compress js %}
+  {% block js %}
+  <script src="{% static 'js/main.js' %}"></script>
+  {% endblock js %}
+  {% endcompress %}
+  <!-- end scripts -->
+
+  <!-- Asynchronous Google Analytics snippet. Change UA-XXXXX-X to be your site's ID.
        mathiasbynens.be/notes/async-analytics-snippet -->
-    <script>
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-        
-        ga('create', 'UA-51841138-1', 'upenn.edu');
-        ga('send', 'pageview');
-    </script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-51841138-1', 'upenn.edu');
+    ga('send', 'pageview');
+  </script>
+  
+  <script src="{% static 'lightbox/js/lightbox.min.js' %}"></script>
   
 {% endblock %} <!-- End Body Block -->
 </body>

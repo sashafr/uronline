@@ -6,12 +6,20 @@
 {% block page_title %}Forbidden{% endblock %}
 <!-- End Metadata -->
 
-{% block pageheader %}
-    <div class="page-header expanded bottomless">
-        <div class="container page-header-content">
-            <h1>Forbidden</h1>
-            <p>Sorry, your request to the server is forbidden. But there's no sense crying over every mistake. You just <a href="{% url 'home' %}">keep on trying</a> till you run out of cake.</p>
+{% block content %}
+    <div class="content-section-b" style="padding-top: 80px;">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-5 col-lg-offset-1 col-sm-push-6 col-sm-6">
+                    <hr class="section-heading-spacer">
+                    <div class="clearfix"></div>
+                    <h2 class="section-heading">Forbidden</h2>
+                    <p class="lead">Sorry, your request to the server is forbidden. But there's no sense crying over every mistake. You just <a href="{% url 'home' %}">keep on trying</a> till you run out of cake.</p>
+                </div>
+                <div class="col-lg-5 col-sm-pull-6 col-sm-6">
+                    <img class="img-responsive" src="{% static 'img/500cake.jpg' %}" alt="Jk. Its a lie.">
+                </div>                
+            </div>
         </div>
-        <div class="overlay"></div>
     </div>
 {% endblock %}

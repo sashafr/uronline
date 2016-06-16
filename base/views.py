@@ -465,31 +465,7 @@ def about(request):
     lic = get_object_or_404(SiteContent, variable='about_lic')
     
     return render(request, 'base/about.html', {'project': project, 'site': site, 'excavation': excavation, 'team': team, 'support': support, 'dev': dev, 'lic': lic })
-
-def sample(request):
-	
-    return render(request, 'base/sample.html')
-
-def ancientur(request):
-	
-    return render(request, 'base/ancientur.html')
-
-def excavations(request):
-	
-    return render(request, 'base/excavations.html')
-
-def woolley(request):
-	
-    return render(request, 'base/woolley.html')
-
-def characters(request):
-	
-    return render(request, 'base/characters.html')
-
-def developers(request):
-	
-    return render(request, 'base/developers.html')
-
+    
 def update_index(request):
     t = tasks.index_update()
     return HttpResponse(t.task_id)
@@ -551,13 +527,6 @@ def terminology(request):
     cntl_props = DescriptiveProperty.objects.filter(control_field = True, visible = True).order_by('order')
 
     return render(request, 'base/terminology.html', {'cntl_props': cntl_props})
-
-def browse(request):
-
-    collections = Collection.objects.filter(public = True)
-    cntl_props = DescriptiveProperty.objects.filter(control_field = True, visible = True).order_by('order')
-
-    return render(request, 'base/browse.html', {'cntl_props': cntl_props, 'collections': collections})
     
 def collections(request):
 

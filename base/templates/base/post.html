@@ -8,8 +8,9 @@
 {% block css %}
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">
-    var BMfeedURI = "http://blog.britishmuseum.org/feed/";
+    <!--
     var PMfeedURI = "http://www.penn.museum/blog/feed/";
+    var GitFeedURI = "https://github.com/sashafr/uronline/commits/master.atom";
     
     google.load("feeds", "1");
     function doFeed(feedURI, feedDomID){
@@ -35,59 +36,100 @@
                 feedDom.appendChild(entryDom);
             }
         });
+        
+        
+        
     }
     
     function initialize() {
-        doFeed(BMfeedURI,"BM-feed");
         doFeed(PMfeedURI,"PM-feed");
+        doFeed(GitFeedURI,"Git-feed");
     }
     google.setOnLoadCallback(initialize);
     -->
 </script>
 {% endblock %}
 
-{% block pageheader %}
-    <div class="page-header">
-        <div class="container page-header-content">
-            <h1>{{ post.title }}</h1>
-            <p>Posted by {{ post.author.username }} on {{ post.created|date }}</p>
-        </div>
-        <div class="overlay"></div>
-    </div>
-{% endblock %}
-
 {% block content %}
+
+    <!-- Banner -->
+    <div class="banner">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-12">
+            <h2 class="text-center">News</h2>
+          </div>
+        </div>
+      </div>
+    </div> <!-- End Banner -->
     
-    <section>
-        <!-- Body Sections-->
-        <div class="container">
-            <div class="row">
-                <!-- Blog Entries Column -->
-                <div class="col-md-8">
-                    <!-- Post Content -->
-                    <p>{{ post.body }}</p>
-    
-                </div>
-    
-                <!-- Blog Sidebar Widgets Column -->
-                <div class="col-md-4">
-    
-                    <!-- News Roll Well -->
-                    <div class="well news hidden">
-                        <h3><a href="http://www.britishmuseum.org/blog.aspx" class="rsswidget" title="Latest news from the British Museum">British Museum Blog</a></h3>
-                        <div id="BM-feed"></div>
-                        <a href="http://blog.britishmuseum.org/feed/" class="rss icon" title="Latest news from the British Museum">Get the British Museum News Feed</a>
-                    </div>                        
-                    <div class="well news hidden">
-                        <h3><a href="http://www.penn.museum/blog/tag/ur/" class="rsswidget" title="Latest news from the Penn Museum">Penn Museum Blog</a></h3>
-                        <div id="PM-feed"></div>
-                        <a href="http://www.penn.museum/blog/feed/" class="rss icon" title="Latest news from the Penn Museum">Get the Penn Museum News Feed</a>
-                    </div>
+    <!-- Body Sections-->
+    <div class="container">
+
+        <div class="row">
+
+            <!-- Blog Entries Column -->
+            <div class="col-md-8">
+                
+                <!-- Blog Post -->
+
+                <!-- Title -->
+                <h1>{{ post.title }}</h1>
+
+                <!-- Author -->
+                <p class="lead">
+                    by {{ post.author.username }}
+                </p>
+
+                <hr>
+
+                <!-- Date/Time -->
+                <p><span class="glyphicon glyphicon-time"></span> Posted on {{ post.created|date }}</p>
+
+                <hr>
+
+                <!-- Post Content -->
+                <p>{{ post.body }}</p>
+
+                <hr>
+
+            </div>
+
+            <!-- Blog Sidebar Widgets Column -->
+            <div class="col-md-4">
+
+                <!-- News Roll Well -->
+                <div class="well" style="margin-top:50px;">
+                    <div class="newsroom_widget">
+                        <h2>Related News</h2>
+                        <div class="newsfeed_box">
+                            <h3>
+                                <a href="http://www.penn.museum/blog/tag/ur/" class="rsswidget" title="Latest news from the Penn Museum">Penn Museum Blog</a>
+                            </h3>
+                            <div id="PM-feed"></div>
+                            <h3>
+                                <a href="http://www.penn.museum/blog/feed/" class="rss icon" title="Latest news from the Penn Museum">get the news feed</a>
+                            </h3>
+                        </div>
+                        <div class="newsfeed_box">
+                            <h3>
+                                <a href="https://github.com/sashafr/uronline/commits/master" class="rsswidget" title="Updates to UrOnline Code">Updates to UrOnline code</a>
+                            </h3>
+                            <div id="Git-feed"></div>
+                            <h3>
+                                <a href="https://github.com/sashafr/uronline/commits/master.atom" class="rss icon" title="Updates to UrOnline Code">get code updates</a>
+                            </h3>
+                        </div>
+                    </div> 
                 </div>
             </div>
-            <!-- /.row -->
-        </div>   
-    </section>
+
+        </div>
+        <!-- /.row -->
+
+        <hr>
+
+    </div>    
     
     <!-- End Body Sections-->
     

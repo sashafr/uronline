@@ -295,7 +295,7 @@ class AdvFacetedSearchForm(AdvancedSearchForm):
 class AdvModelSearchForm(AdvFacetedSearchForm):
     def __init__(self, *args, **kwargs):
         super(AdvModelSearchForm, self).__init__(*args, **kwargs)
-        self.fields['models'] = forms.MultipleChoiceField(choices=model_choices(), required=False, label='Limit Search To:', widget=forms.SelectMultiple)
+        self.fields['models'] = forms.MultipleChoiceField(choices=model_choices(), required=False, label='Limit Search To:', widget=forms.CheckboxSelectMultiple)
 
     def get_models(self):
         """Return an alphabetical list of model classes in the index."""

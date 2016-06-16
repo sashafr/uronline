@@ -1,260 +1,257 @@
 {% extends '_layouts/base.html' %}
 {% load base_tags %}
 {% load mptt_tags %}
-{% load widget_tweaks %}
 
 <!-- Metadata -->
 {% block page_title %}Search{% endblock %}
 <!-- End Metadata -->
 
-{% block pageheader %}
-    <div class="page-header search">
-        <div class="container page-header-content">
+{% block content %}
 
-            <form method="get" action=".">
-                <div class="row search-form" id="basicsearch">
-                    <div class="col-sm-6 col-md-5">
-                        <div class="form-group combo-group">
-                            <label>{{ form.keyword.label }}</label>
-                            {{ form.keyword|add_class:"form-control"|attr:"placeholder:Search by keyword" }}
+    <form method="get" action=".">
+
+        <!-- Advanced Search Box -->
+        <div class="banner">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h2 class="text-center">Advanced Search</h2>
+                        <hr class="intro-divider">
+                        <div>
+                            <div class="form-group row">
+                                <div class="col-sm-4 adv-form">
+                                    {{ form.keyword.label }}: {{ form.keyword }}
+                                </div>
+                                <div class="col-sm-4 adv-form">
+                                    {{ form.unum.label }}: {{ form.unum  }}
+                                </div>
+                                <div class="col-sm-4 adv-form">
+                                    {{ form.museum_num.label }}: {{ form.museum_num }}
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-sm-4 adv-form">
+                                    {{ form.object_type.label }}: {{ form.object_type }}
+                                </div>
+                                <div class="col-sm-4 adv-form">
+                                    {{ form.museum.label }}: {{ form.museum }}
+                                </div>
+                                <div class="col-sm-4 adv-form">
+                                    {{ form.material.label }}: {{ form.material }}
+                                </div>
+                            </div>                                  
                         </div>
-                        <div class="form-group combo-group">
-                            <label>Types</label>
-                            {{ form.models|add_class:"selectpicker"|attr:"multiple"|attr:"title:All types" }}
+                        <div class="row {% adv_searchform_has_changed request as asf_changed %}{% if asf_changed %}in{% else %}collapse{% endif %}" id="advancedsearch">
+                            <hr class="intro-divider">
+                            <div class="form-group">
+                                <div class="col-sm-4 col-sm-offset-1 adv-form">
+                                    {{ form.property.label }}: {{ form.property }}
+                                </div>
+                                <div class="col-sm-3 adv-form">
+                                    {{ form.search_type.label }}: {{ form.search_type }}
+                                </div>
+                                <div class="col-sm-4 adv-form">
+                                    {{ form.q.label }}: {{ form.q }}
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-1 adv-form">
+                                    {{ form.op.label }}: {{ form.op }}
+                                </div>
+                                <div class="col-sm-4 adv-form">
+                                    {{ form.property2.label }}: {{ form.property2 }}
+                                </div>
+                                <div class="col-sm-3 adv-form">
+                                    {{ form.search_type2.label }}: {{ form.search_type2 }}
+                                </div>
+                                <div class="col-sm-4 adv-form">
+                                    {{ form.q2.label }}: {{ form.q2 }}
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-1 adv-form">
+                                    {{ form.op2.label }}: {{ form.op2 }}
+                                </div>
+                                <div class="col-sm-4 adv-form">
+                                    {{ form.property3.label }}: {{ form.property3 }}
+                                </div>
+                                <div class="col-sm-3 adv-form">
+                                    {{ form.search_type3.label }}: {{ form.search_type3 }}
+                                </div>
+                                <div class="col-sm-4 adv-form">
+                                    {{ form.q3.label }}: {{ form.q3 }}
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-sm-3 col-md-2">
-                        <div class="form-group">
-                            <label>{{ form.object_type.label }}</label>
-                            {{ form.object_type|add_class:"selectpicker"|attr:"title:All object types" }}
-                        </div>
-                    </div>
-                    <div class="col-sm-2 hidden-sm">
-                        <div class="form-group">
-                            <label>Museum</label>
-                            {{ form.museum|add_class:"selectpicker"|attr:"title:All museums" }}
-                        </div>
-                    </div>
-                    <div class="col-sm-3 col-md-2">
-                        <div class="btn-group pull-right" role="group">
-                            <input type="submit" class="btn btn-default" id="search" value="Search">
-                            <button class="btn btn-default {% adv_searchform_has_changed request as asf_changed %}{% if asf_changed %}active{% endif %}" data-toggle="collapse" id="searchCollapse" href="#advancedsearch"><span class="glyphicon glyphicon-triangle-bottom"></span></button>
-                        </div>
+                        <div class="row">
+                            <h4 style="text-align: right;"><a style="color: #fff;" data-toggle="collapse" id="searchCollapse" href="#advancedsearch">{% if adv_searchform_has_changed %}Less Search Options{% else %}More Search Options{% endif %}</a></h4>
+                        </div>    
+                        <div class="model_selector">
+                            <div class="col-sm-2 col-sm-offset-2">
+                                <p>Limit Search To: </p>
+                            </div>
+                            <div class="col-sm-8">                   
+                                {{ form.models }}
+                            </div>
+                        </div>                        
+                        <ul class="list-inline center-block text-center adv-form">
+                            <li>
+                                Order By:{{ form.order }}
+                            </li>
+                            <li>
+                                <p>
+                                    <input type="submit" id="search" value="Search">
+                                </p>
+                            </li>
+                            <li>
+                                <p>
+                                    <input onClick="clear_pub_search()" type="button" value="Clear" />
+                                </p>
+                            </li>
+                            <li>
+                                <p>
+                                    <input type="submit" id="export" value="Export Results">
+                                </p>
+                            </li>                            
+                        </ul>
                     </div>
                 </div>
-
-                                                             
-                <div class="search-form {% adv_searchform_has_changed request as asf_changed %}{% if asf_changed %}in{% endif %} collapse" id="advancedsearch">
-                    <div class="row">
-                        <div class="col-sm-3">
-                            <label>{{ form.unum.label }}</label>
-                            {{ form.unum|add_class:"form-control"|attr:"placeholder:e.g. 1765" }}
-                        </div>
-                        <div class="col-sm-3">
-                            <label>{{ form.museum_num.label }}</label>
-                            {{ form.museum_num|add_class:"form-control"|attr:"placeholder:A21345" }}
-                        </div>
-                        <div class="col-sm-3">
-                            <label>{{ form.material.label }}</label>
-                            {{ form.material|add_class:"selectpicker" }}
-                        </div>
-                        <div class="col-sm-3 visible-sm">
-                            <label>Museum</label>
-                            {{ form.museum|add_class:"selectpicker"|attr:"title:All museums" }}
-                        </div>
-                    </div>
-
-                    <hr>
-
-                    <div class="row">
-                        <div class="col-sm-3 col-sm-offset-2 col-md-offset-1">
-                            <label>{{ form.property.label }}</label>
-                            {{ form.property|add_class:"selectpicker" }}
-                        </div>
-                        <div class="col-sm-3">
-                            <label>{{ form.search_type.label }}</label>
-                            {{ form.search_type|add_class:"selectpicker" }}
-                        </div>
-                        <div class="col-sm-4">
-                            <label>{{ form.q.label }}</label>
-                            {{ form.q|add_class:"form-control" }}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-2 col-md-1">
-                            <label>{{ form.op.label }}</label>
-                            {{ form.op|add_class:"selectpicker mini" }}
-                        </div>
-                        <div class="col-sm-3">
-                            <label>{{ form.property2.label }}</label>
-                            {{ form.property2|add_class:"selectpicker" }}
-                        </div>
-                        <div class="col-sm-3">
-                            <label>{{ form.search_type2.label }}</label>
-                            {{ form.search_type2|add_class:"selectpicker" }}
-                        </div>
-                        <div class="col-sm-4">
-                            <label>{{ form.q2.label }}</label>
-                            {{ form.q2|add_class:"form-control" }}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-2 col-md-1">
-                            <label>{{ form.op2.label }}</label>
-                            {{ form.op2|add_class:"selectpicker mini" }}
-                        </div>
-                        <div class="col-sm-3">
-                            <label>{{ form.property3.label }}</label>
-                            {{ form.property3|add_class:"selectpicker" }}
-                        </div>
-                        <div class="col-sm-3">
-                            <label>{{ form.search_type3.label }}</label>
-                            {{ form.search_type3|add_class:"selectpicker" }}
-                        </div>
-                        <div class="col-sm-4">
-                            <label>{{ form.q3.label }}</label>
-                            {{ form.q3|add_class:"form-control" }}
-                        </div>
-                    </div>
-                </form>
             </div>
         </div>
-        <div class="overlay"></div>
-    </div>
-{% endblock %}
+        <!-- End Advanced Search Box -->
 
-{% block content %}
-    {% if query or page.object_list %}
-        <div class="results">
-            <div class="container">
-                <h1><strong>{{ page.paginator.count }}</strong> Results</h1>
-                <div id="sort-export" class="pull-right hidden-xs hidden-sm">
-                    <form method="get" action=".">
-                        {{ form.order|add_class:"selectpicker"|attr:"id:sortby" }}
-                        <input type="submit" class="btn btn-default" id="export" value="Export Results">
-                    </form>
-                </div>
+        {% if query or page.object_list %}
+            <div class="content-section-b">
+                <div class="container">
+                    <div class="row">
+          
+                        <!-- Facets Column -->
+                        <div class="col-md-4">
+                            <div class="well">
+                                <!-- Begin faceting -->
+                                <div id="ot_facetname">
+                                    <h4>By Object Type</h4>
+                                </div>
+                                
+                                <ul style="list-style-type: none;">
+                                    {% get_facet_values 19 as facet_values %}
+                                    {% build_facet_counts facets.fields.facet_prop_19 as facet_counts %}
+                                    {% recursetree facet_values %}
+                                        {% get_node_facet_count facet_counts node as current_total %}
+                                        {% if current_total > 0 %}
+                                        <li>
+                                            <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_19:{{ node.id|urlencode }}">{{ node.title }} ({{ current_total }})</a>
+                                            {% if not node.is_leaf_node %}
+                                                <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse" style="color: #555;">  + Expand</a>
+                                                <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
+                                                    <ul>
+                                                        {{ children }}
+                                                    </ul>
+                                                </div>
+                                            {% endif %}
+                                        </li>
+                                        {% endif %}
+                                    {% endrecursetree %}
+                                </ul> 
 
-                <div class="row">
-                    <!-- Results Column -->
-                    <div class="col-md-8">
-                        {% for result in page.object_list %}
-                            {% include 'search/_result_object.html' %}
-                        {% empty %}
-                            <h1 class="text-center">No results found!</h1>
-                            <h4 class="text-center"><em>Try broadening or adjusting your search criteria.</em></h4>
-                        {% endfor %}
-    
-                        {% if page.has_previous or page.has_next %}
-                            <div class="text-center">
-                                <ul class="pager">
+                                <div>
+                                    <h4>By Material</h4>
+                                </div>
+                                
+                                <ul style="list-style-type: none;">
+                                    {% get_facet_values 12 as facet_values %}
+                                    {% build_facet_counts facets.fields.facet_prop_12 as facet_counts %}
+                                    {% recursetree facet_values %}
+                                        {% get_node_facet_count facet_counts node as current_total %}
+                                        {% if current_total > 0 %}
+                                        <li>
+                                            <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_12:{{ node.id|urlencode }}">{{ node.title }} ({{ current_total }})</a>
+                                            {% if not node.is_leaf_node %}
+                                                <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse" style="color: #555;">  + Expand</a>
+                                                <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
+                                                    <ul>
+                                                        {{ children }}
+                                                    </ul>
+                                                </div>
+                                            {% endif %}
+                                        </li>
+                                        {% endif %}
+                                    {% endrecursetree %}
+                                </ul> 
+
+                                <div>
+                                    <h4>By Museum</h4>
+                                </div>
+                                
+                                <ul style="list-style-type: none;">
+                                    {% get_facet_values 59 as facet_values %}
+                                    {% build_facet_counts facets.fields.facet_prop_59 as facet_counts %}
+                                    {% recursetree facet_values %}
+                                        {% get_node_facet_count facet_counts node as current_total %}
+                                        {% if current_total > 0 %}
+                                        <li>
+                                            <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_59:{{ node.id|urlencode }}">{{ node.title }} ({{ current_total }})</a>
+                                            {% if not node.is_leaf_node %}
+                                                <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse" style="color: #555;">  + Expand</a>
+                                                <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
+                                                    <ul>
+                                                        {{ children }}
+                                                    </ul>
+                                                </div>
+                                            {% endif %}
+                                        </li>
+                                        {% endif %}
+                                    {% endrecursetree %}
+                                </ul>                                 
+
+                            </div>  
+                        </div>
+                        <!-- End Facets Column -->
+        
+                        <!-- Results Column -->
+                        <div class="col-md-8">
+                            <h2 style="text-align:center">Results</h2>
+                            <button id="collapse-init" class="btn btn-default" style="float: right;">Expand All</button></br>
+                            
+                            <!-- Result Count -->
+                            <p>{{ page.paginator.count }} results</p>
+              
+                            {% for result in page.object_list %}
+                                {% include 'search/_result_object.html' %}
+                            {% empty %}
+                                <p>No results found.</p>
+                            {% endfor %}
+
+                            {% if page.has_previous or page.has_next %}
+                                <div>
                                     {% if page.has_previous %}
-                                        <li class="previous"><a href="?{{ request.GET.urlencode }}&amp;page={{ page.previous_page_number }}">&laquo; Previous</a></li>
-                                    {% else %}
-                                        <li class="previous disabled"><a href="#" disabled>&laquo; Previous</a></li>
+                                        <a href="?{{ request.GET.urlencode }}&amp;page={{ page.previous_page_number }}">
                                     {% endif %}
-                                    <span class="current">
-                                        &nbsp;Page {{ page.number }} of {{ page.paginator.num_pages }}
-                                    </span>
+                                    &laquo; Previous
+                                    {% if page.has_previous %}
+                                        </a>
+                                    {% endif %}
+                                    |
                                     {% if page.has_next %}
-                                        <li class="next"><a href="?{{ request.GET.urlencode }}&amp;page={{ page.next_page_number }}">Next &raquo;</a></li>
-                                    {% else %}
-                                        <li class="next disabled"><a href="#" disabled>Next &raquo;</a></li>
+                                        <a href="?{{ request.GET.urlencode }}&amp;page={{ page.next_page_number }}">
                                     {% endif %}
-                                </ul>
-                            </div>
-                        {% endif %}
-                    </div>
-                    <!-- End Results Column -->
-
-                    <!-- Facets Column -->
-                    <div class="col-md-4">
-                        <div class="well filters">
-                            <!-- Begin faceting -->
-                            <div id="ot_facetname"><h5>Filter by Object Type</h5></div>
-                            <ul>
-                                {% get_facet_values 19 as facet_values %}
-                                {% build_facet_counts facets.fields.facet_prop_19 as facet_counts %}
-                                {% recursetree facet_values %}
-                                    {% get_node_facet_count facet_counts node as current_total %}
-                                    {% if current_total > 0 %}
-                                    <li>
-                                        <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_19:{{ node.id|urlencode }}"><span class="badge">{{ current_total }}</span>{{ node.title }}</a>
-                                        {% if not node.is_leaf_node %}
-                                            <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse">  +</a>
-                                            <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
-                                                <ul>
-                                                    {{ children }}
-                                                </ul>
-                                            </div>
-                                        {% endif %}
-                                    </li>
+                                    Next &raquo;
+                                    {% if page.has_next %}
+                                        </a>
                                     {% endif %}
-                                {% endrecursetree %}
-                            </ul>
+                                </div>
+                            {% endif %}
                         </div>
-                        <div class="well filters">
-                            <div id="m_facetname"><h5>Filter by Material</h5></div>
-                            <ul>
-                                {% get_facet_values 12 as facet_values %}
-                                {% build_facet_counts facets.fields.facet_prop_12 as facet_counts %}
-                                {% recursetree facet_values %}
-                                    {% get_node_facet_count facet_counts node as current_total %}
-                                    {% if current_total > 0 %}
-                                    <li>
-                                        <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_12:{{ node.id|urlencode }}"><span class="badge">{{ current_total }}</span>{{ node.title }}</a>
-                                        {% if not node.is_leaf_node %}
-                                            <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse">  +</a>
-                                            <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
-                                                <ul>
-                                                    {{ children }}
-                                                </ul>
-                                            </div>
-                                        {% endif %}
-                                    </li>
-                                    {% endif %}
-                                {% endrecursetree %}
-                            </ul> 
-                        </div>
-                        <div class="well filters">
-                            <div id="muse_facetname"><h5>Filter by Museum</h5></div>
-                            <ul>
-                                {% get_facet_values 59 as facet_values %}
-                                {% build_facet_counts facets.fields.facet_prop_59 as facet_counts %}
-                                {% recursetree facet_values %}
-                                    {% get_node_facet_count facet_counts node as current_total %}
-                                    {% if current_total > 0 %}
-                                    <li>
-                                        <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_59:{{ node.id|urlencode }}"><span class="badge">{{ current_total }}</span>{{ node.title }}</a>
-                                        {% if not node.is_leaf_node %}
-                                            <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse">  +</a>
-                                            <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
-                                                <ul>
-                                                    {{ children }}
-                                                </ul>
-                                            </div>
-                                        {% endif %}
-                                    </li>
-                                    {% endif %}
-                                {% endrecursetree %}
-                            </ul>                                 
-                        </div>  
+                        <!-- End Results Column -->
+      
                     </div>
                 </div>
             </div>
 
         {% else %}
-            <div class="results">
-                <div class="container">
-                    <div class="row">
-                        <div class="col-lg-8 col-lg-offset-2">
-                            <h1 class="text-center">Search the collection above</h1>
-                            <h4 class="text-center"><em>Not sure what to search for? How about <a href="/search/?keyword=rams&models=base.subject&object_type=56&museum=&unum=&museum_num=&material=&property=&search_type=contains&q=&op=and&property2=&search_type2=contains&q2=&op2=and&property3=&search_type3=contains&q3=">figural objects of rams</a>, explore the <a href="/search/?keyword=&models=base.personorg&object_type=&museum=&unum=&museum_num=&material=&property=&search_type=contains&q=&op=and&property2=&search_type2=contains&q2=&op2=and&property3=&search_type3=contains&q3=">people involved in the excavations</a>, or daily objects used for <a href="/search/?order=3&selected_facets=facet_prop_19:113">gaming and fun</a> in Ur.</em></h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {# Show some example queries to run, maybe query syntax, something else? #}
         {% endif %}
+    </form>
 {% endblock %}
 
 <!-- Search Unique JS -->
@@ -267,26 +264,40 @@
 
         var active = true;
 
-        $('.selectpicker').selectpicker();
-        $('.collapse-button').on('click', function(){
-            var txt = $(this).next().hasClass('in') ? '+' : '-';
-            $(this).text(txt)
-        });
-        $('#sortby').on('changed.bs.select', function (e) {
-            $('form').submit();
-        });
-
-        $('#searchCollapse').on('click tap', function(){
-            $(this).toggleClass('active');
+        $('#collapse-init').click(function (event) {
+            event.preventDefault();
+            if (active) {
+                active = false;
+                $('.panel-collapse').collapse('show');
+                $('.panel-title').attr('data-toggle', '');
+                $(this).text('Collapse All');
+            } else {
+                active = true;
+                $('.panel-collapse').collapse('hide');
+                $('.panel-title').attr('data-toggle', 'collapse');
+                $(this).text('Expand All');
+            }
         });
         
+        $('#accordion').on('show.bs.collapse', function () {
+            if (active) $('#accordion .in').collapse('hide');
+        });
+        
+        $('#searchCollapse').click(function () {
+            if($('#advancedsearch').hasClass('in')) {
+                $(this).text('More Search Options');
+            } else {
+                $(this).text('Less Search Options');
+            }
+        });        
+        
         $("#export").click(function() {
-            $(this).closest("form").attr('action', "{% query_params_getlist request 'selected_facets' as facets %}{% url 'search_export' facets %}");
+          $(this).closest("form").attr('action', "{% query_params_getlist request 'selected_facets' as facets %}{% url 'search_export' facets %}");
         });
         
         $("#search").click(function() {
-            $(this).closest("form").attr('action', ".");
-        });
+          $(this).closest("form").attr('action', ".");
+        });       
 
     });
   </script>

@@ -9,7 +9,8 @@
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">
     var BMfeedURI = "http://blog.britishmuseum.org/feed/";
-    var PMfeedURI = "http://www.penn.museum/blog/tag/ur/feed/";
+    var PMfeedURI = "http://www.penn.museum/blog/feed/";
+    var GitFeedURI = "https://github.com/sashafr/uronline/commits/master.atom";
     
     google.load("feeds", "1");
     function doFeed(feedURI, feedDomID){
@@ -43,166 +44,113 @@
     function initialize() {
         doFeed(BMfeedURI,"BM-feed");
         doFeed(PMfeedURI,"PM-feed");
+        doFeed(GitFeedURI,"Git-feed");
     }
     google.setOnLoadCallback(initialize);
 </script>
 {% endblock %}
 
-{% block pageheader %}
-    <div class="page-header">
-        <div class="container page-header-content">
-            <h1>News</h1>
-        </div>
-        <div class="overlay"></div>
-    </div>
-{% endblock %}
-
 {% block content %}
+
+    <!-- Banner -->
+    <div class="banner">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-12">
+            <h2 class="text-center">News</h2>
+          </div>
+        </div>
+      </div>
+    </div> <!-- End Banner -->
     
-    <section>
-        <!-- Body Sections-->
-        <div class="container">
-    
-            <div class="row">
-    
-                <!-- Blog Entries Column -->
-                <div class="col-md-8">
+    <!-- Body Sections-->
+    <div class="container">
 
-                    <h2>2016</h2>
-                    <ul class="news-list list-unstyled">
-                        <li><a href="http://www.penn.museum/blog/museum/ur-project-january-2016-a-tour-of-ur/" target="_blank">"Ur Project, January 2016: A Tour Of Ur" by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/adventure-calls-the-life-of-a-woman-adventurer/" target="_blank">"ADVENTURE CALLS: THE LIFE OF A WOMAN ADVENTURER" February 2016 by Kyra Kaercher</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ancient-ur-and-historic-iraq-woolleys-11th-season/" target="_blank">"ANCIENT UR AND HISTORIC IRAQ: WOOLLEYíS 11TH SEASON" March 2016 by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/collection/conservation/of-daggers-and-scabbards-evidence-from-organic-pseudomorphs-and-x-radiography/" target="_blank">"OF DAGGERS AND SCABBARDS: EVIDENCE FROM ORGANIC PSEUDOMORPHS AND X-RADIOGRAPHY" April 2016 by Tessa de Alarcon</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/the-workers-of-ur-ur-project-may-2016/" target="_blank">"THE WORKERS OF UR - UR PROJECT MAY 2016" by Kyra Kaercher</a></li>    
-                        <li><a href="http://www.world-archaeology.com/issues/cwa-75-out-now.htm" target="_blank">"The Ur Project" by Birger Helgestad. Current World Archaeology, Vol. 75, February 2016</a></li>
-                    </ul>
-                    
-                    <h2>2015</h2>
-                    <ul class="news-list list-unstyled">
-                        <li><a href="http://www.penn.museum/blog/museum/ur-project-january-2015" target="_blank">"Pseudomorphs on Metal Objects from Ur" January 2015 by Kyra Kaercher</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-project-february-2015" target="_blank">"Deep Pits and Early Burials (Again)" February 2015 by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-project-march-2015" target="_blank">"Toward a Digital Research Tool" March 2015 by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/beauty-is-pain-a-new-look-at-the-toiletry-kits-from-ur" target="_blank">"Beauty is Pain: A New Look at the Toiletry Kits from Ur" April 2015 by Kyra Kaercher</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-project-may-2015" target="_blank">"Metal Tools and Weapons from Ur" May 2015 by Brad Hafford</a></li>    
-                        <li><a href="http://www.penn.museum/blog/museum/ur-project-june-2015" target="_blank">"Mapping the Early Trial Trenches at Ur" June 2015 by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/daggers-and-fighting-knives-ur-project-july-2015" target="_blank">"Daggers and Fighting Knives" July 2015 by Kyra Kaercher</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-project-august-2015" target="_blank">"Researcher Notes and Intern Work" August 2015 by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-project-september-2015" target="_blank">"An Ubaid Period Quadruped Figurine from Ur" September 2015 by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/collection/conservation/ancient-repairs-at-ur-and-the-power-of-bitumen" target="_blank">"Ancient Repairs at Ur and the Power of Bitumen" October 2015 by Tessa de Alarcon</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-project-october-2015/" target="_blank">"Spiral pendants from the Near East" October 2015 by Kyra Kaercher</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-november-2015/" target="_blank">"Horse and Rider at Ur" November 2015 by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-project-december-2015/" target="_blank">"Where Are All the Children?" December 2015 by Kyra Kaercher</a></li>
-                        <li><a href="http://asorblog.org/2015/12/04/2015-asor-annual-meeting-presentations-video-2/#kyra-kaercher-university-of-pennsylvania-museum-and-william-hafford-university-of-pennsylvania-ur-digitization-project-designing-and-testing-a-digital-research-tool" target="_blank">"The Ur Digitization Project: Designing and Testing a Digital Research Tool" by Kyra Kaercher and William Hafford. ASOR presentation, November 2015</a></li>
-                    </ul>                   
+        <div class="row">
 
-                    <h2>2014</h2>
-                    <ul class="news-list list-unstyled">
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-january-2014/" target="_blank">"Personal Records, 1926: Continued Spotlight on Legrainís travels" January 2014 by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-february-2014/" target="_blank">"Site Records: Mapping Woolleyís Notes" February 2014 by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/the-ur-digitization-project-the-largest-jar/" target="_blank">"The Ur Digitization Project: The Largest Jar!" March 2014 by Tessa De Alarcon</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-april-2014/" target="_blank">"Artifact of the month: Spotlight on Field Number U.10183" April 2014 by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-of-the-chaldees-digitization-may-2014/" target="_blank">"Combining Maps and More at Ur: Spotlight on matching maps, satellite imagery, and aerial photos" May 2014 by Brad Hafford</a></li>    
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-june-2014/" target="_blank">"Combining Maps and More at Ur: Spotlight on Domestic Burials in Area AH" June 2014 by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/collection/conservation/standing-on-stilts-the-glazed-ceramics-from-ur/" target="_blank">"Standing on Stilts: The Glazed Ceramics from Ur" July 2014 by Tessa De Alarcon</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-august-2014/" target="_blank">"Deep Pits and Early Burials: Spotlight on 31-17-404: Ubaid Period Skeleton from Ur" August 2014 by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-project-september-2014/" target="_blank">"Gold Fit for a Queen (or) How to Wear a Headdress: Spotlight on Puabi's headdress" September 2014 by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-project-october-2014/" target="_blank">"Tomb Fit for a Queen (and King?): Spotlight on PG789 & PG800" October 2014 by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-project-november-2014/" target="_blank">"Tool Complete with Handle: Spotlight on U.8783" November 2014 by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-project-december-2014/" target="_blank">"Tool Complete with Handle (Again): Comparisons to and a closer look at U.8783" December 2014 by Brad Hafford</a></li>
-                        <li><a href="http://mar-shiprim.org/the-ur-project-a-collaboration-between-the-british-museum-and-the-penn-museum/" target="_blank">"Ur of the Chaldees: A Virtual Vision of Woolley's Excavations". Mar Shiprim newsletter article May 2014 by Jonathan Taylor and Birger Helgestad</a></li>
-                        <li><a href="http://blog.britishmuseum.org/2014/07/22/ur-of-the-chaldees-a-virtual-vision-of-woolleys-excavations/" target="_blank">"Ur of the Chaldees: A Virtual Vision of Woolley's Excavations". British Museum Blog, July 2014 by Birger Helgestad</a></li>
-                        <li><a href="http://blog.britishmuseum.org/2014/08/21/conserving-the-pottery-terracotta-and-tablets-from-ur/" target="_blank">"Conserving the pottery, terracotta and tablets from Ur". British Museum Blog, August 2014 by Duygu Camurcuoglu</a></li>
-                        <li><a href="http://asorblog.org/?p=7691" target="_blank">"Ur of the Chaldees: A Virtual Vision of Woolley's Excavations at Ur". ASOR Blog post, August 2014 by Gareth Brereton</a></li>
-                        <li><a href="http://csanet.org/newsletter/spring14/nls1402.html" target="_blank">"Digital Data - Ur of the Chaldees: Making a Virtual Vision Possible". Center for the Study of Architecture website article April 2014 by William B. Hafford</a></li>
-                    </ul>                   
+            <!-- Blog Entries Column -->
+            <div class="col-md-8">
+                
+                {% for post in posts.object_list %}
+                <!-- Blog Post -->
+                <h2>
+                    <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                </h2>
+                <p class="lead">
+                    by {{ post.author.username }}
+                </p>
+                <p><span class="glyphicon glyphicon-time"></span> Posted on {{ post.created|date }}</p>
+                <p>{{ post.body|truncatewords:50 }}</p>
+                <a class="btn btn-primary" href="{{ post.get_absolute_url }}">Read More <span class="glyphicon glyphicon-chevron-right"></span></a>
 
-                    <h2>2013</h2>
-                    <ul class="news-list list-unstyled">
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-january-2013/" target="_blank">"UR DIGITIZATION PROJECT: JANUARY 2013" (Whitburn watercolor reconstruction of ancient house) by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-february-2013/" target="_blank">"UR DIGITIZATION PROJECT: FEBRUARY 2013" (domestic areas excavated) by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-march-2013/" target="_blank">"UR DIGITIZATION PROJECT: MARCH 2013" (electrum adze) by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-april-2013/" target="_blank">"UR DIGITIZATION PROJECT: APRIL 2013" (2 terracotta figurines) by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-may-2013/" target="_blank">"UR DIGITIZATION PROJECT: MAY 2013" (bitumen boat model) by Brad Hafford</a></li>    
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-june-2013/" target="_blank">"UR DIGITIZATION PROJECT: JUNE 2013" (Lindon Smith oil painting of Ur) by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-july-2013/" target="_blank">"UR DIGITIZATION PROJECT: JULY 2013" (Latin cablegrams announcing finds) by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-august-2013/" target="_blank">"UR DIGITIZATION PROJECT: AUGUST 2013" (division of finds) by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-september-2013/" target="_blank">"UR DIGITIZATION PROJECT: SEPTEMBER 2013" (excavation of domestic area AH in 1930-31) by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/collection/conservation/the-salty-pots-of-ur-and-the-desalination-station/" target="_blank">"THE SALTY POTS OF UR AND THE DESALINATION STATION" October 2013 by Tessa de Alarcon</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-november-2013/" target="_blank">"UR DIGITIZATION PROJECT: NOVEMBER 2013" (Father Legrain's travel sketches) by Brad Hafford</a></li>
-                        <li><a href="http://youtu.be/IfEtD5AphZQ" target="_blank">"Ur Digitization Project: Creating a Digital Research Tool for a Divided Collection". AIA talk given on January 6, 2013 by William B. Hafford</a></li>
-                        <li><a href="http://csanet.org/newsletter/spring13/nls1301.html" target="_blank">"Digital Data -- Ur of the Chaldees: A Virtual Vision of Woolley's Excavations". Center for the Study of Architecture website article April 2013 by William B. Hafford</a></li>
-                        <li><a href="http://asorblog.org/?p=4763" target="_blank">"Legacy Excavations and Linked Open Data: A Virtual Vision of Sir Leonard Woolleyís Ur". ASOR Blog post, June 2013 by William B. Hafford</a></li>
-                        <li><a href="http://www.penn.museum/sites/expedition/archaeology-in-the-digital-age/" target="_blank">"Archaeology in the Digital Age: Creating an Online Research Tool for the Ancient City of Ur". Expedition, Volume 55 Issue 2, November 2013, by William B. Hafford</a></li>
-                    </ul>
+                <hr>
+                {% endfor %}
 
-                    <h2>2012</h2>
-                    <ul class="news-list list-unstyled">
-                        <li><a href="http://www.penn.museum/blog/world/iraq/ur-digitization-project-item-of-the-month/" target="_blank">"UR DIGITIZATION PROJECT: ITEM OF THE MONTH" (Humbaba mask) May 2012 by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-item-of-the-month-june-2012/" target="_blank">"UR DIGITIZATION PROJECT: ITEM OF THE MONTH, JUNE 2012" (Neil Gaiman learns about the disk of Enheduanna) by Brad Hafford</a></li>                    
-                        <li><a href="http://www.penn.museum/blog/world/iraq/archaeology-and-empire-the-role-of-the-great-powers/" target="_blank">"ARCHAEOLOGY AND EMPIRE: THE ROLE OF THE GREAT POWERS" (archival documents) June 2012 by Tom Pedrick</a></li>
-                        <li><a href="http://www.penn.museum/blog/world/iraq/ur-digitization-project-item-of-the-month-july-2012/" target="_blank">"UR DIGITIZATION PROJECT: ITEM OF THE MONTH, JULY 2012" (Gold Ring from the ëGreat Death Pití) by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/world/iraq/ur-digitization-project-item-of-the-month-august-2012/" target="_blank">"UR DIGITIZATION PROJECT: ITEM OF THE MONTH, AUGUST 2012" (cylinder seals) by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/collection/archival-practice/archaeology-remembering-the-human-element/" target="_blank">"ARCHAEOLOGY: REMEMBERING THE HUMAN ELEMENT" (archaeologists and workers) August 2012 by Tom Pedrick</a></li>
-                        <li><a href="http://www.penn.museum/blog/world/iraq/ur-digitization-project-september-2012/" target="_blank">"UR DIGITIZATION PROJECT: SEPTEMBER 2012" (PG 143 field notes) by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/world/iraq/ur-digitization-project-item-of-the-month-october-2012/" target="_blank">"UR DIGITIZATION PROJECT: ITEM OF THE MONTH, OCTOBER 2012" (silver garment pin) by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-november-2012/" target="_blank">"UR DIGITIZATION PROJECT: NOVEMBER 2012" (early aerial photos) by Brad Hafford</a></li>
-                        <li><a href="http://www.penn.museum/blog/museum/ur-digitization-project-december-2012/" target="_blank">"UR DIGITIZATION PROJECT: DECEMBER 2012" (records of dig life) by Brad Hafford</a></li>
-                    </ul>
-                    
-            
+                <!-- Pager -->
+                {% if posts.object_list and posts.paginator.num_pages > 1 %}
+                <ul class="pager">
+                    {% if posts.has_previous %}
+                    <li class="previous">
+                        <a href="?page={{ posts.previous_page_number }}">&larr; Older</a>
+                    </li>
+                    {% endif %}
+                    <span class="current">
+                        &nbsp;Page {{ posts.number }} of {{ posts.paginator.num_pages }}
+                    </span>
+                    {% if posts.has_next %}
+                    <li class="next">
+                        <a href="?page={{ posts.next_page_number }}">Newer &rarr;</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                {% endif %}
 
-                    {% comment %}
-                        {% for post in posts.object_list %}
-                            <!-- Blog Post -->
-                            <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
-                            <h5>Posted by {{ post.author.username }} on {{ post.created|date }}</h5>
+            </div>
+
+            <!-- Blog Sidebar Widgets Column -->
+            <div class="col-md-4">
+
+                <!-- News Roll Well -->
+                <div class="well" style="margin-top:50px;">
+                    <div class="newsroom_widget">
+                        <h2>Related News</h2>
+                        <div class="newsfeed_box">
+                            <h3>
+                                <a href="http://www.britishmuseum.org/blog.aspx" class="rsswidget" title="Latest news from the British Museum">British Museum Blog</a>
+                            </h3>
+                            <div id="BM-feed"></div>
                             <p>
-                                {{ post.body|truncatewords:50 }}
-                                <a href="{{ post.get_absolute_url }}">Read More &raquo;</a>
+                                <a href="http://blog.britishmuseum.org/feed/" class="rss icon" title="Latest news from the British Museum">Get the British Museum News Feed</a>
                             </p>
-                            <hr>
-                        {% endfor %}
-        
-                        <!-- Pager -->
-                        {% if posts.object_list and posts.paginator.num_pages > 1 %}
-                            <ul class="pager">
-                                {% if posts.has_previous %}
-                                    <li class="previous"><a href="?page={{ posts.previous_page_number }}">&larr; Older</a></li>
-                                {% else %}
-                                    <li class="previous disabled"><a href="#" disabled>&larr; Older</a></li>
-                                {% endif %}
-                                <span class="current">
-                                    &nbsp;Page {{ posts.number }} of {{ posts.paginator.num_pages }}
-                                </span>
-                                {% if posts.has_next %}
-                                    <li class="next"><a href="?page={{ posts.next_page_number }}">Newer &rarr;</a></li>
-                                {% else %}
-                                    <li class="next disabled"><a href="#" disabled>Newer &rarr;</a></li>
-                                {% endif %}
-                            </ul>
-                        {% endif %}
-                    {% endcomment %}
-    
-                </div>
-    
-                <!-- Blog Sidebar Widgets Column -->
-                <div class="col-md-4">
-    
-                    <!-- News Roll Well -->
-                    <div class="well news hidden">
-                        <h3><a href="http://www.britishmuseum.org/blog.aspx" class="rsswidget" title="Latest news from the British Museum">British Museum Blog</a></h3>
-                        <div id="BM-feed"></div>
-                    </div>                        
-                    <div class="well news hidden">
-                        <h3><a href="http://www.penn.museum/blog/tag/ur/" class="rsswidget" title="Latest news from the Penn Museum">Penn Museum Blog</a></h3>
-                        <div id="PM-feed"></div>
-                    </div>
+                        </div>                        
+                        <div class="newsfeed_box">
+                            <h3>
+                                <a href="http://www.penn.museum/blog/tag/ur/" class="rsswidget" title="Latest news from the Penn Museum">Penn Museum Blog</a>
+                            </h3>
+                            <div id="PM-feed"></div>
+                            <p>
+                                <a href="http://www.penn.museum/blog/feed/" class="rss icon" title="Latest news from the Penn Museum">Get the Penn Museum News Feed</a>
+                            </p>
+                        </div>
+                        <div class="newsfeed_box">
+                            <h3>
+                                <a href="https://github.com/sashafr/uronline/commits/master" class="rsswidget" title="Updates to UrOnline Code">Updates to UrOnline code</a>
+                            </h3>
+                            <div id="Git-feed"></div>
+                            <p>
+                                <a href="https://github.com/sashafr/uronline/commits/master.atom" class="rss icon" title="Updates to UrOnline Code">Get Code Updates</a>
+                            </p>
+                        </div>
+                    </div> 
                 </div>
             </div>
-            <!-- /.row -->
-        </div>  
-    </section>
+
+        </div>
+        <!-- /.row -->
+
+        <hr>
+
+    </div>    
     
     <!-- End Body Sections-->
     

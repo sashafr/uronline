@@ -5,18 +5,14 @@
 {% block page_title %}Collections{% endblock %}
 <!-- End Metadata -->
 
-{% block pageheader %}
-    <div class="page-header colleection">
-        <div class="container page-header-content">
-            <h1>Collections</h1>
-        </div>
-        <div class="overlay"></div>
-    </div>
-{% endblock %}
-
 {% block content %}
-    <section>
+    <div class="content-section-b" style="padding-top: 80px;">
         <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1 id="top" style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">Collections</h1>
+                </div>
+            </div>
             <div class="row">
                 {% for collection in collections %}
                     {% if forloop.counter0|divisibleby:3 %}
@@ -28,7 +24,7 @@
                             <img class="img-circle" src="{{ collection.thumbnail.get_thumbnail }}" alt="collection.thumbnail.caption" width="140" height="140">    
                         {% endif %}
                         <h2><a href="{% url 'collectiondetail' collection.pk %}">{{ collection.title }}</a></h2>
-                        <p>{{ collection.notes }} &nbsp;<a href="{% url 'collectiondetail' collection.pk %}">View details »</a></p>
+                        <p>{{ collection.notes }}</p>
                         <ul>
                             {% for sub in collection.subjectcollection_set.all|slice:":5" %}
                                 <li><a href="{% url 'subjectdetail' sub.subject.pk %}">{{ sub.subject.title }}</a></li>
@@ -43,11 +39,14 @@
                                 <li><a href="{% url 'personorgdetail' po.person_org.pk %}">{{ po.person_org.title }}</a></li>
                             {% endfor %}                            
                         </ul>
+                        <p>
+                            <a class="btn btn-default" href="{% url 'collectiondetail' collection.pk %}" role="button">See All »</a>
+                        </p>
                     </div>
                 {% endfor %}
             </div>  
         </div>
-    </section>
+    </div>
 {% endblock %}
 
 {% block js %}

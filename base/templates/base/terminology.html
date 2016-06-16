@@ -6,38 +6,36 @@
 {% block page_title %}Terminology{% endblock %}
 <!-- End Metadata -->
 
-{% block pageheader %}
-    <div class="page-header">
-        <div class="container page-header-content">
-            <h1>Terminology</h1>
-        </div>
-        <div class="overlay"></div>
-    </div>
-{% endblock %}
-
 {% block content %}
-    <section>
+    <div class="content-section-b" style="padding-top: 80px;">
         <div class="container">
             <div class="row">
-
+                <div class="col-lg-12">
+                    <h1 id="top" style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">Terminology</h1>
+                </div>
+            </div>
+            <div class="row">
                 {% for prop in cntl_props %}
-                    {% if forloop.counter0|divisibleby:2 %}
-                        </div><div class="row">
+                    {% if forloop.counter0|divisibleby:3 %}
+                        </div>
+                        <div class="row">
                     {% endif %}
-                
-                    <div class="col-md-6">
-                        <h2>{{ prop.property }}</h2>
-                        <p>{{ prop.notes }} &nbsp;<a href="{% url 'propertydetail' prop.pk %}">View details »</a></p>
-                        {% for term in prop.controlfield_set.all|slice:":25" %}
-                            <a href="{% url 'termdetail' term.pk %}" class="label label-primary">{{ term.title }}</a>
-                        {% endfor %}
-                        <br /><br />
+                    <div class="col-md-4">
+                        <h2><a href="{% url 'propertydetail' prop.pk %}">{{ prop.property }}</a></h2>
+                        <p>{{ prop.notes }}</p>
+                        <ul>
+                            {% for term in prop.controlfield_set.all|slice:":5" %}
+                                <li><a href="{% url 'termdetail' term.pk %}">{{ term.title }}</a></li>
+                            {% endfor %}
+                        </ul>
+                        <p>
+                            <a class="btn btn-default" href="{% url 'propertydetail' prop.pk %}" role="button">See All »</a>
+                        </p>
                     </div>
-                
                 {% endfor %}
-            </div> 
+            </div>  
         </div>
-    </section>
+    </div>
 {% endblock %}
 
 {% block js %}
