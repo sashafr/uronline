@@ -1,0 +1,26 @@
+html,
+body {
+    background: $black;
+    font-family: $sans-serif;
+}
+
+main {
+    background: white;
+}
+section {
+    padding: 20px 0 40px;
+    
+    &:last-of-type {
+        padding-bottom: 100px;
+    }
+}
+hr {
+    margin-top: 30px;
+    margin-bottom: 40px;
+}
+
+.img-thumbnail {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+}

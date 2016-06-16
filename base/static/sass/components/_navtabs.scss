@@ -1,0 +1,30 @@
+.nav.nav-tabs {
+    margin-bottom: 30px;
+
+    li {
+        margin-right: 30px;
+
+        a {
+            border: none;
+            font-size: 1.8rem;
+            font-weight: 400;
+            padding: 20px 0;
+            color: gray;
+
+            &:hover, &:focus, &:active {
+                background: none;
+                border: none;
+                color: gray;
+            }
+        }
+
+        &.active {
+            a {
+                border: none;
+                background: none;
+                border-bottom: 2px solid $teal;
+                color: $teal;
+            }
+        }
+    }
+}

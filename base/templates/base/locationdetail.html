@@ -6,63 +6,20 @@
 {% block page_title %}{{ location.title }}{% endblock %}
 <!-- End Metadata -->
 
-{% block body_attributes %}data-spy="scroll" data-target="#myScrollspy"{% endblock %}
-
-{% block css %}
-<style type="text/css">
-    /* Custom Styles */
-    ul.nav-tabs{
-        width: 200px;
-        margin-top: 50px;
-        border-radius: 4px;
-        border: 1px solid #ddd;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.067);
-    }
-    ul.nav-tabs li{
-        margin: 0;
-        border-top: 1px solid #ddd;
-    }
-    ul.nav-tabs li:first-child{
-        border-top: none;
-    }
-    ul.nav-tabs li a{
-        margin: 0;
-        padding: 8px 16px;
-        border-radius: 0;
-    }
-    ul.nav-tabs li.active a, ul.nav-tabs li.active a:hover{
-        background: #EDF3FE;
-        border: 1px solid #EDF3FE;
-    }
-    ul.nav-tabs li:first-child a{
-        border-radius: 4px 4px 0 0;
-    }
-    ul.nav-tabs li:last-child a{
-        border-radius: 0 0 4px 4px;
-    }
-    ul.nav-tabs.affix{
-        top: 30px; /* Set the top position of pinned element */
-    }
-</style>
+{% block pageheader %}
+    <div class="page-header detail">
+        <div class="container page-header-content">
+            <h1>{{ location.title }}</h1>
+        </div>
+        <div class="overlay"></div>
+    </div>
 {% endblock %}
 
 {% block content %}
-    <div class="content-section-b" style="padding-top: 80px;">
+    <section>
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <h1 id="top" style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
-                        {% if location.get_ancestors %}
-                            {% for anc in location.get_ancestors %}
-                                <a href="{% url 'locationdetail' anc.id %}" ><small>{{ anc.title1 }}</small></a><small> > </small>
-                            {% endfor %}
-                        {% endif %}
-                        {{ location.title }}
-                    </h1>
-                </div>
-            </div>
             <div class="row">                
-                <div class="col-lg-10">
+                <div class="col-lg-8">
                     <div class="row">
                         <div class="col-lg-12">
                            {% if properties %}
@@ -120,43 +77,22 @@
                     </div>
                     
                     {% if files %}
-                        <div class="row" id="files">
-                            <div class="col-lg-12">
-                                <div class="row">
-                                    <div class="col-sm-10">
-                                        <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">Files</h3>
-                                    </div>
+                        <div id="files">
+                            <hr />
+                            <ul class="list-unstyled">
+                                <div class="row enlarge">
+                                {% for key, file_group in files.items %}
+                                    {% for file in file_group %}
+                                        <div class="enlarge-file col-sm-4 col-md-3">
+                                            <a data-lightbox="subject-file" href="{% load_globals 'image_uri' %}{{ file.rsid.id }}" data-title="{{ file.rsid.caption }}">
+                                                <span class="glyphicon glyphicon-search"></span>
+                                                <img class="img-responsive" src="{% load_globals 'thumbnail_uri' %}{{ file.rsid.id }}">
+                                            </a>
+                                        </div>
+                                    {% endfor %}
+                                {% endfor %}
                                 </div>
-                                <div class="row">
-                                    <div class="col-lg-12">
-                                        <ul class="enlarge">
-                                            {% for key, file_group in files.items %}
-                                                <div class="row">
-                                                    <div class="col-sm-8">
-                                                        {% if key != '' %}
-                                                            <h4 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">{{ key }}</h4>
-                                                        {% endif %}
-                                                    </div>
-                                                    <div class="col-sm-4">
-                                                        <h4 style="padding-bottom: 9px; margin: 40px 0 20px;"><a data-toggle="collapse" class="collapse-button {% if not forloop.counter0 == 0 %} collapsed {% endif %}" href="#{{ forloop.counter }}-collapse" style="color: #555; ">{% if forloop.counter0 == 0 %} - Collapse {% else %} + Expand {% endif %}</a></h4>
-                                                    </div>
-                                                </div>
-                                                <div class="{% if forloop.counter0 == 0 %} in {% else %} collapse {% endif %} collapse-unit" id="{{ forloop.counter }}-collapse">
-                                                    {% for file in file_group %}
-                                                        <li style="border: 1px solid #ddd; border-radius: 4px; margin: 10px; padding: 10px;">
-                                                            <a data-lightbox="location-file" href="{% load_globals 'image_uri' %}{{ file.rsid.id }}" data-title="{{ file.rsid.caption }}">
-                                                                <img class="img-responsive" src="{% load_globals 'thumbnail_uri' %}{{ file.rsid.id }}">
-                                                            </a>
-                                                            <p style="text-align: center;">
-                                                            <a href="{% load_globals 'image_uri' %}{{ file.rsid.id }}">{{ file.rsid.title }}</a></p>
-                                                        </li>
-                                                    {% endfor %}
-                                                </div>
-                                            {% endfor %}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
+                            </ul>
                         </div>
                     {% endif %}
                     
@@ -200,11 +136,11 @@
                     {% endif %}
                     
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="row">
                         <div class="col-sm-11">
-                            <div class="well" style="margin-top: 50px;">                    
-                                <h4>References</h4>
+                            <div class="well filters">                    
+                                <h3>References</h3>
                                 {% for media_relation in related_media %}
                                     <p>
                                         <a href="{% url 'mediadetail' media_relation.media.id %}">{% get_bib_ref media_relation.media %}{% if media_relation.notes %}, {{ media_relation.notes }}{% endif %}.</a>
@@ -216,7 +152,7 @@
                 </div>                
             </div>  
         </div>
-    </div>
+    </section>
 {% endblock %}
 
 {% block js %}

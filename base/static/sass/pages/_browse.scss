@@ -1,0 +1,63 @@
+.browse-block {
+    display: block;
+    box-shadow: 0 0 5px rgba(0,0,0,0.15);
+    height: 225px;    
+    margin-bottom: 30px;
+    position: relative;
+    transition: 0.5s all;
+    background-size: cover;
+    background-position: center center;
+
+    &.browse-block-id-19 .browse-block-title { background: #1D2758; }
+    &.browse-block-id-105 .browse-block-title { background: #106158; }
+    &.browse-block-id-12 .browse-block-title { background: #100C1C; }
+    &.browse-block-id-46 .browse-block-title { background: #FBCC7C; }
+    &.browse-block-id-114 .browse-block-title { background: #F7B32E; }
+    &.browse-block-id-121 .browse-block-title { background: #F19029; }
+    &.browse-block-id-59 .browse-block-title { background: #EF5A26; }
+    &.browse-block-id-150 .browse-block-title { background: #BD4F2A; }
+
+
+    &.browse-block-lg {
+        height: 300px;
+    }
+
+    .browse-block-title {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: $lightgray;
+        padding: 10px;
+
+        h4 {
+            float: left;
+            margin: 0;
+            color: $black;
+            font-weight: 400;
+            font-family: $serif;
+            font-style: italic;
+            line-height: 1.4;
+        }
+        .arrow {
+            float: right;
+            color: $black;
+        }
+        .badge {
+            float: left;
+            background: white;
+        }
+    }
+    .browse-block-title-inverted {
+        h4 {
+            color: white;
+        }
+        .arrow {
+            color: white;
+        }
+    }
+
+    &:hover, &:focus, &:active {
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+}

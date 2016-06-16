@@ -1,0 +1,44 @@
+{% extends '_layouts/base.html' %}
+{% load staticfiles %}
+{% load base_tags %}
+
+<!-- Metadata -->
+{% block page_title %}For Developers{% endblock %}
+<!-- End Metadata -->
+
+{% block pageheader %}
+    <div class="page-header">
+        <div class="container page-header-content">
+            <h1>For Developers</h1>
+        </div>
+        <div class="overlay"></div>
+    </div>
+{% endblock %}
+
+{% block content %}
+
+    <!-- Body Sections-->
+    <section>
+        <div class="container" id="template">
+            <div class="row">
+                <div class="col-md-8">
+                    <div id="developers">
+                        <h2>About the Development</h2>
+                        <p>Check out the code on <a href="https://github.com/sashafr/uronline">Github</a>.</p>
+                    </div>
+                    <div id="licensing">
+                        <h2>Licensing</h2>
+                        <p>The data, text and images available via this service are published under a <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> license. You can read more about the British Museum and Creative Commons <a href="https://www.britishmuseum.org/about_this_site/terms_of_use/copyright_and_permissions.aspx">here</a>.</p>
+                        
+                        <h4>Assets Credited to British Museum</h4>
+                        <p>For uses not covered under the Creative Commons license, or to license content for commercial uses, visit British Museum Images at <a href="http://www.bmimages.com/">bmimages.com</a> or send an e-mail to <a href="mailto:permissions@britishmuseum.org">permissions@britishmuseum.org.</a></p>
+                        <p>Please note: these terms of use apply to data, text and those images with the credit line &copy; Trustees of the British Museum. Use of images with any other credit line requires additional permissions. For advice, please contact the British Museum?s image service: <a href="sales@bmimages.com">sales@bmimages.com.</a></p>
+    
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- End Body Sections-->
+    
+{% endblock %}

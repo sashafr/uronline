@@ -1,0 +1,69 @@
+{% extends "_layouts/base.html" %}
+{% load staticfiles base_tags mptt_tags %}
+
+<!-- Metadata -->
+{% block page_title %}Browse all objects{% endblock %}
+<!-- End Metadata -->
+
+{% block pageheader %}
+    <div class="page-header collection">
+        <div class="container page-header-content">
+            <h1>Browse all objects</h1>
+        </div>
+        <div class="overlay"></div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <section>
+        <div class="container">
+            <h2>Browse by Category</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <p>Ur Online is organized by a number of <a href="{% url 'terminology' %}">different categories</a>, from different materials and techniques to objects (like figurines) and culture. Items are also organized by the season&mdash;when the object was excavated&mdash;and the museum that houses the object today.</p><br />
+                </div>
+            </div>
+            <div class="row">
+                {% for prop in cntl_props %}
+                    {% if prop.pk == 19 or prop.pk == 12 or prop.pk == 46 or prop.pk == 59 %}
+                    <div class="col-md-4 col-lg-3">
+                        <a class="browse-block browse-block-id-{{ prop.id }}" href="{% url 'propertydetail' prop.pk %}" style="background-image:url('/static/img/categories/{{ prop.pk }}.jpg')">
+                            <div class="browse-block-title browse-block-title-inverted">
+                                <span class="badge"></span>
+                                <h4>{{ prop.property }}</h4>
+                                <span class="arrow">&rarr;</span>
+                            </div>
+                        </a>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>  
+        </div>
+    </section>
+    <hr />
+    <section>
+        <div class="container">
+            <h2>Browse Image Books</h2>
+            <div class="row">
+                {% for collection in collections %}
+                    <div class="col-md-4">
+                        <a class="browse-block browse-block-lg" href="{% url 'collectiondetail' collection.pk %}" style="background-image:url(http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ collection.thumbnail.id }})">
+                            <div class="browse-block-title">
+                                <span class="badge"></span>
+                                <h4>{{ collection.title }}</h4>
+                                <span class="arrow">&rarr;</span>
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>  
+        </div>
+    </section>
+
+{% endblock %}
+
+{% block js %}
+
+{{ block.super }}
+
+{% endblock %}
