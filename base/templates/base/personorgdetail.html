@@ -3,16 +3,24 @@
 {% load base_tags %}
 
 <!-- Metadata -->
-{% block page_title %}Person/Organization Detail{% endblock %}
+{% block page_title %}{% for n in properties|slice:":1" %}{{ n.property_value }}{% endfor %} - Person/Organization Detail{% endblock %}
 <!-- End Metadata -->
 
+{% block pageheader %}
+    <div class="page-header detail">
+        <div class="container page-header-content">
+            <h1>{% for n in properties|slice:":1" %}{{ n.property_value }}{% endfor %}</h1>
+        </div>
+        <div class="overlay"></div>
+    </div>
+{% endblock %}
+
 {% block content %}
-    <div class="content-section-b" style="padding-top: 80px;">
+    <section>
         <div class="container">
             <div class="row">
                 <div class="col-md-9">
                     <div class="row">
-                        <h3>{% for n in properties|slice:":1" %}{{ n.property }} :  {{ n.property_value }}{% endfor %}</h3>
                         {% if property_count > 1 %}
                             <table class="table table-striped">                    
                                 {% for property in properties|slice:"1:" %}
@@ -90,7 +98,7 @@
                 <div class="col-md-3">
                     <div class="row">
                         <div class="col-sm-11">
-                            <div class="well" style="margin-top: 50px;">
+                            <div class="well">
                                 <div class="img-table">
                                     <ul class="enlarge">
                                         <li>
@@ -121,7 +129,7 @@
                 </div>                    
             </div>
         </div>
-    </div>
+    </section>
 {% endblock %}
 
 {% block js %}

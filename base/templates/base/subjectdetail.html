@@ -3,31 +3,39 @@
 {% load base_tags %}
 
 <!-- Metadata -->
-{% block page_title %}Object Detail{% endblock %}
+{% block page_title %}{% for n in gen_properties|slice:":1" %}{{ n.property_value }}{% endfor %} - Object Detail{% endblock %}
 <!-- End Metadata -->
 
+{% block pageheader %}
+    <div class="page-header detail">
+        <div class="container page-header-content">
+            <h1>{% for n in gen_properties|slice:":1" %}{{ n.property_value }}{% endfor %}</h1>
+        </div>
+        <div class="overlay"></div>
+    </div>
+{% endblock %}
+
 {% block content %}
-    <div class="content-section-b" style="padding-top: 80px;">
+    <section>
         <div class="container">
             <div class="row">
-                <div class="col-md-9">
-                    <div class="row">
-                        <h3>{% for n in gen_properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}</h3>
+                <div class="col-md-8">
+
                         <ul class="nav nav-tabs">
                             <li class="active"><a href="#general" data-toggle="tab">General</a></li>
                             <li><a href="#archival" data-toggle="tab">Archival</a></li>
                             <li><a href="#conservation" data-toggle="tab">Conservation/Analysis</a></li>
                         </ul>
                         <div class="tab-content">
-                            <div id="general" class="tab-pane active" style="margin-top: 20px;">
+                            <div id="general" class="tab-pane active">
                                 {% if property_count > 1 %}
                                     <table class="table table-striped">
                                         {% for cp in control_properties %}
                                             <tr>
-                                                <td>
+                                                <td width="25%">
                                                     <a href="{% url 'propertydetail' cp.control_property.id %}?type=s" data-toggle="popover" data-html="true" data-content="{{ cp.control_property.notes }}">{{ cp.control_property }}:</a>
                                                 </td>
-                                                <td>
+                                                <td width="75%">
                                                     {% if cp.control_property_value.get_ancestors %}
                                                         {% for anc in cp.control_property_value.get_ancestors %}
                                                             <a href="{% url 'termdetail' anc.id %}" data-toggle="popover" data-html="true" data-content="{{ anc.definition }}">{{ anc.title }}</a> >>
@@ -46,38 +54,35 @@
                                         {% endfor %}                    
                                         {% for property in gen_properties|slice:"1:" %}
                                             <tr>
-                                                <td>
+                                                <td width="25%">
                                                     <a href="{% url 'propertydetail' property.property.id %}?type=s" data-toggle="popover" data-html="true" data-content="{{ property.property.notes }}">{{ property.property }}:</a>
                                                 </td>
-                                                <td>
+                                                <td width="75%">
                                                     {{ property.property_value }}{% if property.notes %}<sup>{{ property.fn }}</sup>{% endif %}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% if property.inline_notes %}<small class="text-muted">({{ property.inline_notes }})</small>{% endif %}
                                                 </td>
                                             </tr>
                                         {% endfor %}
                                     </table>
-                                    <table>
+                                    <ul class="list-unstyled">
                                         {% for fn in gen_footnotes %}
-                                            <tr>
-                                               <td><small>[{{ forloop.counter }}] {{ fn }}</small></td> 
-                                            </tr>
+                                            <li><p class="text-muted"><em>[{{ forloop.counter }}] {{ fn }}</em></p></li> 
                                         {% endfor %}
-                                    </table>
+                                    </ul>
                                 {% else %}
-                                    <br /><br />
-                                    <div class="alert alert-warning" role="alert">
-                                        <p>This object is currently undergoing analysis. More information to come...</p>
+                                    <div class="alert alert-info" role="alert">
+                                        <p>This object is currently undergoing analysis. More information to come.</p>
                                     </div>
                                 {% endif %}
                             </div>
-                            <div id="archival" class="tab-pane" style="margin-top: 20px;">
+                            <div id="archival" class="tab-pane">
                                 {% if arc_properties %}
                                     <table class="table table-striped">
                                         {% for cp in arc_control_properties %}
                                             <tr>
-                                                <td>
+                                                <td width="25%">
                                                     <a href="{% url 'propertydetail' cp.control_property.id %}?type=s" data-toggle="popover" data-html="true" data-content="{{ cp.control_property.notes }}">{{ cp.control_property }}:</a>
                                                 </td>
-                                                <td>
+                                                <td width="75%">
                                                     {% if cp.control_property_value.get_ancestors %}
                                                         {% for anc in cp.control_property_value.get_ancestors %}
                                                             <a href="{% url 'termdetail' anc.id %}" data-toggle="popover" data-html="true" data-content="{{ anc.definition }}">{{ anc.title }}</a> >>
@@ -96,38 +101,35 @@
                                         {% endfor %}                                    
                                         {% for property in arc_properties %}
                                             <tr>
-                                                <td>
+                                                <td width="25%">
                                                     <a href="{% url 'propertydetail' property.property.id %}?type=s" data-toggle="popover" data-html="true" data-content="{{ property.property.notes }}">{{ property.property }}:</a>
                                                 </td>
-                                                <td>
+                                                <td width="75%">
                                                     {{ property.property_value }}{% if property.notes %}<sup>{{ property.fn }}</sup>{% endif %}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% if property.inline_notes %}<small class="text-muted">({{ property.inline_notes }})</small>{% endif %}
                                                 </td>
                                             </tr>
                                         {% endfor %}
                                     </table>
-                                    <table>
+                                    <ul class="list-unstyled">
                                         {% for fn in arc_footnotes %}
-                                            <tr>
-                                               <td><small>[{{ forloop.counter }}] {{ fn }}</small></td> 
-                                            </tr>
+                                            <li><p class="text-muted"><em>[{{ forloop.counter }}] {{ fn }}</em></p></li> 
                                         {% endfor %}
-                                    </table>                                    
+                                    </ul>                                    
                                 {% else %}
-                                    <br /><br />
-                                    <div class="alert alert-warning" role="alert">
-                                        <p>This object is currently undergoing analysis. More information to come...</p>
+                                    <div class="alert alert-info" role="alert">
+                                        <p>This object is currently undergoing analysis. More information to come.</p>
                                     </div>
                                 {% endif %}
                             </div>  
-                            <div id="conservation" class="tab-pane" style="margin-top: 20px;">
+                            <div id="conservation" class="tab-pane">
                                 {% if con_properties or con_control_properties %}
                                     <table class="table table-striped">
                                         {% for cp in con_control_properties %}
                                             <tr>
-                                                <td>
+                                                <td width="25%">
                                                     <a href="{% url 'propertydetail' cp.control_property.id %}?type=s" data-toggle="popover" data-html="true" data-content="{{ cp.control_property.notes }}">{{ cp.control_property }}:</a>
                                                 </td>
-                                                <td>
+                                                <td width="75%">
                                                     {% if cp.control_property_value.get_ancestors %}
                                                         {% for anc in cp.control_property_value.get_ancestors %}
                                                             <a href="{% url 'termdetail' anc.id %}" data-toggle="popover" data-html="true" data-content="{{ anc.definition }}">{{ anc.title }}</a> >>
@@ -146,115 +148,89 @@
                                         {% endfor %}                                      
                                         {% for property in con_properties %}
                                             <tr>
-                                                <td>
+                                                <td width="25%">
                                                     <a href="{% url 'propertydetail' property.property.id %}?type=s" data-toggle="popover" data-html="true" data-content="{{ property.property.notes }}">{{ property.property }}:</a>
                                                 </td>
-                                                <td>
+                                                <td width="75%">
                                                     {{ property.property_value }}{% if property.notes %}<sup>{{ property.fn }}</sup>{% endif %}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% if property.inline_notes %}<small class="text-muted">({{ property.inline_notes }})</small>{% endif %}
                                                 </td>
                                             </tr>
                                         {% endfor %}
                                     </table>
-                                    <table>
+                                    <ul class="list-unstyled">
                                         {% for fn in con_footnotes %}
-                                            <tr>
-                                               <td><small>{{ forloop.counter }}. {{ fn }}</small></td> 
-                                            </tr>
+                                               <li><p class="text-muted"><em>{{ forloop.counter }}. {{ fn }}</em></p></li> 
                                         {% endfor %}
-                                    </table>                                    
+                                    </ul>                                    
                                 {% else %}
-                                    <br /><br />
                                     <div class="alert alert-warning" role="alert">
-                                        <p>This object is currently undergoing analysis. More information to come...</p>
+                                        <p>This object is currently undergoing analysis. More information to come.</p>
                                     </div>
                                 {% endif %}
                             </div>                              
                         </div> 
-                    </div>
                     {% if files %}
-                        <div class="row" id="files">
-                            <div class="col-lg-12">
-                                <div class="row">
-                                    <div class="col-sm-10">
-                                        <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">Files</h3>
-                                    </div>
+                        <div id="files">
+                            <hr />
+                            <ul class="list-unstyled">
+                                <div class="row enlarge">
+                                {% for key, file_group in files.items %}
+                                    {% for file in file_group %}
+                                        <div class="enlarge-file col-sm-4 col-md-3">
+                                            <a data-lightbox="subject-file" href="{% load_globals 'image_uri' %}{{ file.rsid.id }}" data-title="{{ file.rsid.caption }}">
+                                                <span class="glyphicon glyphicon-search"></span>
+                                                <img class="img-responsive" src="{% load_globals 'thumbnail_uri' %}{{ file.rsid.id }}">
+                                            </a>
+                                        </div>
+                                    {% endfor %}
+                                {% endfor %}
                                 </div>
-                                <div class="row">
-                                    <div class="col-lg-12">
-                                        <ul class="enlarge">
-                                            {% for key, file_group in files.items %}
-                                                <div class="row">
-                                                    <div class="col-sm-8">
-                                                        {% if key != '' %}
-                                                            <h4 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">{{ key }}</h4>
-                                                        {% endif %}
-                                                    </div>
-                                                    <div class="col-sm-4">
-                                                        <h4 style="padding-bottom: 9px; margin: 40px 0 20px;"><a data-toggle="collapse" class="collapse-button {% if not forloop.counter0 == 0 %} collapsed {% endif %}" href="#{{ forloop.counter }}-collapse" style="color: #555; ">{% if forloop.counter0 == 0 %} - Collapse {% else %} + Expand {% endif %}</a></h4>
-                                                    </div>
-                                                </div>
-                                                <div class="{% if forloop.counter0 == 0 %} in {% else %} collapse {% endif %} collapse-unit" id="{{ forloop.counter }}-collapse">
-                                                    {% for file in file_group %}
-                                                        <li style="border: 1px solid #ddd; border-radius: 4px; margin: 10px; padding: 10px;">
-                                                            <a data-lightbox="subject-file" href="{% load_globals 'image_uri' %}{{ file.rsid.id }}" data-title="{{ file.rsid.caption }}">
-                                                                <img class="img-responsive" src="{% load_globals 'thumbnail_uri' %}{{ file.rsid.id }}">
-                                                            </a>
-                                                            <p style="text-align: center;">
-                                                            <a href="{% load_globals 'image_uri' %}{{ file.rsid.id }}">{{ file.rsid.title }}</a></p>
-                                                        </li>
-                                                    {% endfor %}
-                                                </div>
-                                            {% endfor %}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
+                            </ul>
                         </div>
                     {% endif %}                    
                 </div>
-                <div class="col-md-3">
-                    <div class="row">
-                        <div class="col-sm-11">
-                            <div class="well" style="margin-top: 50px;">
-                                <div class="img-table">
-                                    <ul class="enlarge">
-                                        <li>
-                                            <img class="img-responsive" src="{{ subject.get_thumbnail }}">
-                                        </li>
-                                    </ul>
-                                </div>
-                                <hr />
-                                <h4>Context</h4>
-                                {% for location_relation in subject.locationsubjectrelations_set.all %}
-                                    <p>{% get_loc_ancestors location_relation.location as location_tree %}
-                                    {% has_spec_context location_tree as spec_context %}
-                                    {% if spec_context %}{{ spec_context }}{% endif %}
-                                    {% for loc in location_tree %}
-                                        {% if forloop.counter0 > 0 %} >> {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
-                                    {% endfor %}
-                                    {% if location_relation.notes %}: {{ location_relation.notes }}{% endif %}</p>
+                <div class="col-md-4">
+                    {% if subject.get_thumbnail != 'http://ur.iaas.upenn.edu/static/img/no_img.jpg' %}
+                        <img class="img-responsive img-full-width" src="{% load_globals 'image_uri' %}{{ subject.get_thumbnail }}">
+                    {% endif %}
+                    <div class="well filters">
+                    
+                        {% if subject.locationsubjectrelations_set.all %}
+                            <h3>Context</h3>
+                            {% for location_relation in subject.locationsubjectrelations_set.all %}
+                                <p>{% get_loc_ancestors location_relation.location as location_tree %}
+                                {% has_spec_context location_tree as spec_context %}
+                                {% if spec_context %}{{ spec_context }}{% endif %}
+                                {% for loc in location_tree %}
+                                    {% if forloop.counter0 > 0 %} >> {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
                                 {% endfor %}
-                                <hr />
-                                <h4>References</h4>
-                                {% for media_relation in related_media %}
-                                    <p>
-                                        <a href="{% url 'mediadetail' media_relation.media.id %}">{% get_bib_ref media_relation.media %}{% if media_relation.notes %}, {{ media_relation.notes }}{% endif %}.</a>
-                                    </p>
-                                {% endfor %}
-                                <hr />
-                                <h4>Linked Resources</h4>
-                                {% for web in related_web %}
-                                    <p>
-                                        <a href="{{ web.link }}">{{ web.source.title }}</a>
-                                    </p>
-                                {% endfor %}
-                            </div>
-                        </div>
+                                {% if location_relation.notes %}: {{ location_relation.notes }}{% endif %}</p>
+                            {% endfor %}
+                            <hr />
+                        {% endif %}
+
+                        {% if related_media %}
+                            <h3>References</h3>
+                            {% for media_relation in related_media %}
+                                <p>
+                                    <a href="{% url 'mediadetail' media_relation.media.id %}">{% get_bib_ref media_relation.media %}{% if media_relation.notes %}, {{ media_relation.notes }}{% endif %}.</a>
+                                </p>
+                            {% endfor %}
+                            <hr />
+                        {% endif %}
+                        {% if related_web %}
+                            <h3>Linked Resources</h3>
+                            {% for web in related_web %}
+                                <p>
+                                    <a href="{{ web.link }}">{{ web.source.title }}</a>
+                                </p>
+                            {% endfor %}
+                        {% endif %}
                     </div>
                 </div>                    
             </div>
         </div>
-    </div>
+    </section>
 {% endblock %}
 
 {% block js %}

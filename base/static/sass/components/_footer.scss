@@ -1,0 +1,117 @@
+footer {
+    display: flex;
+
+    @media screen and #{$screen-sm} {
+        display: block;
+    }
+    @media screen and #{$screen-xs} {
+        display: block;
+    }
+
+    .license {
+        display: inline-block;
+        
+        @media screen and #{$screen-xs} {
+            display: none;
+        }
+
+        & + ul {
+            display: inline-block;
+            margin-top: 5px;
+            margin-left: 15px;
+
+            @media screen and #{$screen-xs} {
+                display: none;
+            }
+
+            li {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            a {
+                color: white;
+                font-weight: 700;
+                border-bottom: 1px dotted white;
+                transition: 0.5s all;
+
+                &:hover, &:focus, &:active {
+                    color: white;
+                    text-decoration: none;
+                    opacity: 0.65;
+                }
+            }
+        }
+    }
+    .footer-inner {
+        padding: 30px 50px 40px;
+    }
+    .left {
+        background: url(../img/backgrounds/footer-bg@2x.jpg);
+        background-size: cover;
+        width: 80%;
+
+        @media screen and #{$screen-gtmd} {
+            width: 75%;
+        }
+        @media screen and #{$screen-sm} {
+            width: 100%;
+        }
+        @media screen and #{$screen-xs} {
+            width: 100%;
+        }
+
+        h3 {
+            font-family: $serif;
+            font-size: 2.7rem;
+            font-weight: 400;
+            color: white;
+        }
+        p {
+            font-family: $serif;
+            font-size: 1.8rem;
+            color: white;
+            line-height: 2.1;
+            max-width: 800px;
+            margin-bottom: 20px;
+
+            @media screen and #{$screen-xs} {
+                font-size: 1.6rem;
+                line-height: 1.8;
+            }
+
+            a {
+                font-weight: 500;
+                color: white;
+                border-bottom: 1px dotted white;
+            }
+        }
+    }
+    .right {
+        background: $lightgray;
+        width: 20%;
+
+        @media screen and #{$screen-gtmd} {
+            width: 25%;
+        }
+        @media screen and #{$screen-sm} {
+            width: 100%;
+        }
+        @media screen and #{$screen-xs} {
+            width: 100%;
+        }
+
+        img {
+            max-width: 100%;
+            margin-bottom: 15px;
+
+            @media screen and #{$screen-sm} {
+                width: 30%;
+                margin-right: 2%;
+                margin-bottom: 0;
+            }
+        }
+        a:last-of-type img {
+            margin: 0;
+        }
+    }
+}
