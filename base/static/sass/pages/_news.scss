@@ -1,0 +1,50 @@
+.news {
+    border-radius: 0;
+    border: 0;
+    padding: 19px 19px 11px;
+
+    h3 {
+        margin: -20px -20px 0;
+        padding: 12px 20px;
+        color: white;
+        background: $gold;
+        font-size: 1.6rem;
+
+        a { color: white; }
+    }
+    ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+
+        li {
+            padding: 5px 0;
+
+            &:first-of-type {
+                margin-top: 8px;
+            }
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+    }
+}
+
+.news-list {
+    font-size: 1.6rem;
+    line-height: 2.1;
+
+    a {
+        color: $teal;
+        font-weight: 700;
+        border-bottom: 1px dotted $teal;
+        transition: 0.5s all;
+
+        &:hover, &:focus, &:active {
+            color: $teal;
+            text-decoration: none;
+            opacity: 0.65;
+        }
+    }
+}

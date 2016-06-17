@@ -1,0 +1,96 @@
+.page-header {
+    background-image: url(../img/backgrounds/background-06@2x.jpg);
+    background-size: cover;
+    min-height: 300px;
+    padding-top: 120px;
+    margin: -20px 0 60px;
+    border: none;
+    padding-bottom: 0;
+    position: relative;
+
+    &.search {
+        background-image: url(../img/backgrounds/background-02@2x.jpg);
+    }
+    &.detail {
+        background-image: url(../img/backgrounds/background-04@2x.jpg);
+    }
+    &.collection {
+        background-image: url(../img/backgrounds/background-01@2x.jpg);
+    }
+
+    &.homepage {
+        background-image: url(../img/backgrounds/background-01@2x.jpg);
+        min-height: 700px;
+        margin-bottom: 0;
+        text-align: center;
+
+        .page-header-content {
+            h1 {
+                font-weight: 300;
+                margin: 150px 0 50px !important;
+                font-size: 7.2rem;
+    
+                @media screen and #{$screen-xs} {
+                    margin: 75px 0 35px !important;
+                    font-size: 6.0rem;
+                }
+    
+                strong {
+                    color: $gold;
+                }
+            }
+        }
+    }
+    &.bottomless {
+        margin-bottom: 0;
+    }
+    &.expanded {
+        min-height: 700px;
+    }
+
+    .overlay {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0,0,0,0.35);
+        z-index: 0;
+    }
+    .page-header-content {
+        z-index: 1;
+        position: relative;
+
+        h1 {
+            margin: 50px 0 0;
+            font-size: 5.4rem;
+            font-weight: 300;
+            color: white;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
+
+            & + p {
+                margin-top: 5px;
+            }
+        }
+        p {
+            margin: 0;
+            font-size: 1.8rem;
+            font-style: italic;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
+            line-height: 1.8;
+            color: white;
+        }
+        a:not(.btn) {
+            color: white;
+            font-weight: 700;
+            border-bottom: 1px dotted white;
+            transition: 0.5s all;
+    
+            &:hover, &:focus, &:active {
+                color: white;
+                text-decoration: none;
+                opacity: 0.65;
+            }
+        }
+    }
+}
