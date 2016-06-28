@@ -4,7 +4,7 @@ from django.utils import timezone
 from celery import shared_task
 import urllib, urllib2, pycurl, json
 from base.models import *
-from base.utils import update_display_fields
+from base.utils import *
 from django.conf import settings
 from os import listdir, remove
 from os.path import isfile, join, splitext

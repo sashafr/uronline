@@ -1,11 +1,12 @@
 from django.contrib import admin
 from base.models import *
+from base.forms import BulkAddCollectionForm, BulkEditForm
 from django.forms.formsets import formset_factory
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Max
 import re
 from django.forms import Textarea, ModelChoiceField, ModelForm
 from django.utils.translation import ugettext_lazy as _
-from base.utils import update_display_fields
+from base.utils import update_display_fields, flatten_to_csv, serialize_data
 from mptt.admin import MPTTModelAdmin
 from suit_ckeditor.widgets import CKEditorWidget
 from mptt.forms import TreeNodeChoiceField
@@ -27,6 +28,12 @@ from filer.fields.image import FilerFileField
 from django.conf import settings
 import sys
 from django.core.paginator import EmptyPage, InvalidPage, Paginator
+from django.contrib.contenttypes.models import ContentType
+from django.shortcuts import render_to_response
+from django.template import RequestContext
+from base.serializers import *
+from rest_framework.renderers import JSONRenderer
+from rest_framework_xml.renderers import XMLRenderer
 
 OPERATOR = (
     ('and', 'AND'),
@@ -101,7 +108,7 @@ class PaginationInline(admin.TabularInline):
                     self._queryset = page.object_list
 
         PaginationFormSet.per_page = self.per_page
-        return PaginationFormSet
+        return PaginationFormSet       
 
 """ ADMIN ACTIONS """
 
@@ -731,6 +738,53 @@ def import_data(modeladmin, request, queryset):
             
 import_data.short_description = "Import data from selected CSV files"
 
+def export_data(modeladmin, request, queryset, format):
+    """ Export selected items in requested format. """
+    
+    filename = ''
+    entity = ''
+    is_file = False
+    if queryset.model is Subject:
+        filename += 'object_admin_export_'
+        entity = 'subject' 
+    elif queryset.model is Location:
+        filename += 'location_admin_export_'
+        entity = 'location'
+    elif queryset.model is Media:
+        filename += 'media_admin_export_'
+        entity = 'media'
+    elif queryset.model is PersonOrg:
+        filename += 'people_admin_export_'
+        entity = 'people'
+    elif queryset.model is File:
+        filename += 'file_admin_export_'
+        entity = 'file'
+    filename += datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+    
+    if format == 'json':
+        return serialize_data(filename, queryset, entity, 'json', is_admin = True) 
+    elif format == 'xml':
+        return serialize_data(filename, queryset, entity, 'xml', is_admin = True)
+    elif format == 'csv':
+        if queryset.model is File:
+            is_file = True
+        return flatten_to_csv(filename, queryset, entity, is_file = is_file, is_admin = True)
+            
+def export_data_json(modeladmin, request, queryset):
+    return export_data(modeladmin, request, queryset, 'json')
+    
+export_data_json.short_description = 'Exported selected items as JSON.'
+
+def export_data_xml(modeladmin, request, queryset):
+    return export_data(modeladmin, request, queryset, 'xml')
+    
+export_data_xml.short_description = 'Exported selected items as XML.'
+
+def export_data_csv(modeladmin, request, queryset):
+    return export_data(modeladmin, request, queryset, 'csv')
+    
+export_data_csv.short_description = 'Exported selected items as CSV.'
+
 def rollback_import(modeladmin, request, queryset):
     """ Deletes all data added created by this upload """
     
@@ -741,7 +795,7 @@ def rollback_import(modeladmin, request, queryset):
         upload.imported = False
         upload.save()
         
-rollback_import.short_description = "Rollback import - PERMANENTLY DELETE all data created by import"
+rollback_import.short_description = "Rollback import - PERMANENTLY DELETE all data created by import."
 
 def generate_thumbnail(modeladmin, request, queryset):
     """ Sets thumbnail for all related entities. If a thumbnail is already tagged, its replaced. """
@@ -792,7 +846,224 @@ def generate_thumbnail(modeladmin, request, queryset):
                 pof.thumbnail = True
                 pof.save()                
 
-generate_thumbnail.short_description = "Set these files to thumbnail for all related entities."
+generate_thumbnail.short_description = "Set selected files to thumbnail for all related entities."
+
+def bulk_add_collection(modeladmin, request, queryset):
+    """ Add selected items to collection in bulk. """
+    
+    form = None
+
+    if 'apply' in request.POST:
+        form = BulkAddCollectionForm(request.POST)
+
+        if form.is_valid():
+            collection = form.cleaned_data['collection']
+            max_order = 0
+            if queryset.model is Subject:
+                max_order_query = SubjectCollection.objects.all().aggregate(Max('order'))
+            elif queryset.model is Location:
+                max_order_query = LocationCollection.objects.all().aggregate(Max('order'))
+            elif queryset.model is Media:
+                max_order_query = MediaCollection.objects.all().aggregate(Max('order'))
+            elif queryset.model is PersonOrg:
+                max_order_query = PersonOrgCollection.objects.all().aggregate(Max('order'))
+            elif queryset.model is File:
+                max_order_query = FileCollection.objects.all().aggregate(Max('order'))
+            
+            if max_order_query:
+                max_order = max_order_query['order__max']
+                
+            notes = form.cleaned_data['notes']
+
+            for item in queryset:
+                if queryset.model is Subject:
+                    new_entry = SubjectCollection()
+                    new_entry.subject = item
+                elif queryset.model is Location:
+                    new_entry = LocationCollection()
+                    new_entry.location = item
+                elif queryset.model is Media:
+                    new_entry = MediaCollection()
+                    new_entry.media = item
+                elif queryset.model is PersonOrg:
+                    new_entry = PersonOrgCollection()
+                    new_entry.person_org = item
+                elif queryset.model is File:
+                    new_entry = FileCollection()
+                    new_entry.file = item                    
+                new_entry.collection = collection
+                new_entry.notes = notes
+                new_entry.order = max_order + 1
+                max_order += 1
+                new_entry.save()
+
+            modeladmin.message_user(request, _("%s %s." % ('Selected items added to collection ', collection)))
+
+            return HttpResponseRedirect(request.get_full_path())
+
+    if not form:
+        form = BulkAddCollectionForm(initial={'_selected_action': request.POST.getlist(admin.ACTION_CHECKBOX_NAME)})
+
+    opts = queryset.model._meta
+    app_label = opts.app_label
+
+    return render_to_response(
+        'admin/bulk_add_collection.html',
+        {'items': queryset, 'bulk_add_form': form, "opts": opts, "app_label": app_label},
+        context_instance = RequestContext(request)
+    )
+
+bulk_add_collection.short_description = 'Add selected items to collection.'
+
+def bulk_edit(modeladmin, request, queryset):
+    """ Bulk edit selected items. """
+    
+    form = None
+
+    if 'apply' in request.POST:
+        form = BulkEditForm(request.POST)
+
+        if form.is_valid():
+            property = form.cleaned_data['property']
+            cf_value = form.cleaned_data['cf_value']
+            ff_value = form.cleaned_data['ff_value']
+            inline_notes = form.cleaned_data['inline_notes']
+            footnotes = form.cleaned_data['footnotes']
+            overwrite = form.cleaned_data['overwrite']
+            delete_only = form.cleaned_data['delete_only']
+            
+            if queryset.model is Subject:
+                entity_type = 'SO'
+            elif queryset.model is Location:
+                entity_type = 'SL'
+            elif queryset.model is Media:
+                entity_type = 'MP'
+            elif queryset.model is File:
+                entity_type = 'MF'
+            else:
+                entity_type = 'PO'
+            
+            if not delete_only and (property.control_field and not cf_value):
+                modeladmin.message_user(request, 'UPDATE FAILED: If you would like to update a Controlled Property, you must selected a Controlled Term', level=messages.ERROR)
+
+                return HttpResponseRedirect(request.get_full_path())                
+            elif not delete_only and (not property.control_field and (not ff_value or ff_value == '')):
+                modeladmin.message_user(request, 'UPDATE FAILED: If you would like to update a Free-Form Property, you must provide a Free-Form value', level=messages.ERROR)
+
+                return HttpResponseRedirect(request.get_full_path())
+            if property.primary_type != 'AL' and property.primary_type != entity_type:
+                modeladmin.message_user(request, 'UPDATE FAILED: You selected a property which is not available for this Entity. If you would like to make it available, go to the Descriptive Property table and change Primary Type to All', level=messages.ERROR)
+
+                return HttpResponseRedirect(request.get_full_path())
+            if cf_value and cf_value.type != property:
+                modeladmin.message_user(request, 'UPDATE FAILED: You selected a Controlled Term that is not a value for the selected Property', level=messages.ERROR)
+
+                return HttpResponseRedirect(request.get_full_path())                  
+
+            for item in queryset:
+                if queryset.model is Subject:
+                    if property.control_field:
+                        if overwrite or delete_only:
+                            control_props = SubjectControlProperty.objects.filter(subject = item, control_property = property)
+                            for cp in control_props:
+                                cp.delete()
+                        if not delete_only:
+                            new_cp = SubjectControlProperty(subject = item, control_property = property, control_property_value = cf_value, notes = footnotes, inline_notes = inline_notes, last_mod_by = request.user)
+                            new_cp.save()
+                    else:
+                        if overwrite or delete_only:
+                            ff_props = SubjectProperty.objects.filter(subject = item, property = property)
+                            for fp in ff_props:
+                                fp.delete()
+                        if not delete_only:
+                            new_fp = SubjectProperty(subject = item, property = property, property_value = ff_value, notes = footnotes, inline_notes = inline_notes, last_mod_by = request.user)
+                            new_fp.save()                        
+                elif queryset.model is Location:
+                    if property.control_field:
+                        if overwrite or delete_only:
+                            control_props = LocationControlProperty.objects.filter(location = item, control_property = property)
+                            for cp in control_props:
+                                cp.delete()
+                        if not delete_only:
+                            new_cp = LocationControlProperty(location = item, control_property = property, control_property_value = cf_value, notes = footnotes, inline_notes = inline_notes, last_mod_by = request.user)
+                            new_cp.save()
+                    else:
+                        if overwrite or delete_only:
+                            ff_props = LocationProperty.objects.filter(location = item, property = property)
+                            for fp in ff_props:
+                                fp.delete()
+                        if not delete_only:
+                            new_fp = LocationProperty(location = item, property = property, property_value = ff_value, notes = footnotes, inline_notes = inline_notes, last_mod_by = request.user)
+                            new_fp.save()   
+                elif queryset.model is Media:
+                    if property.control_field:
+                        if overwrite or delete_only:
+                            control_props = MediaControlProperty.objects.filter(media = item, control_property = property)
+                            for cp in control_props:
+                                cp.delete()
+                        if not delete_only:
+                            new_cp = MediaControlProperty(media = item, control_property = property, control_property_value = cf_value, notes = footnotes, inline_notes = inline_notes, last_mod_by = request.user)
+                            new_cp.save()
+                    else:
+                        if overwrite or delete_only:
+                            ff_props = MediaProperty.objects.filter(media = item, property = property)
+                            for fp in ff_props:
+                                fp.delete()
+                        if not delete_only:
+                            new_fp = MediaProperty(media = item, property = property, property_value = ff_value, notes = footnotes, inline_notes = inline_notes, last_mod_by = request.user)
+                            new_fp.save()   
+                elif queryset.model is PersonOrg:
+                    if property.control_field:
+                        if overwrite or delete_only:
+                            control_props = PersonOrgControlProperty.objects.filter(person_org = item, control_property = property)
+                            for cp in control_props:
+                                cp.delete()
+                        if not delete_only:
+                            new_cp = PersonOrgControlProperty(person_org = item, control_property = property, control_property_value = cf_value, notes = footnotes, inline_notes = inline_notes, last_mod_by = request.user)
+                            new_cp.save()
+                    else:
+                        if overwrite or delete_only:
+                            ff_props = PersonOrgProperty.objects.filter(person_org = item, property = property)
+                            for fp in ff_props:
+                                fp.delete()
+                        if not delete_only:
+                            new_fp = PersonOrgProperty(person_org = item, property = property, property_value = ff_value, notes = footnotes, inline_notes = inline_notes, last_mod_by = request.user)
+                            new_fp.save()   
+                elif queryset.model is File:
+                    if property.control_field:
+                        if overwrite or delete_only:
+                            control_props = FileControlProperty.objects.filter(file = item, control_property = property)
+                            for cp in control_props:
+                                cp.delete()
+                        if not delete_only:
+                            new_cp = FileControlProperty(file = item, control_property = property, control_property_value = cf_value, notes = footnotes, inline_notes = inline_notes, last_mod_by = request.user)
+                            new_cp.save()
+                    else:
+                        if overwrite or delete_only:
+                            ff_props = FileProperty.objects.filter(file = item, property = property)
+                            for fp in ff_props:
+                                fp.delete()
+                        if not delete_only:
+                            new_fp = FileProperty(file = item, property = property, property_value = ff_value, notes = footnotes, inline_notes = inline_notes, last_mod_by = request.user)
+                            new_fp.save()
+
+            modeladmin.message_user(request, _("%s %s." % ('Selected property edited: ', property)))
+
+            return HttpResponseRedirect(request.get_full_path())
+
+    if not form:
+        form = BulkEditForm(initial={'_selected_action': request.POST.getlist(admin.ACTION_CHECKBOX_NAME)})
+
+    opts = queryset.model._meta
+    app_label = opts.app_label
+
+    return render_to_response(
+        'admin/bulk_edit.html',
+        {'items': queryset, 'bulk_edit_form': form, "opts": opts, "app_label": app_label},
+        context_instance = RequestContext(request)
+    )
+
+bulk_edit.short_description = 'Bulk edit selected items.'
                 
 """ SPECIAL FORM FIELDS """
 
@@ -1651,8 +1922,8 @@ admin.site.register(ControlField, ControlFieldAdmin)
 """ ARCHAEOLOGICAL ENTITY ADMIN """
 
 class FileAdmin(admin.ModelAdmin):
-    fields = ['get_thumbnail_admin', 'get_download_admin', 'title', 'notes', 'public', 'uploaded', 'upload_batch']
-    readonly_fields = ('get_thumbnail_admin', 'get_download_admin', 'title', 'uploaded', 'upload_batch')    
+    fields = ['get_thumbnail_admin', 'get_download_admin', 'title', 'get_uri', 'notes', 'public', 'uploaded', 'upload_batch']
+    readonly_fields = ('get_thumbnail_admin', 'get_download_admin', 'title', 'get_uri', 'uploaded', 'upload_batch')    
     inlines = [FilePropertyInline, FileControlPropertyInline, FileSubjectRelationsInline, FileLocationRelationsInline, FileMediaRelationsInline, FilePersonOrgRelationsInline, FileCollectionInline, FileLinkedDataInline]  
     search_fields = ['title', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3']
     list_display = ('get_thumbnail_admin', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3', 'filetype', 'public', 'uploaded', 'upload_batch')
@@ -1662,12 +1933,12 @@ class FileAdmin(admin.ModelAdmin):
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
     advanced_search_form = FileAdminAdvSearchForm()
-    actions = [generate_thumbnail]
+    actions = [generate_thumbnail, bulk_add_collection, bulk_edit, export_data_json, export_data_xml, export_data_csv]
     suit_form_tabs = (('general', 'File'), ('relations', 'Relations'), ('collections', 'Collections'), ('linked', 'Linked Data'))
     fieldsets = [
         (None, {
             'classes': ('suit-tab', 'suit-tab-general'),
-            'fields': ['get_thumbnail_admin', 'get_download_admin', 'title', 'notes', 'public', 'uploaded', 'upload_batch']
+            'fields': ['get_thumbnail_admin', 'get_download_admin', 'title', 'get_uri', 'notes', 'public', 'uploaded', 'upload_batch']
         }),
     ]    
     

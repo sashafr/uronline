@@ -790,16 +790,16 @@ class File(models.Model):
     def __unicode__(self):
         return self.title
         
-    def get_absolute_url(self):
-        return reverse('filedetail', args=[str(self.id)])
+    # def get_absolute_url(self):
+        # return reverse('filedetail', args=[str(self.id)])
         
-    def get_full_absolute_url(self):
-        domain = settings.ALLOWED_HOSTS[0]
+    # def get_full_absolute_url(self):
+        # domain = settings.ALLOWED_HOSTS[0]
         
-        if domain.startswith('.'):
-            domain = domain[1:]
+        # if domain.startswith('.'):
+            # domain = domain[1:]
 
-        return 'http://%s%s' % (domain, self.get_absolute_url())        
+        # return 'http://%s%s' % (domain, self.get_absolute_url())        
         
     def save(self, *args, **kwargs):
         """ Auto fills the main title field. If file does not have a value for title1, title2, or title3,
@@ -833,6 +833,10 @@ class File(models.Model):
         return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, self.get_thumbnail())
     get_thumbnail_admin.short_description = 'Thumbnail'
     get_thumbnail_admin.allow_tags = True
+    
+    def get_uri(self):
+        return GlobalVars.objects.get(pk=13).val + str(self.id)
+    get_uri.short_description = 'URI'
 
     def get_download(self):  
         resource_uri = GlobalVars.objects.get(pk=14)
@@ -848,14 +852,14 @@ class File(models.Model):
     get_download_admin.allow_tags = True
     
     def next(self):
-        next_files = File.objects.filter(pk__gt=self.pk)
+        next_files = File.objects.filter(pk__gt=self.pk).order_by('id')
         if next_files:
             return next_files[0]
         else:
             return None
             
     def prev(self):
-        prev_files = File.objects.filter(pk__lt = self.pk)
+        prev_files = File.objects.filter(pk__lt = self.pk).order_by('id')
         if prev_files:
             return prev_files.reverse()[0]
         else:

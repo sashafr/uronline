@@ -13,6 +13,10 @@ from django.conf import settings
 from os import listdir, remove
 from os.path import isfile, join, splitext
 from StringIO import StringIO
+from django.http import HttpResponse
+from base.serializers import *
+from rest_framework.renderers import JSONRenderer
+from rest_framework_xml.renderers import XMLRenderer
 
 def export_csv(results):
     response = HttpResponse(mimetype='text/csv')
@@ -551,3 +555,136 @@ def single_file_upload(file):
     remove(upload_file_loc)
 
     return new_rsid
+    
+class JSONResponse(HttpResponse):
+    def __init__(self, data, **kwargs):
+        content = JSONRenderer().render(data)
+        kwargs['content_type'] = 'application/json'
+        super(JSONResponse, self).__init__(content, **kwargs)
+        
+class XMLResponse(HttpResponse):
+    def __init__(self, data, **kwargs):
+        content = XMLRenderer().render(data)
+        kwargs['content_type'] = 'text/xml'
+        super (XMLResponse, self).__init__(content, **kwargs)
+        
+def serialize_data(filename, queryset, entity, serialize_type, is_admin=False):
+    if entity == 'subject':
+        if is_admin:
+            serializer = SubjectAdminSerializer(queryset, many=True)
+        else:
+            serializer = SubjectSerializer(queryset, many=True)
+    elif entity == 'location':
+        if is_admin:
+            serializer = LocationAdminSerializer(queryset, many=True)
+        else:
+            serializer = LocationSerializer(queryset, many=True)
+    elif entity == 'media':
+        if is_admin:
+            serializer = MediaAdminSerializer(queryset, many=True)
+        else:
+            serializer = MediaSerializer(queryset, many=True)        
+    elif entity == 'people':
+        if is_admin:
+            serializer = PersonOrgAdminSerializer(queryset, many=True)
+        else:
+            serializer = PersonOrgSerializer(queryset, many=True)            
+    elif entity == 'file':
+        if is_admin:
+            serializer = FileAdminSerializer(queryset, many=True)
+        else:
+            serializer = FileSerializer(queryset, many=True)            
+    if serialize_type == 'json':
+        response = JSONResponse(serializer.data)
+        response['Content-Disposition'] = 'attachment; filename="' + filename + '.json"'
+    else:
+        response = XMLResponse(serializer.data)
+        response['Content-Disposition'] = 'attachment; filename="' + filename + '.xml"'
+    return response
+    
+def flatten_to_csv(filename, qs, entity, is_file=False, is_admin=False):
+    """ Flatten Entity properties to be exported as csv. """
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="' + filename + '.csv"'
+
+    writer = csv.writer(response)
+    titles = []
+    titles.append('__Title__')
+    if not is_file:
+        titles.append('__URL__')
+    if is_file:
+        titles.append('__Download__')
+    rows = []
+    for result in qs:
+        row = []
+        row_dict = {}
+        
+        # store title and url
+        row_dict[0] = result.title
+        if not is_file:
+            row_dict[1] = result.get_full_absolute_url()
+        if is_file:
+            row_dict[1] = result.get_download()
+        
+        # controlled properties
+        if entity == 'subject':
+            cps = result.subjectcontrolproperty_set.all()
+        elif entity == 'location':
+            cps = result.locationcontrolproperty_set.all()            
+        elif entity == 'media':
+            cps = result.mediacontrolproperty_set.all()
+        elif entity == 'file':
+            cps = result.filecontrolproperty_set.all()            
+        else:
+            cps = result.personorgcontrolproperty_set.all()                    
+        for each_prop in cps:
+            if is_admin or each_prop.control_property.visible:
+                prop_name = each_prop.control_property.property.strip()
+                prop_value = each_prop.control_property_value.title.strip()
+                if not (prop_name in titles):
+                    column_index = len(titles)                        
+                    titles.append(prop_name)
+                else:
+                    column_index = titles.index(prop_name)
+                    if column_index in row_dict:
+                        prop_value = row_dict[column_index] + '; ' + prop_value
+                row_dict[column_index] = prop_value
+        
+        # free-form properties
+        if entity == 'subject':
+            ps = result.subjectproperty_set.all()
+        elif entity == 'location':
+            ps = result.locationproperty_set.all()        
+        elif entity == 'media':
+            ps = result.mediaproperty_set.all()
+        elif entity == 'file':
+            ps = result.fileproperty_set.all()
+        else:
+            ps = result.personorgproperty_set.all()                  
+        for each_prop in ps:
+            if is_admin or each_prop.property.visible:
+                prop_name = each_prop.property.property.strip()
+                prop_value = each_prop.property_value.strip()
+                if not (prop_name in titles):
+                    column_index = len(titles)                        
+                    titles.append(prop_name)
+                else:
+                    column_index = titles.index(prop_name)
+                    if column_index in row_dict:
+                        prop_value = row_dict[column_index] + '; ' + prop_value
+                row_dict[column_index] = prop_value                    
+                        
+        # store row in list
+        for i in range(len(titles)):
+            if i in row_dict:
+                row.append(row_dict[i])
+            else:
+                row.append('')
+        rows.append(row)
+
+    # write out the rows, starting with header
+    writer.writerow(titles)
+    for each_row in rows:
+        writer.writerow(each_row)
+    return response

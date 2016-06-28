@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer, StringRelatedField, ListSerializer, CharField, HyperlinkedModelSerializer
-from base.models import SubjectControlProperty, SubjectProperty, Subject, LocationControlProperty, LocationProperty, Location, MediaControlProperty, MediaProperty, Media, PersonOrgControlProperty, PersonOrgProperty, PersonOrg
+from base.models import SubjectControlProperty, SubjectProperty, Subject, LocationControlProperty, LocationProperty, Location, MediaControlProperty, MediaProperty, Media, PersonOrgControlProperty, PersonOrgProperty, PersonOrg, FileControlProperty, FileProperty, File
 
 class VisibleCPListSerializer(ListSerializer):
     
@@ -11,7 +11,13 @@ class VisibleFFPListSerializer(ListSerializer):
     
     def to_representation(self, data):
         data = data.filter(property__visible = True)
-        return super(VisibleFFPListSerializer, self).to_representation(data)        
+        return super(VisibleFFPListSerializer, self).to_representation(data)
+
+class VisibleEntityListSerializer(ListSerializer):
+    
+    def to_representation(self, data):
+        data = data.filter(public = True)
+        return super(VisibleEntityListSerializer, self).to_representation(data)
 
 class SubjectControlPropertySerializer(ModelSerializer):
     property = StringRelatedField(source='control_property')
@@ -131,7 +137,38 @@ class PersonOrgSerializer(HyperlinkedModelSerializer):
     
     class Meta:
         model = PersonOrg
-        fields = ('id', 'url', 'title', 'control_properties', 'free_form_properties')        
+        fields = ('id', 'url', 'title', 'control_properties', 'free_form_properties')
+
+class FileControlPropertySerializer(ModelSerializer):
+    property = StringRelatedField(source='control_property')
+    value = StringRelatedField(source='control_property_value')
+    footnote = CharField(source='notes')
+    inline = CharField(source='inline_notes')
+
+    class Meta:
+        list_serializer_class = VisibleCPListSerializer
+        model = FileControlProperty
+        fields = ('property', 'value', 'inline', 'footnote')
+        
+class FilePropertySerializer(ModelSerializer):
+    prop = StringRelatedField(source='property')
+    inline_note = CharField(source='inline_notes')
+    footnote = CharField(source='notes')
+
+    class Meta:
+        list_serializer_class = VisibleFFPListSerializer
+        model = FileProperty
+        fields = ('prop', 'property_value', 'inline_note', 'footnote')        
+        
+class FileSerializer(HyperlinkedModelSerializer):
+    download = CharField(source='get_download', read_only=True)
+    control_properties = FileControlPropertySerializer(source='filecontrolproperty_set', many=True, read_only=True)
+    free_form_properties = FilePropertySerializer(source='fileproperty_set', many=True, read_only=True)
+    
+    class Meta:
+        list_serializer_class = VisibleEntityListSerializer
+        model = File
+        fields = ('id', 'title', 'download', 'control_properties', 'free_form_properties')        
         
 """ ADMIN """
 
@@ -245,4 +282,32 @@ class PersonOrgAdminSerializer(HyperlinkedModelSerializer):
     
     class Meta:
         model = PersonOrg
-        fields = ('id', 'url', 'title', 'control_properties', 'free_form_properties')        
+        fields = ('id', 'url', 'title', 'control_properties', 'free_form_properties')
+        
+class FileControlPropertyAdminSerializer(ModelSerializer):
+    property = StringRelatedField(source='control_property')
+    value = StringRelatedField(source='control_property_value')
+    footnote = CharField(source='notes')
+    inline = CharField(source='inline_notes')
+
+    class Meta:
+        model = FileControlProperty
+        fields = ('property', 'value', 'inline', 'footnote')
+        
+class FilePropertyAdminSerializer(ModelSerializer):
+    prop = StringRelatedField(source='property')
+    inline_note = CharField(source='inline_notes')
+    footnote = CharField(source='notes')
+
+    class Meta:
+        model = FileProperty
+        fields = ('prop', 'property_value', 'inline_note', 'footnote')        
+        
+class FileAdminSerializer(HyperlinkedModelSerializer):
+    download = CharField(source='get_download', read_only=True)
+    control_properties = FileControlPropertyAdminSerializer(source='filecontrolproperty_set', many=True, read_only=True)
+    free_form_properties = FilePropertyAdminSerializer(source='fileproperty_set', many=True, read_only=True)
+    
+    class Meta:
+        model = File
+        fields = ('id', 'title', 'download', 'control_properties', 'free_form_properties')

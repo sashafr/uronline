@@ -1,10 +1,4 @@
 {% load i18n admin_static suit_list admin_list suit_tags base_tags %}
-{% block extrastyle %}
-  {{ block.super }}
-    <style>
-      .row-fluid [class*="span"] {width:inital;}
-    </style>
-{% endblock %}
 {% if cl.search_fields or cl.has_filters %}
   {% suit_bc_value 1.5 'pop' 1.6 '_popup' as POPUP_VAR %}
   <div id="toolbar" class="clearfix">
@@ -18,76 +12,79 @@
           <div class="in collapse" id="advSearch">
             <h2>Controlled Properties</h2>
             <div class="row-fluid">
-              <div class="span2 control_property_select">
+              <div class="span2 control_property_select" style="width:initial;">
                 {{ asf.cp1 }}
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.cst1 }}
               </div>            
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.cv1 }}
               </div>
             </div>
             <div class="row-fluid">
-              <div class="span2 control_property_select">
+              <div class="span2 control_property_select" style="width:initial;">
                 {{ asf.cp2 }}
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.cst2 }}
               </div>            
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.cv2 }}
               </div>
             </div>
             <div class="row-fluid">
-              <div class="span2 control_property_select">
+              <div class="span2 control_property_select" style="width:initial;">
                 {{ asf.cp3 }}
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.cst3 }}
               </div>            
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.cv3 }}
               </div>
             </div>            
             <hr>
             <h2>Free-Form Properties</h2>
             <div class="row-fluid">
-              <div class="span2 offset2">
+              <div class="span2" style="width:initial;">
+                <select style="visibility:hidden;"></select>
+              </div>             
+              <div class="span2" style="width:initial;">
                 {{ asf.fp1 }}
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.fst1 }}
               </div>            
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.fv1 }}
               </div>
             </div> 
             <div class="row-fluid">
-              <div class="span1">
+              <div class="span2" style="width:initial;">
                 {{ asf.op1 }}
               </div> 
-              <div class="span2 offset1">
+              <div class="span2" style="width:initial;">
                 {{ asf.fp2 }}
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.fst2 }}
               </div>            
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.fv2 }}
               </div>
             </div> 
             <div class="row-fluid">
-              <div class="span1">
+              <div class="span2" style="width:initial;">
                 {{ asf.op2 }}
               </div>            
-              <div class="span2 offset1">
+              <div class="span2" style="width:initial;">
                 {{ asf.fp3 }}
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.fst3 }}
               </div>            
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.fv3 }}
               </div>
             </div>
@@ -97,13 +94,13 @@
               <div class="span1">
                 <h3>{{ asf.sub.label }}: </h3>
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.sub }}
               </div>
               <div class="span1">
                 <h3>{{ asf.loc.label }}: </h3>
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.loc }}
               </div>
             </div>
@@ -111,13 +108,13 @@
               <div class="span1">
                 <h3>{{ asf.med.label }}: </h3>
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.med }}
               </div>
               <div class="span1">
                 <h3>{{ asf.po.label }}: </h3>
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.po }}
               </div>                            
             </div>
@@ -125,10 +122,10 @@
               <div class="span1">
                 <h3>{{ asf.col.label }}: </h3>
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.col }}
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 <h3>{{ asf.check_unrelated.label }}: </h3>
               </div>
               <div class="span1">

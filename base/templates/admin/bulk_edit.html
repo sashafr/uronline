@@ -1,0 +1,40 @@
+{% extends "admin/base_site.html" %}
+{% load i18n l10n admin_urls %}
+{% load url from future %}
+
+{% block breadcrumbs %}
+  <ul class="breadcrumb">
+    <li><a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+      <span class="divider">&raquo;</span></li>
+    <li>
+      <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ app_label|capfirst }}</a>
+      <span class="divider">&raquo;</span></li>
+    <li>
+      <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+      <span class="divider">&raquo;</span></li>
+    <li class="active">{% trans 'Edit multiple items' %}</li>
+  </ul>
+{% endblock %}
+
+{% block content %}
+
+<p>{% trans 'Select Fields to Edit' %}:</p>
+
+<form action="" method="post">
+    {% csrf_token %}
+
+    {{ bulk_edit_form }}
+
+    <p>{% trans 'Items to edit' %}:</p>
+
+    <ul>
+        {% for item in items %}
+            <li>{{ item.title }}</li>
+        {% endfor %}
+    </ul>
+
+    <input type="hidden" name="action" value="bulk_edit" />
+    <input type="submit" name="apply" value="{% trans 'Edit' %}" />
+</form>
+
+{% endblock %}

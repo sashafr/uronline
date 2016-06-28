@@ -1,6 +1,6 @@
 from django import forms
 from haystack.forms import SearchForm, model_choices
-from base.models import DescriptiveProperty, ResultProperty, ControlField
+from base.models import *
 from haystack.inputs import Raw
 from haystack.query import SearchQuerySet, SQ
 from django.db import models
@@ -315,3 +315,18 @@ class FileUploadForm(forms.Form):
     """Simple form used to upload files via the admin interface"""
     
     file = forms.FileField(label='File', required=True)
+    
+class BulkAddCollectionForm(forms.Form):
+    _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
+    collection = forms.ModelChoiceField(queryset=Collection.objects.all())
+    notes = forms.CharField(required=False)
+    
+class BulkEditForm(forms.Form):
+    _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
+    property = forms.ModelChoiceField(queryset = DescriptiveProperty.objects.all())
+    cf_value = TreeNodeChoiceField(required = False, queryset = ControlField.objects.all(), label = 'Controlled Term')
+    ff_value = forms.CharField(required = False, label = 'Free-Form Value')
+    inline_notes = forms.CharField(required = False)
+    footnotes = forms.CharField(required = False)
+    overwrite = forms.BooleanField(required = False)
+    delete_only = forms.BooleanField(required = False, label = 'Delete Only - Do Not Add')

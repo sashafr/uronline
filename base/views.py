@@ -1216,3 +1216,67 @@ def addfile(request):
     else:
         form = FileUploadForm()
     return render(request, 'admin/base/file/add_form.html', {'form': form})
+    
+def export(request):
+    """ Exports the requested entity in the requested format. """
+  
+    # get the parameters
+    entity = request.GET.get('entity', '')
+    type = request.GET.get('type', '')
+    username = request.GET.get('user', '')
+    pw = request.GET.get('pw', '')
+    
+    filename = ''
+    is_file = False
+    user = User.objects.filter(username = username)
+    if user.check_password(pw):
+        is_admin = True
+    if entity == 'subject':
+        filename += 'object_backup_'
+        if is_public:
+            qs = Subject.objects.filter(public=True)
+            filename += 'public_'
+        else:
+            qs = Subject.objects.all()
+            filename += 'private_'
+    elif entity == 'location':
+        filename += 'location_backup_'
+        if is_public:
+            qs = Location.objects.filter(public=True)
+            filename += 'public_'
+        else:
+            qs = Location.objects.all()
+            filename += 'private_'
+    elif entity == 'media':
+        filename += 'media_backup_'
+        if is_public:
+            qs = Media.objects.filter(public=True)
+            filename += 'public_'
+        else:
+            qs = Media.objects.all()
+            filename += 'private_'
+    elif entity == 'people':
+        filename += 'people_backup_'
+        if is_public:
+            qs = PersonOrg.objects.filter(public=True)
+            filename += 'public_'
+        else:
+            qs = PersonOrg.objects.all()
+            filename += 'private_'
+    elif entity == 'file':
+        filename += 'file_backup_'
+        is_file = True
+        if is_public:
+            qs = File.objects.filter(public=True)
+            filename += 'public_'
+        else:
+            qs = File.objects.all()
+            filename += 'private_'
+    filename += datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+    
+    if entity == 'json':
+        return serialize_data(filename, qs, entity, 'json', is_admin=is_admin)
+    elif entity == 'xml':
+        return serialize_data(filename, qs, entity, 'xml', is_admin=is_admin)
+    else:
+        return flatten_to_csv(filename, qs, entity, is_file=is_file, is_admin=is_admin)

@@ -67,6 +67,10 @@
                     <i class="icon-plus-sign icon-white"></i>&nbsp;
                     Batch Upload
                   </a>
+                  <a href="mailto:?subject=[From UrOnline Admin] {{ request.user.first_name }} {{ request.user.last_name }} shared some Files&amp;body=You can view these files at www.ur-online.org{{ request.get_full_path|urlencode }}" target="_blank" class="btn btn-success">
+                    <i class="icon-envelope icon-alpha75"></i>&nbsp;
+                    Email Current Search
+                  </a>                
                   <!-- End modifications -->                   
                   <a href="{% url cl.opts|admin_urlname:'add' %}{% if is_popup %}?_popup=1{% endif %}" class="btn btn-success">
                     <i class="icon-plus-sign icon-white"></i>&nbsp;
