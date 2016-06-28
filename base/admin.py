@@ -3456,7 +3456,6 @@ class SubjectAdmin(admin.ModelAdmin):
                 instance.save()
 
             if isinstance (instance, LocationSubjectRelations):
-                instance.relation_type = Relations.objects.get(pk=4)
                 instance.last_mod_by = request.user            
                 instance.save() 
 
@@ -4092,21 +4091,6 @@ class MediaSubjectRelationsAdmin(admin.ModelAdmin):
         obj.save()
 
 admin.site.register(MediaSubjectRelations, MediaSubjectRelationsAdmin)
-
-class LocationSubjectRelationsAdmin(admin.ModelAdmin):
-    readonly_fields = ('created', 'modified', 'last_mod_by')
-    fields = ['location', 'subject', 'relation_type', 'notes', 'created', 'modified', 'last_mod_by']
-    list_display = ['location', 'subject', 'relation_type', 'notes', 'created', 'modified', 'last_mod_by']
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2})},
-    }
-    
-    def save_model(self, request, obj, form, change):
-        obj.last_mod_by = request.user
-        obj.save()
-
-admin.site.register(LocationSubjectRelations, LocationSubjectRelationsAdmin)
-
 admin.site.register(MediaPersonOrgRelations)
 admin.site.register(PersonOrgProperty)
 

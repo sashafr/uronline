@@ -474,29 +474,43 @@ class Subject(models.Model):
     def get_thumbnail(self):
         """ Returns thumbnail for this object, or if none is set, returns stock "no image". """
         
-        resource_uri = GlobalVars.objects.get(pk=11)
-        no_img = GlobalVars.objects.get(pk=12).val
+        resource_uri = settings.THUMBNAIL_URI
+        no_img = settings.NO_IMG
         thumbs = SubjectFile.objects.filter(subject = self, thumbnail = True)
         if thumbs:
-            return resource_uri.val + str(thumbs[0].rsid.id)
+            return resource_uri + str(thumbs[0].rsid.id)
         else:
             return no_img
     get_thumbnail.short_description = 'Object'
     get_thumbnail.allow_tags = True
     
     def get_thumbnail_admin(self):
-        resource_uri = GlobalVars.objects.get(pk=13)
-        no_img = GlobalVars.objects.get(pk=12).val    
+        resource_uri = settings.IMAGE_URI
+        no_img = settings.NO_IMG    
         thumbs = SubjectFile.objects.filter(subject = self, thumbnail = True)
         if thumbs:
             url = resource_uri + str(thumbs[0].rsid.id)
-            thumbnail = GlobalVars.objects.get(pk=11).val + str(thumbs[0].rsid.id)
+            thumbnail = settings.THUMBNAIL_URI + str(thumbs[0].rsid.id)
         else:
             url =  no_img
             thumbnail = no_img
         return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, thumbnail) 
     get_thumbnail_admin.short_description = 'Object Thumbnail'
-    get_thumbnail_admin.allow_tags = True   
+    get_thumbnail_admin.allow_tags = True
+
+    def next(self):
+        next_subs = Subject.objects.filter(pk__gt=self.pk).order_by('id')
+        if next_subs:
+            return next_subs[0]
+        else:
+            return None
+            
+    def prev(self):
+        prev_subs = Subject.objects.filter(pk__lt = self.pk).order_by('id')
+        if prev_subs:
+            return prev_subs.reverse()[0]
+        else:
+            return None    
     
     class Meta:
         verbose_name = 'Object'    
@@ -1365,12 +1379,12 @@ class SubjectCollection(models.Model):
     get_thumbnail.allow_tags = True    
         
     def get_thumbnail_admin(self):
-        resource_uri = GlobalVars.objects.get(pk=13)
-        no_img = GlobalVars.objects.get(pk=12).val    
+        resource_uri = settings.IMAGE_URI
+        no_img = settings.NO_IMG    
         thumbs = SubjectFile.objects.filter(subject = self.subject, thumbnail = True)
         if thumbs:
             url = resource_uri + str(thumbs[0].rsid.id)
-            thumbnail = GlobalVars.objects.get(pk=11).val + str(thumbs[0].rsid.id)
+            thumbnail = settings.THUMBNAIL_URI + str(thumbs[0].rsid.id)
         else:
             url =  no_img
             thumbnail = no_img
@@ -1653,7 +1667,6 @@ class LocationSubjectRelations(models.Model):
 
     location = models.ForeignKey(Location)
     subject = models.ForeignKey(Subject)
-    relation_type = models.ForeignKey(Relations, blank = True, null = True)
     notes = models.TextField(blank = True, help_text = "Please use this field for more specific information about where this object was found within this context, as well as citations, notes on certainty, and attribution of this piece of information.")
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
@@ -1664,8 +1677,8 @@ class LocationSubjectRelations(models.Model):
         return self.location.title + ":" + self.subject.title
         
     class Meta:
-        verbose_name = 'Location-Object Relation'
-        verbose_name_plural = 'Location-Object Relations'
+        verbose_name = 'Object Context'
+        verbose_name_plural = 'Object Contexts'
 
 class LocationPersonOrgRelations(models.Model):
     """ Related locations and people """
