@@ -70,6 +70,7 @@ INSTALLED_APPS = (
     'south',
 
     # Local apps, referenced via appname
+    'widget_tweaks'
 )
 
 # Place bcrypt first in the list, so it will be the default password hashing

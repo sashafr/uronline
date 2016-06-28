@@ -3,67 +3,23 @@
 {% load render_table from django_tables2 %}
 
 <!-- Metadata -->
-{% block page_title %}{{ term.title }}{% endblock %}
+{% block page_title %}{{ term.title }} - Term Detail{% endblock %}
 <!-- End Metadata -->
 
-{% block body_attributes %}data-spy="scroll" data-target="#myScrollspy"{% endblock %}
-
-{% block css %}
-<style type="text/css">
-    /* Custom Styles */
-    ul.nav-tabs{
-        width: 200px;
-        margin-top: 50px;
-        border-radius: 4px;
-        border: 1px solid #ddd;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.067);
-    }
-    ul.nav-tabs li{
-        margin: 0;
-        border-top: 1px solid #ddd;
-    }
-    ul.nav-tabs li:first-child{
-        border-top: none;
-    }
-    ul.nav-tabs li a{
-        margin: 0;
-        padding: 8px 16px;
-        border-radius: 0;
-    }
-    ul.nav-tabs li.active a, ul.nav-tabs li.active a:hover{
-        background: #EDF3FE;
-        border: 1px solid #EDF3FE;
-    }
-    ul.nav-tabs li:first-child a{
-        border-radius: 4px 4px 0 0;
-    }
-    ul.nav-tabs li:last-child a{
-        border-radius: 0 0 4px 4px;
-    }
-    ul.nav-tabs.affix{
-        top: 30px; /* Set the top position of pinned element */
-    }
-</style>
+{% block pageheader %}
+    <div class="page-header detail">
+        <div class="container page-header-content">
+            <h1>{{ term.title }}</h1>
+        </div>
+        <div class="overlay"></div>
+    </div>
 {% endblock %}
 
 {% block content %}
-    <div class="content-section-b" style="padding-top: 80px;">
+    <section>
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <h1 id="top" style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
-                        <a href="{% url 'propertydetail' term.type.id %}"><small>{{ term.type.property }}: </small></a>
-                        {% if term.get_ancestors %}
-                            {% for anc in term.get_ancestors %}
-                                <a href="{% url 'termdetail' anc.id %}" ><small>{{ anc.title }}</small></a><small> > </small>
-                            {% endfor %}
-                        {% endif %}
-                        {{ term.title }}
-                    </h1>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-lg-10">
                     <div class="row">
                         <div class="col-lg-12">
                             {% if term.notes and term.notes != '' %}
@@ -79,34 +35,29 @@
                     {% if subjects %}
                     <div class="row" id="subjects">
                         <div class="col-lg-12">
-                            <div class="row">
-                                <div class="col-sm-10">
-                                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
-                                        Objects: {{ term.title }}
-                                        <small>Export: </small>
-                                        <a class="subj-ex" href="{% url 'termdetailexport' term.id %}?col={{ sub_col }}&entity=subject&format=json"><small>JSON</small></a>
-                                        <small> - </small>
-                                        <a class="subj-ex" href="{% url 'termdetailexport' term.id %}?col={{ sub_col }}&entity=subject&format=xml"><small>XML</small></a>
-                                        <small> - </small>
-                                        <a class="subj-ex" href="{% url 'termdetailexport' term.id %}?col={{ sub_col }}&entity=subject&format=csv"><small>CSV</small></a>
-                                        <small style="float: right; margin: 10px 0 20px;">{{ sub_col_title }}</small>
-                                    </h3>
-                                </div>
-                                <div class="col-sm-2">
-                                    {% if subject_collections %}
-                                        <button class="btn btn-default dropdown-toggle" style="margin: 40px 0 0;" type="button" data-toggle="dropdown">
-                                            Collection:
-                                            <span class="caret"></span>
-                                        </button>
-                                        <ul class="dropdown-menu" role="menu">
-                                            <li><a href="{% url 'termdetail' term.id %}?subcol=0">All Objects</a></li>
-                                            {% for collection in subject_collections %}
-                                                <li><a href="{% url 'termdetail' term.id %}?subcol={{ collection.id }}">{{ collection.title }}</a></li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                </div>
-                            </div>
+                            <h3>
+                                Objects: {{ term.title }}
+                                <small>Export: </small>
+                                <a class="subj-ex" href="{% url 'termdetailexport' term.id %}?col={{ sub_col }}&entity=subject&format=json"><small>JSON</small></a>
+                                <small> - </small>
+                                <a class="subj-ex" href="{% url 'termdetailexport' term.id %}?col={{ sub_col }}&entity=subject&format=xml"><small>XML</small></a>
+                                <small> - </small>
+                                <a class="subj-ex" href="{% url 'termdetailexport' term.id %}?col={{ sub_col }}&entity=subject&format=csv"><small>CSV</small></a>
+                                <small>{{ sub_col_title }}</small>
+                            </h3>
+                        
+                            {% if subject_collections %}
+                                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
+                                    Collection:
+                                    <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu" role="menu">
+                                    <li><a href="{% url 'termdetail' term.id %}?subcol=0">All Objects</a></li>
+                                    {% for collection in subject_collections %}
+                                        <li><a href="{% url 'termdetail' term.id %}?subcol={{ collection.id }}">{{ collection.title }}</a></li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
                             <div id="subj-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
                                 <p>Exporting large queries may take several minutes, please do not leave this page until the download completes.</p>
                             </div>
@@ -119,8 +70,8 @@
                     <div class="row" id="locations">
                         <div class="col-lg-12">
                             <div class="row">
-                                <div class="col-sm-10">
-                                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
+                                <div class="col-sm-12">
+                                    <h3>
                                         Locations: {{ term.title }}
                                         <small>Export: </small>
                                         <a class="loc-ex" href="{% url 'termdetailexport' term.id %}?col={{ loc_col }}&entity=location&format=json"><small>JSON</small></a>
@@ -128,12 +79,12 @@
                                         <a class="loc-ex" href="{% url 'termdetailexport' term.id %}?col={{ loc_col }}&entity=location&format=xml"><small>XML</small></a>
                                         <small> - </small>
                                         <a class="loc-ex" href="{% url 'termdetailexport' term.id %}?col={{ loc_col }}&entity=location&format=csv"><small>CSV</small></a>
-                                        <small style="float: right; margin: 10px 0 20px;">{{ loc_col_title }}</small>
+                                        <small>{{ loc_col_title }}</small>
                                     </h3>
                                 </div>
-                                <div class="col-sm-2">
+                                <div class="col-sm-12">
                                     {% if location_collections %}
-                                        <button class="btn btn-default dropdown-toggle" style="margin: 40px 0 0;" type="button" data-toggle="dropdown">
+                                        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
                                             Collection:
                                             <span class="caret"></span>
                                         </button>
@@ -197,8 +148,8 @@
                     <div class="row" id="siblings">
                         <div class="col-lg-12">
                             <div class="row">
-                                <div class="col-sm-10">
-                                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">Related Terms</h3>
+                                <div class="col-sm-12">
+                                    <h3>Related Terms</h3>
                                 </div>
                             </div>
                             <p>
@@ -213,8 +164,8 @@
                     <div class="row" id="children">
                         <div class="col-lg-12">
                             <div class="row">
-                                <div class="col-sm-10">
-                                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">Child Terms</h3>
+                                <div class="col-sm-12">
+                                    <h3>Child Terms</h3>
                                 </div>
                             </div>
                             <p>
@@ -226,34 +177,9 @@
                     </div>
                     {% endif %}                    
                 </div>
-                {% if show_contents == 'true' %}
-                <div class="col-xs-2 hideonsmall" id="myScrollspy">
-                    <ul class="nav nav-tabs nav-stacked" data-spy="affix" data-offset-top="125">
-                        {% if subjects %}
-                            <li><a href="#subjects">Objects</a></li>
-                        {% endif %}
-                        {% if locations %}
-                            <li><a href="#locations">Locations</a></li>
-                        {% endif %}
-                        {% if people %}
-                            <li><a href="#people">People</a></li>
-                        {% endif %}
-                        {% if linked_data %}
-                            <li><a href="#linked-data">Linked Data</a></li>
-                        {% endif %}
-                        {% if term.get_siblings_same_type %}
-                            <li><a href="#siblings">Related Terms</a></li>
-                        {% endif %}
-                        {% if term.get_children_same_type %}
-                            <li><a href="#children">Child Terms</a></li>
-                        {% endif %}                        
-                        <li><a href="#top">Back to Top</a></li>
-                    </ul>                    
-                </div>
-                {% endif %}
             </div>  
         </div>
-    </div>
+    </section>
 {% endblock %}
 
 {% block js %}

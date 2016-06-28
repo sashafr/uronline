@@ -24,3 +24,6 @@ media/*
 */settings/test.py
 solr/*
 /fabfile.py
+.sass-cache
+/static/*
+

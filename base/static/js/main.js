@@ -25,3 +25,13 @@ function clear_pub_search() {
     document.getElementById('id_museum').selectedIndex = 0;
     document.getElementById('id_material').selectedIndex = 0;
 }
+
+$(function(){
+    $('#input-open').on('tap click', function() {
+        $('.navbar-form').addClass('in');
+    });
+    $('#input-close').on('tap click', function() {
+        $('.navbar-form').removeClass('in');
+        $('#general_search').val('');
+    });
+});

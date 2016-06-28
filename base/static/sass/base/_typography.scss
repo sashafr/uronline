@@ -1,0 +1,48 @@
+h2 {
+    font-family: $sans-serif;
+    font-size: 3.0rem;
+    font-weight: 300;
+    margin-bottom: 20px;
+}
+h3 {
+    font-family: $sans-serif;
+    font-size: 2.4rem;
+    font-weight: 400;
+    color: $gold;
+    margin-bottom: 10px;
+}
+h4 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 20px 0 10px;
+}
+p {
+    font-size: 1.6rem;
+    line-height: 2.1;
+
+    a {
+        color: $teal;
+        font-weight: 700;
+        border-bottom: 1px dotted $teal;
+        transition: 0.5s all;
+
+        &:hover, &:focus, &:active {
+            color: $teal;
+            text-decoration: none;
+            opacity: 0.65;
+        }
+    }
+}
+
+label {
+    font-family: $sans-serif;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.label {
+    font-size: 1.2rem;
+    margin-bottom: 4px;
+    display: inline-block;
+    padding: 4px 6px;
+}
