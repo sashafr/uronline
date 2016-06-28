@@ -2115,7 +2115,7 @@ class FileAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None, **kwargs):
         self.other_search_fields = {}
         asf = self.advanced_search_form
-        extra_context = {'asf': asf}
+        extra_context = {'asf': asf, 'github_uri': settings.GITHUB_BACKUP_URI}
         
         request.GET._mutable = True
         

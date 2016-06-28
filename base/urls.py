@@ -54,4 +54,5 @@ urlpatterns = patterns('base.views',
     url(r'^bulk_update_subject/$', 'bulk_update_subject', name='bulk_update_subject'),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^bulk_upload_file/', 'bulk_upload_file', name='bulk_upload_file'),
+    url(r'^export/$', 'export', name='export'),
 )

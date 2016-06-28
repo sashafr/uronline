@@ -7,7 +7,7 @@ from base.forms import AdvancedSearchForm, AdvModelSearchForm, FileUploadForm
 from django.forms.formsets import formset_factory
 from base import tasks
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
-from base.utils import get_img_ids, search_for_export, get_img_ids_spec, single_context_in_ah, single_file_upload
+from base.utils import get_img_ids, search_for_export, get_img_ids_spec, single_context_in_ah, single_file_upload, serialize_data, flatten_to_csv
 from django.db.models import Count
 import djqscsv
 from django.core import serializers
@@ -1223,60 +1223,63 @@ def export(request):
     # get the parameters
     entity = request.GET.get('entity', '')
     type = request.GET.get('type', '')
+    admin_check = request.GET.get('a', '')
     username = request.GET.get('user', '')
     pw = request.GET.get('pw', '')
     
     filename = ''
     is_file = False
-    user = User.objects.filter(username = username)
-    if user.check_password(pw):
+    is_admin = False
+    if admin_check == 'True':
         is_admin = True
-    if entity == 'subject':
-        filename += 'object_backup_'
-        if is_public:
-            qs = Subject.objects.filter(public=True)
-            filename += 'public_'
+    user = User.objects.filter(username = username)
+    if user and user[0].check_password(pw):
+        if entity == 'subject':
+            filename += 'object_backup_'
+            if not is_admin:
+                qs = Subject.objects.filter(public=True)
+                filename += 'public_'
+            else:
+                qs = Subject.objects.all()
+                filename += 'private_'
+        elif entity == 'location':
+            filename += 'location_backup_'
+            if not is_admin:
+                qs = Location.objects.filter(public=True)
+                filename += 'public_'
+            else:
+                qs = Location.objects.all()
+                filename += 'private_'
+        elif entity == 'media':
+            filename += 'media_backup_'
+            if not is_admin:
+                qs = Media.objects.filter(public=True)
+                filename += 'public_'
+            else:
+                qs = Media.objects.all()
+                filename += 'private_'
+        elif entity == 'people':
+            filename += 'people_backup_'
+            if not is_admin:
+                qs = PersonOrg.objects.filter(public=True)
+                filename += 'public_'
+            else:
+                qs = PersonOrg.objects.all()
+                filename += 'private_'
+        elif entity == 'file':
+            filename += 'file_backup_'
+            is_file = True
+            if not is_admin:
+                qs = File.objects.filter(public=True)
+                filename += 'public_'
+            else:
+                qs = File.objects.all()
+                filename += 'private_'
+        filename += datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        
+        if type == 'json':
+            return serialize_data(filename, qs, entity, 'json', is_admin=is_admin)
+        elif type == 'xml':
+            return serialize_data(filename, qs, entity, 'xml', is_admin=is_admin)
         else:
-            qs = Subject.objects.all()
-            filename += 'private_'
-    elif entity == 'location':
-        filename += 'location_backup_'
-        if is_public:
-            qs = Location.objects.filter(public=True)
-            filename += 'public_'
-        else:
-            qs = Location.objects.all()
-            filename += 'private_'
-    elif entity == 'media':
-        filename += 'media_backup_'
-        if is_public:
-            qs = Media.objects.filter(public=True)
-            filename += 'public_'
-        else:
-            qs = Media.objects.all()
-            filename += 'private_'
-    elif entity == 'people':
-        filename += 'people_backup_'
-        if is_public:
-            qs = PersonOrg.objects.filter(public=True)
-            filename += 'public_'
-        else:
-            qs = PersonOrg.objects.all()
-            filename += 'private_'
-    elif entity == 'file':
-        filename += 'file_backup_'
-        is_file = True
-        if is_public:
-            qs = File.objects.filter(public=True)
-            filename += 'public_'
-        else:
-            qs = File.objects.all()
-            filename += 'private_'
-    filename += datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
-    
-    if entity == 'json':
-        return serialize_data(filename, qs, entity, 'json', is_admin=is_admin)
-    elif entity == 'xml':
-        return serialize_data(filename, qs, entity, 'xml', is_admin=is_admin)
-    else:
-        return flatten_to_csv(filename, qs, entity, is_file=is_file, is_admin=is_admin)
+            return flatten_to_csv(filename, qs, entity, is_file=is_file, is_admin=is_admin)
