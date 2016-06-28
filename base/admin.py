@@ -378,7 +378,7 @@ def import_data(modeladmin, request, queryset):
                         else:
                             # DESCRIPTIVE PROPERTY
                             dp = column.property
-                            if (column.matching_field and not create) or column.insert_as_inline or column.insert_as_footnote or column.insert_as_relnote:
+                            if (column.matching_field and not create) or column.insert_as_inline or column.insert_as_footnote or column.insert_as_relnote or column.loc_parent:
                                 continue
                             
                             inline = ''
@@ -2320,7 +2320,7 @@ class DataUploadAdmin(admin.ModelAdmin):
                                     else:                                    
                                         # DESCRIPTIVE PROPERTY
                                         dp = column.property 
-                                        if column.matching_field or column.insert_as_inline or column.insert_as_footnote or column.insert_as_relnote:
+                                        if column.matching_field or column.insert_as_inline or column.insert_as_footnote or column.insert_as_relnote or column.loc_parent:
                                             continue
                                         
                                         inline = ''
