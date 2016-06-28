@@ -164,65 +164,6 @@ def update_display_fields(object_id, object_type):
             
             kwargs = {key : id_str}
             Subject.objects.filter(id=subject.id).update(**kwargs)
-            
-def get_img_ids(object, type):
-    imgs = []
-
-    if type == 'ms':
-        relations = MediaSubjectRelations.objects.filter(subject = object.id, relation_type = 3)
-    elif type == 'mpo':
-        relations = MediaPersonOrgRelations.objects.filter(person_org = object.id, relation_type = 3)
-    elif type == 'ml':
-        relations = MediaLocationRelations.objects.filter(location = object.id, relation_type = 3)
-    elif type == 'mf':
-        prop = MediaProperty.objects.filter(media_id = object.id, property__property = 'Resource Space ID')
-        if prop and prop[0]:
-            imgs.append(prop[0].property_value)
-        return imgs
-    else:
-        relations = MediaMediaRelations.objects.filter(media1 = object.id, relation_type = 3)
-        for relation in relations:
-            rs_ids = relation.media2.mediaproperty_set.filter(property__property = 'Resource Space ID')
-            if rs_ids:
-                for rs_id in rs_ids:
-                    imgs.append(rs_id.property_value)
-        return imgs
-        
-    if relations:
-        for relation in relations:
-            rs_ids = relation.media.mediaproperty_set.filter(property__property = 'Resource Space ID')
-            if rs_ids:
-                for rs_id in rs_ids:
-                    imgs.append(rs_id.property_value)
-    
-    return imgs            
-
-def get_img_ids_spec(object, type, img_type):
-    imgs = []
-
-    if type == 'ms':
-        relations = MediaSubjectRelations.objects.filter(subject = object.id, relation_type = img_type)
-    elif type == 'mpo':
-        relations = MediaPersonOrgRelations.objects.filter(person_org = object.id, relation_type = img_type)
-    elif type == 'ml':
-        relations = MediaLocationRelations.objects.filter(location = object.id, relation_type = img_type)
-    else:
-        relations = MediaMediaRelations.objects.filter(media1 = object.id, relation_type = img_type)
-        for relation in relations:
-            rs_ids = relation.media2.mediaproperty_set.filter(property__property = 'Resource Space ID')
-            if rs_ids:
-                for rs_id in rs_ids:
-                    imgs.append(rs_id.property_value)
-        return imgs
-        
-    if relations:
-        for relation in relations:
-            rs_ids = relation.media.mediaproperty_set.filter(property__property = 'Resource Space ID')
-            if rs_ids:
-                for rs_id in rs_ids:
-                    imgs.append(rs_id.property_value)
-    
-    return imgs      
     
 def search_for_export (p1, st1, q1, op1, p2, st2, q2, op2, p3, st3, q3, order):
         

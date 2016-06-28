@@ -62,6 +62,16 @@
             {% if has_add_permission %}
               <div class="object-tools">
                 {% block object-tools-items %}
+                  <!-- Modifications to original Django Suit template begin here -->                
+                  <a href="{{ github_uri }}" class="btn btn-success" >
+                    <i class="icon-file icon-white"></i>&nbsp;
+                    Download Full Export
+                  </a>
+                  <a href="mailto:?subject=[From UrOnline Admin] {{ request.user.first_name }} {{ request.user.last_name }} shared some Objects&amp;body=You can view these objects at www.ur-online.org{{ request.get_full_path|urlencode }}" target="_blank" class="btn btn-success">
+                    <i class="icon-envelope icon-alpha75"></i>&nbsp;
+                    Email Current Search
+                  </a>                
+                  <!-- End modifications -->                             
                   <a href="{% url cl.opts|admin_urlname:'add' %}{% if is_popup %}?_popup=1{% endif %}" class="btn btn-success">
                     <i class="icon-plus-sign icon-white"></i>&nbsp;
                     {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}

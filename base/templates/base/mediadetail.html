@@ -60,7 +60,7 @@
                                 <a href="{% url 'subjectdetail' object_relation.subject.id %}"><li class="list-group-item">
                                     <div class="row">
                                         <div class="col-md-3">
-                                            <img class="img-responsive" src="{% get_img_thumb object_relation.subject 'ms' 'thm' %}" alt=""></img>    
+                                            <img class="img-responsive" src="{{ object_relation.subject.get_thumbnail }}" alt=""></img>    
                                         </div>
                                         <div class="col-md-9">
                                             <table class="table table-striped">

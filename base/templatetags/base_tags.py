@@ -140,61 +140,6 @@ def get_result_details(fields):
     
     return rowhtml
     
-@register.simple_tag    
-def get_img_thumb(object, type, size):
-
-    if type == 'ms':
-        relation = MediaSubjectRelations.objects.filter(subject = object.id, relation_type = 1)
-    elif type == 'mpo':
-        relation = MediaPersonOrgRelations.objects.filter(person_org = object.id, relation_type = 1)
-    elif type == 'ml':
-        relation = MediaLocationRelations.objects.filter(location = object.id, relation_type = 1)
-    else:
-        relation = MediaMediaRelations.objects.filter(media1 = object.id, relation_type = 1)
-        if relation:
-            first_rel = relation[0]
-            rs_ids = first_rel.media2.mediaproperty_set.filter(property__property = 'Resource Space ID')
-            if rs_ids:
-                rs_id = rs_ids[0].property_value
-                return 'http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref=' + rs_id + '&size=' + size
-        return 'http://ur.iaas.upenn.edu/static/img/no_img.jpg'
-    
-    if relation:
-        first_rel = relation[0]
-        rs_ids = first_rel.media.mediaproperty_set.filter(property__property = 'Resource Space ID')
-        if rs_ids:
-            rs_id = rs_ids[0].property_value
-            return 'http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref=' + rs_id + '&size=' + size
-    
-    return 'http://ur.iaas.upenn.edu/static/img/no_img.jpg'
-    
-@register.simple_tag    
-def get_img_url(object, type):
-    if type == 'ms':
-        relation = MediaSubjectRelations.objects.filter(subject = object.id, relation_type = 1)
-    elif type == 'mpo':
-        relation = MediaPersonOrgRelations.objects.filter(person_org = object.id, relation_type = 1)
-    elif type == 'ml':
-        relation = MediaLocationRelations.objects.filter(location = object.id, relation_type = 1)
-    else:
-        relation = MediaMediaRelations.objects.filter(media1 = object.id, relation_type = 1)
-        if relation:
-            first_rel = relation[0]
-            rs_ids = first_rel.media2.mediaproperty_set.filter(property__property = 'Resource Space ID')
-            if rs_ids:
-                rs_id = rs_ids[0].property_value
-                return 'http://ur.iaas.upenn.edu/resourcespace/pages/view.php?ref=' + rs_id
-        return 'http://ur.iaas.upenn.edu/static/img/no_img.jpg'
-    
-    if relation:
-        first_rel = relation[0]
-        rs_ids = first_rel.media.mediaproperty_set.filter(property__property = 'Resource Space ID')
-        if rs_ids:
-            rs_id = rs_ids[0].property_value
-            return 'http://ur.iaas.upenn.edu/resourcespace/pages/view.php?ref=' + rs_id
-            
-    return ''
-    
 @register.simple_tag
 def get_properties_dropdown():
     props = DescriptiveProperty.objects.filter(Q(primary_type='SO') | Q(primary_type='AL')).exclude(control_field=True).order_by('order')

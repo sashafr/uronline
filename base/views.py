@@ -7,7 +7,7 @@ from base.forms import AdvancedSearchForm, AdvModelSearchForm, FileUploadForm
 from django.forms.formsets import formset_factory
 from base import tasks
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
-from base.utils import get_img_ids, search_for_export, get_img_ids_spec, single_context_in_ah, single_file_upload, serialize_data, flatten_to_csv
+from base.utils import search_for_export, single_context_in_ah, single_file_upload, serialize_data, flatten_to_csv
 from django.db.models import Count
 import djqscsv
 from django.core import serializers
@@ -97,7 +97,7 @@ def subjectdetail(request, subject_id):
         gen_control_properties = subject.subjectcontrolproperty_set.filter(control_property__property_type__id=1).order_by('control_property__order')
         arc_control_properties = subject.subjectcontrolproperty_set.filter(control_property__property_type__id=3).order_by('control_property__order')
         con_control_properties = subject.subjectcontrolproperty_set.filter(control_property__property_type__id=2).order_by('control_property__order')        
-        related_media = subject.mediasubjectrelations_set.filter(relation_type_id=2)
+        related_media = subject.mediasubjectrelations_set.all()
         related_web = subject.subjectlinkeddata_set.all()
         property_count = subject.subjectproperty_set.filter(property__visible=True).count() + subject.subjectcontrolproperty_set.all().count()
     else:     
@@ -148,7 +148,7 @@ def mediadetail(request, media_id):
     media = get_object_or_404(Media, pk=media_id)
     if media:
         if isfile == 'true':
-            images = get_img_ids(media, 'mf')
+            images = []
             '''current_page_qs = MediaProperty.objects.filter(media_id = media.id, property_id = 122)
             if current_page_qs:
                 if isfloat(current_page_qs[0].property_value):
@@ -161,7 +161,7 @@ def mediadetail(request, media_id):
                             for item in next_page_qs:
                                 next_vol_qs = MediaProperty.objects.filter(property_id = 123, media_id = item.id, property_value = current_vol)'''
         else:
-            images = get_img_ids(media, 'mm')
+            images = []
         properties = media.mediaproperty_set.filter(property__visible=True).order_by('property__order')
         related_objects = media.mediasubjectrelations_set.all()[:10]
         related_web = media.medialinkeddata_set.all()
@@ -177,9 +177,9 @@ def personorgdetail(request, personorg_id):
     
     personorg = get_object_or_404(PersonOrg, pk=personorg_id)
     if personorg:
-        images = get_img_ids(personorg, 'mpo')
+        images = []
         properties = personorg.personorgproperty_set.filter(property__visible=True)
-        related_media = personorg.mediapersonorgrelations_set.filter(relation_type_id=2)
+        related_media = personorg.mediapersonorgrelations_set.all()
         related_web = personorg.personorglinkeddata_set.all()
         property_count = personorg.personorgproperty_set.filter(property__visible=True).count()
     else:
@@ -204,7 +204,7 @@ def locationdetail(request, location_id):
     po_col_title = ''
     
     # getting rid of this stuff
-    related_media = location.medialocationrelations_set.filter(relation_type_id=2)
+    related_media = location.medialocationrelations_set.all()
     
     location_tree = location.get_descendants(include_self=True)
     
@@ -786,7 +786,7 @@ def mapdetail(request, location_id):
     
     current_map_id = request.GET.get('mapid', '')
     location = get_object_or_404(Location, pk = location_id)
-    maps = MediaLocationRelations.objects.filter(location__id = location_id, relation_type_id = 9)
+    maps = MediaLocationRelations.objects.filter(location__id = location_id)
     
     if current_map_id == '':
         current_map = get_object_or_404(Media, pk = maps[0].media_id)
@@ -803,7 +803,7 @@ def mapdetail(request, location_id):
         except IndexError:
             continue
     
-    loci = MediaLocationRelations.objects.filter(media_id = current_map.id, relation_type = 10).order_by('location__title')
+    loci = MediaLocationRelations.objects.filter(media_id = current_map.id).order_by('location__title')
     
     loci_details = {}
     for locus in loci:

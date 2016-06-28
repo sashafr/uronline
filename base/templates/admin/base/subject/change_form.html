@@ -123,24 +123,17 @@
                     Email
                   </a>
                 </li>
-                
-                <li>
-                    <a href="{% url 'subjectdetail' original.pk %}" target="_blank">
-                        <i class="icon-globe icon-alpha75"></i>
-                        View on Public Site
-                    </a>
-                </li>
 
-                {% if request|has_prev:object_id %}
+                {% if original.prev %}
                 <li>
-                    {% url 'admin:base_subject_change' request|get_prev:object_id as prev_url %}
+                    {% url 'admin:base_subject_change' original.prev.id as prev_url %}
                     <a href="{% add_preserved_filters prev_url %}" class="historylink"><i class="icon-chevron-left"></i> Previous</a>
                 </li>
                 {% endif %}
                 
-                {% if request|has_next:object_id %}
+                {% if original.next %}
                 <li>
-                    {% url 'admin:base_subject_change' request|get_next:object_id as next_url %}
+                    {% url 'admin:base_subject_change' original.next.id as next_url %}
                     <a href="{% add_preserved_filters next_url %}" class="historylink"><i class="icon-chevron-right"></i> Next</a>
                 </li>
                 {% endif %}

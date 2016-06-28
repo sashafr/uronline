@@ -1610,7 +1610,6 @@ class MediaSubjectRelations(models.Model):
 
     media = models.ForeignKey(Media)
     subject = models.ForeignKey(Subject)
-    relation_type = models.ForeignKey(Relations, blank = True, null = True)
     notes = models.TextField(blank = True, help_text = "Please use this field for specific page or plate information, etc, referring to where this object is mentioned in this media item.")
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
@@ -1621,8 +1620,8 @@ class MediaSubjectRelations(models.Model):
         return self.media.title + ":" + self.subject.title
         
     class Meta:
-        verbose_name = 'Media-Object Relation'
-        verbose_name_plural = 'Media-Object Relations'
+        verbose_name = 'Object Record'
+        verbose_name_plural = 'Object Records'
         
 class MediaPersonOrgRelations(models.Model):
     """ Related media and people """
@@ -1704,7 +1703,6 @@ class SubjectPersonOrgRelations(models.Model):
 
     subject = models.ForeignKey(Subject)
     person_org = models.ForeignKey(PersonOrg)
-    relation_type = models.ForeignKey(Relations, blank = True, null = True)
     notes = models.TextField(blank = True, help_text = "Please use this field for specific page or plate information, etc, referring to where this Person/Organization is mentioned in this media item.")
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
@@ -1715,8 +1713,8 @@ class SubjectPersonOrgRelations(models.Model):
         return self.subject.title + ":" + self.person_org.title
 
     class Meta:
-        verbose_name = 'Object-Person/Organization Relation'
-        verbose_name_plural = 'Object-Person/Organization Relations'        
+        verbose_name = 'Objects & People'
+        verbose_name_plural = 'Objects & People'        
         
 """Related media"""
 class MediaMediaRelations(models.Model):

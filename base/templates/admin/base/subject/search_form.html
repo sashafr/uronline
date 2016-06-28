@@ -12,115 +12,119 @@
           <div class="in collapse" id="advSearch">
             <h2>Controlled Properties</h2>
             <div class="row-fluid">
-              <div class="span2 control_property_select">
+              <div class="span2 control_property_select" style="width:initial;">
                 {{ asf.cp1 }}
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.cst1 }}
               </div>            
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.cv1 }}
               </div>
             </div>
             <div class="row-fluid">
-              <div class="span2 control_property_select">
+              <div class="span2 control_property_select" style="width:initial;">
                 {{ asf.cp2 }}
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.cst2 }}
               </div>            
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.cv2 }}
               </div>
             </div>
             <div class="row-fluid">
-              <div class="span2 control_property_select">
+              <div class="span2 control_property_select" style="width:initial;">
                 {{ asf.cp3 }}
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.cst3 }}
               </div>            
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.cv3 }}
               </div>
             </div>            
             <hr>
             <h2>Free-Form Properties</h2>
             <div class="row-fluid">
-              <div class="span2 offset2">
+              <div class="span2" style="width:initial;">
+                <select style="visibility:hidden;"></select>
+              </div>             
+              <div class="span2" style="width:initial;">
                 {{ asf.fp1 }}
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.fst1 }}
               </div>            
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.fv1 }}
               </div>
             </div> 
             <div class="row-fluid">
-              <div class="span1">
+              <div class="span2" style="width:initial;">
                 {{ asf.op1 }}
               </div> 
-              <div class="span2 offset1">
+              <div class="span2" style="width:initial;">
                 {{ asf.fp2 }}
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.fst2 }}
               </div>            
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.fv2 }}
               </div>
             </div> 
             <div class="row-fluid">
-              <div class="span1">
+              <div class="span2" style="width:initial;">
                 {{ asf.op2 }}
               </div>            
-              <div class="span2 offset1">
+              <div class="span2" style="width:initial;">
                 {{ asf.fp3 }}
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.fst3 }}
               </div>            
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.fv3 }}
               </div>
             </div>
             <hr>
+            <h1>Relation Filters</h1>            
             <div class="row-fluid">
               <div class="span1">
                 <h3>{{ asf.loc.label }}: </h3>
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.loc }}
+              </div>
+              <div class="span1">
+                <h3>{{ asf.med.label }}: </h3>
+              </div>
+              <div class="span2" style="width:initial;">
+                {{ asf.med }}
+              </div>              
+            </div>
+            <div class="row-fluid">
+              <div class="span1">
+                <h3>{{ asf.po.label }}: </h3>
+              </div>
+              <div class="span2" style="width:initial;">
+                {{ asf.po }}
               </div>
               <div class="span1">
                 <h3>{{ asf.img.label }}: </h3>
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.img }}
-              </div>
-            </div>
-            <div class="row-fluid">
-              <div class="span1">
-                <h3>{{ asf.pub.label }}: </h3>
-              </div>
-              <div class="span2">
-                {{ asf.pub }}
-              </div>
-              <div class="span1">
-                <h3>{{ asf.last_mod.label }}: </h3>
-              </div>
-              <div class="span2">
-                {{ asf.last_mod }}
-              </div>                            
+              </div>              
             </div>
             <div class="row-fluid">
               <div class="span1">
                 <h3>{{ asf.col.label }}: </h3>
               </div>
-              <div class="span2">
+              <div class="span2" style="width:initial;">
                 {{ asf.col }}
-              </div>
+              </div>            
             </div>            
           </div>
           <hr>
@@ -305,17 +309,8 @@
         if (urlparams['fv3']) {
             document.getElementById('id_fv3').value = urlparams['fv3'];
         }
-        if (urlparams['loc']) {
-            document.getElementById('id_loc').value = urlparams['loc'];
-        }        
         if (urlparams['img']) {
             document.getElementById('id_img').value = urlparams['img'];
-        }
-        if (urlparams['pub']) {
-            document.getElementById('id_pub').value = urlparams['pub'];
-        }
-        if (urlparams['last_mod']) {
-            document.getElementById('id_last_mod').value = urlparams['last_mod'];
         }
         if (urlparams['col']) {
             document.getElementById('id_col').value = urlparams['col'];
@@ -349,10 +344,7 @@
             document.getElementById('id_fp3').selectedIndex = 0;
             document.getElementById('id_fst3').selectedIndex = 0;
             document.getElementById('id_fv3').value = '';
-            document.getElementById('id_loc').selectedIndex = 0;
             document.getElementById('id_img').selectedIndex = 0;
-            document.getElementById('id_pub').selectedIndex = 0;            
-            document.getElementById('id_last_mod').selectedIndex = 0; 
             document.getElementById('id_col').selectedIndex = 0;             
             document.getElementById('id_dup_prop').selectedIndex = 0;
         }        
