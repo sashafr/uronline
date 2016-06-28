@@ -823,26 +823,26 @@ class File(models.Model):
     def get_thumbnail(self):
         """ Returns thumbnail for this object, or if none is set, returns stock "no image". """
         
-        resource_uri = GlobalVars.objects.get(pk=11)
-        return resource_uri.val + str(self.id)
+        resource_uri = settings.THUMBNAIL_URI
+        return resource_uri + str(self.id)
     get_thumbnail.short_description = 'Thumbnail'
     get_thumbnail.allow_tags = True
     
     def get_thumbnail_admin(self):
-        url = GlobalVars.objects.get(pk=13).val + str(self.id)
+        url = settings.IMAGE_URI + str(self.id)
         return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, self.get_thumbnail())
     get_thumbnail_admin.short_description = 'Thumbnail'
     get_thumbnail_admin.allow_tags = True
     
     def get_uri(self):
-        return GlobalVars.objects.get(pk=13).val + str(self.id)
+        return settings.IMAGE_URI + str(self.id)
     get_uri.short_description = 'URI'
 
     def get_download(self):  
-        resource_uri = GlobalVars.objects.get(pk=14)
+        resource_uri = settings.DOWNLOAD_URI
         # I am essentially hard coding a file extension param, need to come up with something better
-        extra_params = GlobalVars.objects.get(pk=15)
-        return resource_uri.val + str(self.id) + extra_params.val + self.filetype
+        extra_params = settings.DOWNLOAD_URI_EXTRA
+        return resource_uri + str(self.id) + extra_params + self.filetype
     get_download.short_description = 'Download'
     get_download.allow_tags = True     
     
@@ -1511,7 +1511,7 @@ class SubjectFile(models.Model):
     upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
     
     def get_thumbnail_admin(self):
-        url = GlobalVars.objects.get(pk=13).val + str(self.rsid.id)
+        url = settings.IMAGE_URI + str(self.rsid.id)
         return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, self.rsid.get_thumbnail())
     get_thumbnail_admin.short_description = 'Thumbnail'
     get_thumbnail_admin.allow_tags = True
@@ -1529,7 +1529,7 @@ class LocationFile(models.Model):
     upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
     
     def get_thumbnail_admin(self):
-        url = GlobalVars.objects.get(pk=13).val + str(self.rsid.id)
+        url = settings.IMAGE_URI + str(self.rsid.id)
         return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, self.rsid.get_thumbnail())
     get_thumbnail_admin.short_description = 'Image'
     get_thumbnail_admin.allow_tags = True 
@@ -1547,7 +1547,7 @@ class MediaFile(models.Model):
     upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
     
     def get_thumbnail_admin(self):
-        url = GlobalVars.objects.get(pk=13).val + str(self.rsid.id)
+        url = settings.IMAGE_URI + str(self.rsid.id)
         return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, self.rsid.get_thumbnail())
     get_thumbnail_admin.short_description = 'Image'
     get_thumbnail_admin.allow_tags = True 
@@ -1565,7 +1565,7 @@ class PersonOrgFile(models.Model):
     upload_batch = models.ForeignKey(UploadBatch, blank = True, null = True)
     
     def get_thumbnail_admin(self):
-        url = GlobalVars.objects.get(pk=13).val + str(self.rsid.id)
+        url = settings.IMAGE_URI + str(self.rsid.id)
         return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, self.rsid.get_thumbnail())
     get_thumbnail_admin.short_description = 'Image'
     get_thumbnail_admin.allow_tags = True  
