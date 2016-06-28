@@ -102,10 +102,7 @@
                                 <div class="img-table">
                                     <ul class="enlarge">
                                         <li>
-                                            <a href="{% get_img_url personorg 'mpo' %}"><img class="img-responsive" src="{% get_img_thumb personorg 'mpo' 'thm' %}" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'></a>
-                                            <span>
-                                                <img src="{% get_img_thumb personorg 'mpo' 'scr' %}" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'/>
-                                            </span>
+                                            <a href="{% get_img_url personorg 'mpo' %}"><img class="img-responsive" src="{{ personorg.get_thumbnail }}" alt='{% for n in properties|slice:":1" %}{{ n.property }}:  {{ n.property_value }}{% endfor %}'></a>
                                         </li>
                                     </ul>
                                 </div>
