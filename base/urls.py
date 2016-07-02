@@ -24,10 +24,13 @@ urlpatterns = patterns('base.views',
     ), name='haystack_search'),
     # ex: /ur.iaas.upenn.edu/subject/5/
     url(r'^subject/(?P<subject_id>\d+)/$', 'subjectdetail', name='subjectdetail'),
+    url(r'^subject_export/(?P<subject_id>\d+)/$', 'subjectdetailexport', name='subjectdetailexport'),        
     # ex: /ur.iaas.upenn.edu/personorg/5/
     url(r'^personorg/(?P<personorg_id>\d+)/$', 'personorgdetail', name='personorgdetail'),
     # ex: /ur.iaas.upenn.edu/media/5/
     url(r'^media_item/(?P<media_id>\d+)/$', 'mediadetail', name='mediadetail'),
+    url(r'^file-detail/(?P<file_id>\d+)/$', 'filedetail', name='filedetail'),
+    url(r'^about/(?P<about_id>\d+)/$', 'aboutdetail', name='aboutdetail'),
     url(r'^property/(?P<prop_id>\d+)/$', 'propertydetail', name='propertydetail'),
     url(r'^terminology/', 'terminology', name='terminology'),
     url(r'^browse/', 'browse', name='browse'),

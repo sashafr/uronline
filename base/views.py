@@ -26,6 +26,7 @@ import string
 from itertools import chain
 from operator import attrgetter
 from django.conf import settings
+from django.utils.text import slugify
 
 def create_footnotes(start_index, properties, gen_notes):
     """ Helper to create footnotes """
@@ -86,59 +87,130 @@ def map(request):
 
     return render(request, 'base/map.html')
     
+def aboutdetail(request, about_id):
+    aboutpage = get_object_or_404(AboutPage, pk=about_id)
+    
+    return render(request, 'base/aboutdetail.html', {'aboutpage': aboutpage})
+    
 def subjectdetail(request, subject_id):
     """ Detailed view of a subject record """
     
     subject = get_object_or_404(Subject, pk=subject_id)
-    if subject:      
-        gen_properties = subject.subjectproperty_set.filter(property__visible=True, property__property_type__id=1)
-        arc_properties = subject.subjectproperty_set.filter(property__visible=True, property__property_type__id=3)
-        con_properties = subject.subjectproperty_set.filter(property__visible=True, property__property_type__id=2)        
-        gen_control_properties = subject.subjectcontrolproperty_set.filter(control_property__property_type__id=1).order_by('control_property__order')
-        arc_control_properties = subject.subjectcontrolproperty_set.filter(control_property__property_type__id=3).order_by('control_property__order')
-        con_control_properties = subject.subjectcontrolproperty_set.filter(control_property__property_type__id=2).order_by('control_property__order')        
-        related_media = subject.mediasubjectrelations_set.all()
-        related_web = subject.subjectlinkeddata_set.all()
-        property_count = subject.subjectproperty_set.filter(property__visible=True).count() + subject.subjectcontrolproperty_set.all().count()
-    else:     
-        gen_properties = []
-        arc_properties = []
-        con_properties = []
-        gen_control_properties = []
-        arc_control_properties = []
-        con_control_properties = []        
-        related_media = []
-        related_web = []
-        property_count = 0
-        
+    
+    # if subject is not set to public, return 404
+    if not subject.public:
+        raise Http404("This page does not exist")
+    
+    # get the parameters    
+    loc_coll_id = request.GET.get('loccol', '')    
+    med_coll_id = request.GET.get('medcol', '')
+    po_coll_id = request.GET.get('pocol', '')
+    
+    show_contents = 'false'
+    loc_col_title = ''
+    med_col_title = ''
+    po_col_title = ''
+    
+    # properties
+    control_properties = SubjectControlProperty.objects.filter(subject = subject, control_property__visible=True).exclude(control_property__in = DescriptiveProperty.objects.filter(resultproperty__display_field__startswith = 'subj_title'))
+    ff_properties = SubjectProperty.objects.filter(subject = subject, property__visible=True).exclude(property__in = DescriptiveProperty.objects.filter(resultproperty__display_field__startswith = 'subj_title'))
+    # magic to combine both property types and sort by their order fields
+    sorted_properties = sorted(chain(control_properties, ff_properties), key = lambda property: property.property.order if hasattr(property, 'property') else property.control_property.order)
+    # notes
+    footnotes = []
+    create_footnotes(1, sorted_properties, footnotes)
+    properties = {}
+    properties['General'] = []
+    for p in sorted_properties:
+        if hasattr(p, 'property') and p.property.property_type:
+            pt = p.property.property_type.type
+        elif hasattr(p, 'control_property') and p.control_property.property_type:
+            pt = p.control_property.property_type.type
+        else:
+            pt = 'General'
+        if not pt in properties.keys():
+            properties[pt] = [p]
+        else:
+            properties[pt].append(p)    
+    
     # files
     files = {}
-    files[''] = []
+    files['General'] = []
     files_list = SubjectFile.objects.filter(subject = subject)
     for file in files_list:
         cols = FileCollection.objects.filter(file = file.rsid)
         if not cols:
-            files[''].append(file)
+            files['General'].append(file)
         else:
             for col in cols:
                 if not col.collection.title in files.keys():
                     files[col.collection.title] = [file]
                 else:
                     files[col.collection.title].append(file)     
-        
-    gen_notes = []
-    gen_index = create_footnotes(1, gen_control_properties, gen_notes)
-    create_footnotes(gen_index, gen_properties, gen_notes)
-    
-    arc_notes = []
-    arc_index = create_footnotes(1, arc_control_properties, arc_notes)
-    create_footnotes(arc_index, arc_properties, arc_notes)
 
-    con_notes = []
-    con_index = create_footnotes(1, con_control_properties, con_notes)
-    create_footnotes(con_index, con_properties, con_notes) 
+    # locations
+    locations = Location.objects.filter(locationsubjectrelations__subject = subject).distinct()
+    # media
+    media = Media.objects.filter(mediasubjectrelations__subject = subject).distinct()
+    # people/organizations
+    people = PersonOrg.objects.filter(subjectpersonorgrelations__subject = subject).distinct()
     
-    return render(request, 'base/subjectdetail.html', {'subject': subject, 'gen_properties': gen_properties, 'con_properties': con_properties, 'arc_properties': arc_properties, 'control_properties': gen_control_properties, 'arc_control_properties': arc_control_properties, 'con_control_properties': con_control_properties, 'related_media': related_media, 'related_web': related_web, 'property_count': property_count, 'gen_footnotes': gen_notes, 'arc_footnotes': arc_notes, 'con_footnotes': con_notes, 'files': files})
+    # collections that include the selected locations
+    lcs = LocationCollection.objects.filter(location__in = locations)
+    location_collections = Collection.objects.filter(locationcollection__in = lcs).distinct()
+    # collections that include the selected media
+    mcs = MediaCollection.objects.filter(media__in = media)
+    media_collections = Collection.objects.filter(mediacollection__in = mcs).distinct() 
+    # collections that include the selected people
+    pocs = PersonOrgCollection.objects.filter(person_org__in = people)
+    po_collections = Collection.objects.filter(personorgcollection__in = pocs).distinct()
+    
+    # if a specific collection was requested, get only locations in selected collection
+    if loc_coll_id != '' and loc_coll_id != '0':
+        selected_cols = Collection.objects.filter(pk=loc_coll_id)
+        if selected_cols:
+            locations = locations.filter(locationcollection__collection = selected_cols[0])
+            loc_col = Collection.objects.filter(pk=loc_coll_id)
+            if loc_col:
+                loc_col_title = loc_col[0].title
+    # if a specific collection was requested, get only media in selected collection
+    if med_coll_id != '' and med_coll_id != '0':
+        selected_cols = Collection.objects.filter(pk=med_coll_id)
+        if selected_cols:
+            media = media.filter(mediacollection__collection = selected_cols[0])
+            med_col = Collection.objects.filter(pk=med_coll_id)
+            if med_col:
+                med_col_title = med_col[0].title
+    # if a specific collection was requested, get only people in selected collection
+    if po_coll_id != '' and po_coll_id != '0':
+        selected_cols = Collection.objects.filter(pk=po_coll_id)
+        if selected_cols:
+            people = people.filter(personorgcollection__collection = selected_cols[0])
+            po_col = Collection.objects.filter(pk=po_coll_id)
+            if po_col:
+                po_col_title = po_col[0].title
+    
+    # create the location table
+    location_table = LocationTable(locations, prefix='loc-')
+    RequestConfig(request).configure(location_table)
+    # create the media table
+    media_table = MediaTable(media, prefix='med-')
+    RequestConfig(request).configure(media_table)    
+    # create the people table
+    people_table = PersonOrgTable(people, prefix='po-')
+    RequestConfig(request).configure(people_table)
+
+    # collections
+    collections = SubjectCollection.objects.filter(subject = subject)
+    
+    # linked data
+    linked_data = SubjectLinkedData.objects.filter(subject = subject)
+    
+    # determine if menu is needed
+    if locations or media or people:
+        show_contents = 'true'
+    
+    return render(request, 'base/subjectdetail.html', {'subject': subject, 'properties': properties, 'footnotes': footnotes, 'locations': locations, 'media': media, 'people': people, 'location_table': location_table, 'media_table': media_table, 'people_table': people_table, 'location_collections': location_collections, 'media_collections': media_collections, 'po_collections': po_collections, 'loc_col': loc_coll_id, 'med_col': med_coll_id, 'po_col': po_coll_id, 'loc_col_title': loc_col_title, 'med_col_title': med_col_title, 'po_col_title': po_col_title, 'files': files, 'collections': collections, 'linked_data': linked_data, 'show_contents': show_contents })
     
 def mediadetail(request, media_id):
     """ Detailed view of a media record """
@@ -302,6 +374,188 @@ def locationdetail(request, location_id):
         show_contents = 'true'
     
     return render(request, 'base/locationdetail.html', {'location': location, 'subjects': subjects, 'media': media, 'show_contents': show_contents, 'subject_table': subject_table, 'media_table': media_table, 'people_table': people_table, 'subject_collections': subject_collections, 'media_collections': media_collections, 'po_collections': po_collections, 'sub_col': sub_coll_id, 'med_col': med_coll_id, 'po_col': po_coll_id, 'sub_col_title': sub_col_title, 'med_col_title': med_col_title, 'po_col_title': po_col_title, 'files': files, 'properties': properties, 'footnotes': footnotes, 'related_media': related_media })
+
+def filedetail(request, file_id):
+    """ Detailed view of a file """
+    
+    file = get_object_or_404(File, pk=file_id)
+    
+    # if file is not set to public, return 404
+    if not file.public:
+        raise Http404("This page does not exist")
+    
+    # get the parameters
+    sub_coll_id = request.GET.get('subcol', '')    
+    loc_coll_id = request.GET.get('loccol', '')    
+    med_coll_id = request.GET.get('medcol', '')
+    po_coll_id = request.GET.get('pocol', '')
+    
+    show_contents = 'false'
+    sub_col_title = ''    
+    loc_col_title = ''
+    med_col_title = ''
+    po_col_title = ''
+    
+    # properties
+    control_properties = FileControlProperty.objects.filter(file = file, control_property__visible=True).exclude(control_property__in = DescriptiveProperty.objects.filter(resultproperty__display_field__startswith = 'file_title'))
+    ff_properties = FileProperty.objects.filter(file = file, property__visible=True).exclude(property__in = DescriptiveProperty.objects.filter(resultproperty__display_field__startswith = 'file_title'))
+    # magic to combine both property types and sort by their order fields
+    sorted_properties = sorted(chain(control_properties, ff_properties), key = lambda property: property.property.order if hasattr(property, 'property') else property.control_property.order)
+    # notes
+    footnotes = []
+    create_footnotes(1, sorted_properties, footnotes)
+    properties = {}
+    properties['General'] = []
+    for p in sorted_properties:
+        if hasattr(p, 'property') and p.property.property_type:
+            pt = p.property.property_type.type
+        elif hasattr(p, 'control_property') and p.control_property.property_type:
+            pt = p.control_property.property_type.type
+        else:
+            pt = 'General'
+        if not pt in properties.keys():
+            properties[pt] = [p]
+        else:
+            properties[pt].append(p)     
+
+    # objects
+    subjects = Subject.objects.filter(subjectfile__rsid = file).distinct()
+    # locations
+    locations = Location.objects.filter(locationfile__rsid = file).distinct()
+    # media
+    media = Media.objects.filter(mediafile__rsid = file).distinct()
+    # people/organizations
+    people = PersonOrg.objects.filter(personorgfile__rsid = file).distinct()
+    
+    # collections that include the selected objects
+    scs = SubjectCollection.objects.filter(subject__in = subjects)
+    subject_collections = Collection.objects.filter(subjectcollection__in = scs).distinct()
+    # collections that include the selected locations
+    lcs = LocationCollection.objects.filter(location__in = locations)
+    location_collections = Collection.objects.filter(locationcollection__in = lcs).distinct()
+    # collections that include the selected media
+    mcs = MediaCollection.objects.filter(media__in = media)
+    media_collections = Collection.objects.filter(mediacollection__in = mcs).distinct() 
+    # collections that include the selected people
+    pocs = PersonOrgCollection.objects.filter(person_org__in = people)
+    po_collections = Collection.objects.filter(personorgcollection__in = pocs).distinct()
+    
+    # if a specific collection was requested, get only objects in selected collection
+    if sub_coll_id != '' and sub_coll_id != '0':
+        selected_cols = Collection.objects.filter(pk=sub_coll_id)
+        if selected_cols:
+            subjects = subjects.filter(subjectcollection__collection = selected_cols[0])
+            sub_col = Collection.objects.filter(pk=sub_coll_id)
+            if sub_col:
+                sub_col_title = sub_col[0].title
+    # if a specific collection was requested, get only locations in selected collection
+    if loc_coll_id != '' and loc_coll_id != '0':
+        selected_cols = Collection.objects.filter(pk=loc_coll_id)
+        if selected_cols:
+            locations = locations.filter(locationcollection__collection = selected_cols[0])
+            loc_col = Collection.objects.filter(pk=loc_coll_id)
+            if loc_col:
+                loc_col_title = loc_col[0].title
+    # if a specific collection was requested, get only media in selected collection
+    if med_coll_id != '' and med_coll_id != '0':
+        selected_cols = Collection.objects.filter(pk=med_coll_id)
+        if selected_cols:
+            media = media.filter(mediacollection__collection = selected_cols[0])
+            med_col = Collection.objects.filter(pk=med_coll_id)
+            if med_col:
+                med_col_title = med_col[0].title
+    # if a specific collection was requested, get only people in selected collection
+    if po_coll_id != '' and po_coll_id != '0':
+        selected_cols = Collection.objects.filter(pk=po_coll_id)
+        if selected_cols:
+            people = people.filter(personorgcollection__collection = selected_cols[0])
+            po_col = Collection.objects.filter(pk=po_coll_id)
+            if po_col:
+                po_col_title = po_col[0].title
+    
+    # create the object table
+    subject_table = SubjectTable(subjects, prefix='subj-')
+    RequestConfig(request).configure(subject_table)
+    # create the location table
+    location_table = LocationTable(locations, prefix='loc-')
+    RequestConfig(request).configure(location_table)
+    # create the media table
+    media_table = MediaTable(media, prefix='med-')
+    RequestConfig(request).configure(media_table)    
+    # create the people table
+    people_table = PersonOrgTable(people, prefix='po-')
+    RequestConfig(request).configure(people_table)
+
+    # collections
+    collections = FileCollection.objects.filter(file = file)
+    
+    # linked data
+    linked_data = FileLinkedData.objects.filter(file = file)
+    
+    # determine if menu is needed
+    if subjects or locations or media or people:
+        show_contents = 'true'
+    
+    return render(request, 'base/filedetail.html', {'file': file, 'properties': properties, 'footnotes': footnotes, 'subject_table': subject_table, 'location_table': location_table, 'media_table': media_table, 'people_table': people_table, 'subject_collections': subject_collections, 'location_collections': location_collections, 'media_collections': media_collections, 'po_collections': po_collections, 'sub_col': sub_coll_id, 'loc_col': loc_coll_id, 'med_col': med_coll_id, 'po_col': po_coll_id, 'sub_col_title': sub_col_title, 'loc_col_title': loc_col_title, 'med_col_title': med_col_title, 'po_col_title': po_col_title, 'collections': collections, 'linked_data': linked_data, 'show_contents': show_contents })
+    
+def subjectdetailexport (request, subject_id):
+    
+    # get the parameters
+    subject = get_object_or_404(Subject, pk=subject_id)
+    coll_id = request.GET.get('col', '')
+    entity = request.GET.get('entity', '')
+    format = request.GET.get('format', '')
+    
+    filename = subject.title
+    
+    # location export
+    if entity == 'location':
+        filename += '_locations_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        qs = Location.objects.filter(locationsubjectrelations__subject = subject)
+        
+        # if a specific collection was requested, get only objects in selected collection
+        if coll_id != '' and coll_id != '0':
+            selected_cols = Collection.objects.filter(pk=coll_id)
+            if selected_cols:
+                qs = qs.filter(locationcollection__collection = selected_cols[0])
+                filename += '_collection-' + format_filename(selected_cols[0].title)
+                
+    # media export
+    if entity == 'media':
+        filename += '_media_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        qs = Media.objects.filter(mediasubjectrelations__subject = subject)
+        
+        # if a specific collection was requested, get only media in selected collection
+        if coll_id != '' and coll_id != '0':
+            selected_cols = Collection.objects.filter(pk=coll_id)
+            if selected_cols:
+                qs = qs.filter(mediacollection__collection = selected_cols[0])
+                filename += '_collection-' + format_filename(selected_cols[0].title)
+
+    # people export
+    if entity == 'people':
+        filename += '_people_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        qs = PersonOrg.objects.filter(subjectpersonorgrelations__subject = subject)
+        
+        # if a specific collection was requested, get only people in selected collection
+        if coll_id != '' and coll_id != '0':
+            selected_cols = Collection.objects.filter(pk=coll_id)
+            if selected_cols:
+                qs = qs.filter(personorgcollection__collection = selected_cols[0])
+                filename += '_collection-' + format_filename(selected_cols[0].title)     
+                
+    if qs:
+        # json
+        if format == 'json':
+            return serialize_data(filename, qs, entity, 'json', is_admin=False)
+            
+        # xml
+        elif format == 'xml':
+            return serialize_data(filename, qs, entity, 'xml', is_admin=False)
+            
+        # csv - evil, evil, flattened csv
+        elif format == 'csv':
+            return flatten_to_csv(filename, qs, entity, is_file=False, is_admin=False)
     
 def locationdetailexport (request, location_id):
     

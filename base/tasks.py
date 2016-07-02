@@ -9,6 +9,7 @@ from django.conf import settings
 from os import listdir, remove
 from os.path import isfile, join, splitext
 from StringIO import StringIO
+import wget
 
 @shared_task
 def update():

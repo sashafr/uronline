@@ -1,0 +1,19 @@
+{% extends "_layouts/base.html" %}
+{% load staticfiles base_tags %}
+{% load render_table from django_tables2 %}
+
+<!-- Metadata -->
+{% block page_title %}{{ file.title }}{% endblock %}
+<!-- End Metadata -->
+
+{% block pageheader %}
+    <div class="page-header detail">
+        <div class="container page-header-content">
+            <h1>{{ file.title }}</h1>
+        </div>
+        <div class="overlay"></div>
+    </div>
+{% endblock %}
+
+{% block content %}
+{% endblock %}

@@ -111,12 +111,10 @@
                         <li class="dropdown">
                             <a href="{% url 'about' %}" class="dropdown-toggle {% if request.get_full_path == '/about/' %}active{% endif %}" data-toggle="dropdown">About</a>
                             <ul class="dropdown-menu">
-                                <li><a href="{% url 'about' %}">The Ur Online Project</a></li>
-                                <li><a href="{% url 'ancientur' %}">Ancient Ur</a></li>
-                                <li><a href="{% url 'excavations' %}">Excavations at Ur</a></li>
-                                <li><a href="{% url 'woolley' %}">Woolley's Excavations</a></li>
-                                <li><a href="{% url 'characters' %}">Cast of Characters</a></li>
-                                <li><a href="{% url 'developers' %}">For Developers</a></li>
+                                {% get_aboutpages as aboutpages %}
+                                {% for page in aboutpages %}
+                                    <li><a href="{% url 'aboutdetail' page.id %}">{{ page.title }}</a></li>
+                                {% endfor %}
                             </ul>
                         </li>
                         <li><a href="{% url 'news' %}" class="{% if '/news' in request.get_full_path %}active{% endif %}">News</a></li>

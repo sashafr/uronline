@@ -12,6 +12,8 @@ from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.contrib.admin.helpers import AdminReadonlyField, AdminField
+from unidecode import unidecode
+from django.template.defaultfilters import slugify
 
 register = template.Library()
 
@@ -638,3 +640,11 @@ def adv_searchform_has_changed(request):
     if (request.GET.get('q', '') == '' and request.GET.get('search_type', '') != 'blank') and (request.GET.get('q2', '') == '' and request.GET.get('search_type2', '') != 'blank') and (request.GET.get('q3', '') == '' and request.GET.get('search_type3', '') != 'blank'):
         return False
     return True
+    
+@register.assignment_tag
+def get_aboutpages():
+    return AboutPage.objects.all()
+    
+@register.filter
+def slug(value):
+    return slugify(unidecode(value))

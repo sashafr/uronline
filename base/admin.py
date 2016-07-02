@@ -283,50 +283,61 @@ def import_data(modeladmin, request, queryset):
                 if upload.collection:
                     col = upload.collection
                     if entity == 'S':
-                        last_order = 0
-                        col_ordered = SubjectCollection.objects.filter(collection = col).order_by('-order')
-                        if col_ordered:
-                            last_order = col_ordered[0].order + 1
-                        for match in matches:                    
-                            new_col = SubjectCollection(subject = match, collection = col, order = last_order, upload_batch = batch)
-                            new_col.save()
-                            last_order = last_order + 1
+                        if not dup_check:
+                            last_order = 0
+                            col_ordered = SubjectCollection.objects.filter(collection = col).order_by('-order')
+                            if col_ordered:
+                                last_order = col_ordered[0].order + 1
+                            for match in matches:
+                                dup_check = SubjectCollection.objects.filter(collection = col, subject = match)
+                                if not dup_check:
+                                    new_col = SubjectCollection(subject = match, collection = col, order = last_order, upload_batch = batch)
+                                    new_col.save()
+                                    last_order = last_order + 1
                     elif entity == 'L':
                         last_order = 0
                         col_ordered = LocationCollection.objects.filter(collection = col).order_by('-order')
                         if col_ordered:
                             last_order = col_ordered[0].order + 1
-                        for match in matches:                    
-                            new_col = LocationCollection(location = match, collection = col, order = last_order, upload_batch = batch)
-                            new_col.save()
-                            last_order = last_order + 1
+                        for match in matches:
+                            dup_check = LocationCollection.objects.filter(collection = col, location = match)
+                            if not dup_check:
+                                new_col = LocationCollection(location = match, collection = col, order = last_order, upload_batch = batch)
+                                new_col.save()
+                                last_order = last_order + 1
                     elif entity == 'M':
                         last_order = 0
                         col_ordered = MediaCollection.objects.filter(collection = col).order_by('-order')
                         if col_ordered:
                             last_order = col_ordered[0].order + 1
-                        for match in matches:                    
-                            new_col = MediaCollection(media = match, collection = col, order = last_order, upload_batch = batch)
-                            new_col.save()
-                            last_order = last_order + 1
+                        for match in matches:
+                            dup_check = MediaCollection.objects.filter(collection = col, media = match)
+                            if not dup_check:                        
+                                new_col = MediaCollection(media = match, collection = col, order = last_order, upload_batch = batch)
+                                new_col.save()
+                                last_order = last_order + 1
                     elif entity == 'F':
                         last_order = 0
                         col_ordered = FileCollection.objects.filter(collection = col).order_by('-order')
                         if col_ordered:
                             last_order = col_ordered[0].order + 1
-                        for match in matches:                    
-                            new_col = FileCollection(file = match, collection = col, order = last_order, upload_batch = batch)
-                            new_col.save()
-                            last_order = last_order + 1
+                        for match in matches:
+                            dup_check = FileCollection.objects.filter(collection = col, file = match)
+                            if not dup_check:                        
+                                new_col = FileCollection(file = match, collection = col, order = last_order, upload_batch = batch)
+                                new_col.save()
+                                last_order = last_order + 1
                     elif entity == 'PO':
                         last_order = 0
                         col_ordered = PersonOrgCollection.objects.filter(collection = col).order_by('-order')
                         if col_ordered:
                             last_order = col_ordered[0].order + 1
-                        for match in matches:                    
-                            new_col = PersonOrgCollection(personorg = match, collection = col, order = last_order, upload_batch = batch)
-                            new_col.save()
-                            last_order = last_order + 1                               
+                        for match in matches:
+                            dup_check = PersonOrgCollection.objects.filter(collection = col, personorg = match)
+                            if not dup_check:                        
+                                new_col = PersonOrgCollection(personorg = match, collection = col, order = last_order, upload_batch = batch)
+                                new_col.save()
+                                last_order = last_order + 1                               
                             
                 # PRIVATE
                 if upload.private:
@@ -848,6 +859,35 @@ def generate_thumbnail(modeladmin, request, queryset):
 
 generate_thumbnail.short_description = "Set selected files to thumbnail for all related entities."
 
+def generate_entity_thumbnail(modeladmin, request, queryset):
+    """ Sets thumbnail for all selected entities. """
+    
+    imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']
+    
+    for item in queryset:
+        files = None
+        if queryset.model is Subject:
+            thumb_check = SubjectFile.objects.filter(subject = item, thumbnail = True)
+            if not thumb_check:
+                files = SubjectFile.objects.filter(subject = item, rsid__filetype__in = imgs)
+        elif queryset.model is Location:
+            thumb_check = LocationFile.objects.filter(location = item, thumbnail = True)
+            if not thumb_check:
+                files = LocationFile.objects.filter(location = item, rsid__filetype__in = imgs)
+        elif queryset.model is Media:
+            thumb_check = MediaFile.objects.filter(media = item, thumbnail = True)
+            if not thumb_check:
+                files = MediaFile.objects.filter(media = item, rsid__filetype__in = imgs)
+        elif queryset.model is PersonOrg:
+            thumb_check = PersonOrgFile.objects.filter(person_org = item, thumbnail = True)
+            if not thumb_check:
+                files = PersonOrgFile.objects.filter(person_org = item, rsid__filetype__in = imgs)
+        if files:
+            files[0].thumbnail = True
+            files[0].save()
+
+generate_entity_thumbnail.short_description = "Attempt to generate thumbnails for selected entities."
+
 def bulk_add_collection(modeladmin, request, queryset):
     """ Add selected items to collection in bulk. """
     
@@ -1204,6 +1244,70 @@ class AdminAdvSearchForm(forms.Form):
     # utilities
     dup_prop = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='SO') | Q(primary_type='AL')), empty_label = "Find Objects with Multiple...")
     
+class LocationAdvSearchForm(forms.Form):
+    """ Used on the Location Admin page to search location by related Properties """
+    
+    # controlled properties
+    cp1 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='SL') | Q(primary_type='AL')))
+    cst1 = forms.ChoiceField(label='', required=False, choices=CONTROL_SEARCH_TYPE)
+    cv1 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))
+    cp2 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='SL') | Q(primary_type='AL')))
+    cst2 = forms.ChoiceField(label='', required=False, choices=CONTROL_SEARCH_TYPE)
+    cv2 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))
+    cp3 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='SL') | Q(primary_type='AL')))
+    cst3 = forms.ChoiceField(label='', required=False, choices=CONTROL_SEARCH_TYPE)
+    cv3 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))     
+    
+    # free-form properties
+    fp1 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='SL') | Q(primary_type='AL')))
+    fst1 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
+    fv1 = forms.CharField(label='', required=False)
+    op1 = forms.ChoiceField(label='', required=False, choices=OPERATOR)
+    fp2 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='SL') | Q(primary_type='AL')))
+    fst2 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
+    fv2 = forms.CharField(label='', required=False)
+    op2 = forms.ChoiceField(label='', required=False, choices=OPERATOR)
+    fp3 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='SL') | Q(primary_type='AL')))
+    fst3 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
+    fv3 = forms.CharField(label='', required=False)
+    
+    # filters
+    sub = SubjectChoices(
+        label = Subject._meta.verbose_name.capitalize(),
+        required = False,
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Subject._meta.verbose_name
+            }
+        )
+    )
+    med = MediaChoices(
+        label = Media._meta.verbose_name.capitalize(),
+        required = False,
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Media._meta.verbose_name
+            }
+        )
+    )
+    po = PersonOrgChoices(
+        label = PersonOrg._meta.verbose_name.capitalize(),
+        required = False,
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % PersonOrg._meta.verbose_name
+            }
+        )
+    )    
+    img = forms.ChoiceField(label='Has Image', required=False, choices=(('default', '---'), ('yes', 'Yes'), ('no', 'No')))
+    col = forms.ModelChoiceField(label='Collection', required=False, queryset=Collection.objects.all())
+    
+    # utilities
+    dup_prop = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='SL') | Q(primary_type='AL')), empty_label = "Find Locations with Multiple...")
+    
 class FileAdminAdvSearchForm(forms.Form):
     
     # controlled properties
@@ -1302,6 +1406,30 @@ class ControlFieldForm(ModelForm):
         widgets = {
             'notes': CKEditorWidget(editor_options=_ck_editor_config),
         }
+        
+class CMSPageForm(ModelForm):
+    
+    class Meta:
+  
+        _ck_editor_toolbar = [
+            {'name': 'basicstyles', 'groups': ['basicstyles', 'cleanup']},
+            {'name': 'paragraph',
+             'groups': ['list', 'indent', 'blocks', 'align']},
+            {'name': 'document', 'groups': ['mode']}, '/',
+            {'name': 'styles'}, {'name': 'colors'},
+            {'name': 'insert_custom',
+             'items': ['Image', 'Flash', 'Table', 'HorizontalRule']},
+            {'name': 'links'}]
+
+        _ck_editor_config = {'autoGrow_onStartup': True,
+                             'autoGrow_minHeight': 100,
+                             'autoGrow_maxHeight': 250,
+                             'extraPlugins': 'autogrow',
+                             'toolbarGroups': _ck_editor_toolbar}            
+  
+        widgets = {
+            'body': CKEditorWidget(editor_options=_ck_editor_config),
+        }        
 
 class BlogPostForm(ModelForm):
     """ Used on Blog Post Change Form page to edit blog posts """
@@ -1583,7 +1711,62 @@ class FileSubjectAdminForm(ModelForm):
     
     class Meta:
           model = SubjectFile
+
+class LocationSubjectAdminForm(ModelForm):
+    subject = SubjectChoices(
+        label = Subject._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Subject._meta.verbose_name
+            }
+        )
+    )     
+    
+    class Meta:
+          model = LocationSubjectRelations
+
+class LocationMediaAdminForm(ModelForm):
+    media = MediaChoices(
+        label = Media._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Media._meta.verbose_name
+            }
+        )
+    )      
+    
+    class Meta:
+          model = MediaLocationRelations
+
+class LocationPersonOrgAdminForm(ModelForm):
+    person_org = PersonOrgChoices(
+        label = PersonOrg._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % PersonOrg._meta.verbose_name
+            }
+        )
+    )
+    
+    class Meta:
+          model = LocationPersonOrgRelations
           
+class FileLocationAdminForm(ModelForm):
+    rsid = FileChoices(
+        label = File._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % File._meta.verbose_name
+            }
+        )
+    )  
+    
+    class Meta:
+          model = LocationFile          
 
 class SubjectFileAdminForm(ModelForm):
     subject = SubjectChoices(
@@ -1659,6 +1842,12 @@ class SubjectLinkedDataInline(admin.TabularInline):
     extra = 1
     suit_classes = 'suit-tab suit-tab-linked'
     
+class LocationLinkedDataInline(admin.TabularInline):
+    model = LocationLinkedData
+    fields = ['source', 'link']
+    extra = 1
+    suit_classes = 'suit-tab suit-tab-linked'    
+    
 class PersonOrgLinkedDataInline(admin.TabularInline):
     model = PersonOrgLinkedData
     fields = ['source', 'link']    
@@ -1709,6 +1898,39 @@ class SubjectControlPropertyInline(admin.TabularInline):
         if db_field.name == 'control_property':
             kwargs["queryset"] = DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='SO') | Q(primary_type='AL'))
         return super(SubjectControlPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        
+class LocationPropertyInline(admin.TabularInline):
+    model = LocationProperty
+    fields = ['property', 'property_value', 'inline_notes', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)    
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    ordering = ('property__order',)
+    suit_classes = 'suit-tab suit-tab-general'
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'property':
+            kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='AL') | Q(primary_type='SL')).exclude(control_field = True)
+        return super(LocationPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        
+class LocationControlPropertyInline(admin.TabularInline):   
+    model = LocationControlProperty
+    fields = ['control_property', 'control_property_value', 'inline_notes', 'notes', 'last_mod_by'] 
+    readonly_fields = ('last_mod_by',)
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_classes = 'suit-tab suit-tab-general'
+    extra = 3
+    template = 'admin/base/location/tabular.html'
+    ordering = ('control_property__order',)
+    
+    # for control property form dropdown, only show descriptive properties marked as control_field = true
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'control_property':
+            kwargs["queryset"] = DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='SL') | Q(primary_type='AL'))
+        return super(LocationControlPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
         
 class FilePropertyInline(admin.TabularInline):
     model = FileProperty
@@ -1785,6 +2007,47 @@ class FileInline(admin.TabularInline):
     suit_classes = 'suit-tab suit-tab-files'
     extra = 1
     form = FileSubjectAdminForm
+    
+class SubjectLocationRelationsInline(admin.TabularInline):
+    model = LocationSubjectRelations
+    fields = ['subject', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)        
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_classes = 'suit-tab suit-tab-relations'
+    extra = 1
+    form = LocationSubjectAdminForm 
+
+class MediaLocationRelationsInline(admin.TabularInline):
+    model = MediaLocationRelations
+    fields = ['media', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)        
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_classes = 'suit-tab suit-tab-relations'
+    extra = 1
+    form = LocationMediaAdminForm
+
+class LocationPersonOrgRelationsInline(admin.TabularInline):
+    model = LocationPersonOrgRelations
+    fields = ['person_org', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)        
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_classes = 'suit-tab suit-tab-relations'
+    extra = 1
+    form = LocationPersonOrgAdminForm
+        
+class LocationFileInline(admin.TabularInline):
+    model = LocationFile
+    fields = ['get_thumbnail_admin', 'rsid', 'thumbnail']
+    readonly_fields = ('get_thumbnail_admin',)        
+    suit_classes = 'suit-tab suit-tab-files'
+    extra = 1
+    form = FileLocationAdminForm
 
 class FileSubjectRelationsInline(admin.TabularInline):
     model = SubjectFile
@@ -2053,7 +2316,7 @@ class SubjectAdmin(admin.ModelAdmin):
         }),
     ]
     advanced_search_form = AdminAdvSearchForm()
-    actions = [bulk_add_collection, bulk_edit, export_data_json, export_data_xml, export_data_csv]
+    actions = [bulk_add_collection, bulk_edit, export_data_json, export_data_xml, export_data_csv, generate_entity_thumbnail]
     save_as = True
     
     change_list_template = 'admin/base/subject/change_list.html'
@@ -2319,6 +2582,33 @@ class SubjectAdmin(admin.ModelAdmin):
             return queryset.order_by('-modified').distinct(), use_distinct
 
 admin.site.register(Subject, SubjectAdmin)
+
+class LocationAdmin(MPTTModelAdmin):
+    readonly_fields = ('title', 'created', 'modified', 'last_mod_by')    
+    inlines = [LocationPropertyInline, MediaLocationRelationsInline, LocationCollectionEntityInline]
+    search_fields = ['title']
+    list_display = ('title', 'notes', 'type', 'ancestors')
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    list_filter = ['type']
+    fields = ['title', 'notes', 'type', 'parent', 'created', 'modified', 'last_mod_by']
+    
+    change_form_template = 'admin/base/location/change_form.html'    
+    
+    def save_model(self, request, obj, form, change):
+        obj.last_mod_by = request.user
+        obj.save()
+        
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
+        for instance in instances:
+            if isinstance(instance, LocationProperty) or isinstance(instance, MediaLocationRelations): #Check if it is the correct type of inline
+                instance.last_mod_by = request.user            
+                instance.save()
+
+admin.site.register(Location, LocationAdmin)
 
 class FileAdmin(admin.ModelAdmin):
     fields = ['get_thumbnail_admin', 'get_download_admin', 'title', 'get_uri', 'notes', 'public', 'uploaded', 'upload_batch']
@@ -2649,6 +2939,13 @@ class ResultPropertyAdmin(admin.ModelAdmin):
     
 admin.site.register(ResultProperty, ResultPropertyAdmin)
 
+class AboutPageAdmin(SortableModelAdmin):   
+    form = CMSPageForm
+    sortable = 'order'
+    fields = ('title', 'body')
+
+admin.site.register(AboutPage, AboutPageAdmin)
+
 class DataUploadAdmin(admin.ModelAdmin):
     fields = ['name', 'file', 'notes', 'entity', 'imported', 'create_on_no_match', 'allow_multiple', 'collection', 'owner', 'upload_time', 'private']
     readonly_fields = ('name', 'imported', 'owner', 'upload_time')
@@ -2839,41 +3136,51 @@ class DataUploadAdmin(admin.ModelAdmin):
                                     col_ordered = SubjectCollection.objects.filter(collection = col).order_by('-order')
                                     if col_ordered:
                                         last_order = col_ordered[0].order + 1
-                                    new_col = SubjectCollection(subject = match, collection = col, order = last_order, upload_batch = batch)
-                                    new_col.save()
-                                    last_order = last_order + 1
+                                    dup_check = SubjectCollection.objects.filter(collection = col, subject = match)
+                                    if not dup_check:
+                                        new_col = SubjectCollection(subject = match, collection = col, order = last_order, upload_batch = batch)
+                                        new_col.save()
+                                        last_order = last_order + 1
                                 elif entity == 'L':
                                     last_order = 0
                                     col_ordered = LocationCollection.objects.filter(collection = col).order_by('-order')
                                     if col_ordered:
                                         last_order = col_ordered[0].order + 1                 
-                                    new_col = LocationCollection(location = match, collection = col, order = last_order, upload_batch = batch)
-                                    new_col.save()
-                                    last_order = last_order + 1
+                                    dup_check = LocationCollection.objects.filter(collection = col, location = match)
+                                    if not dup_check:
+                                        new_col = LocationCollection(location = match, collection = col, order = last_order, upload_batch = batch)
+                                        new_col.save()
+                                        last_order = last_order + 1
                                 elif entity == 'M':
                                     last_order = 0
                                     col_ordered = MediaCollection.objects.filter(collection = col).order_by('-order')
                                     if col_ordered:
                                         last_order = col_ordered[0].order + 1                   
-                                    new_col = MediaCollection(media = match, collection = col, order = last_order, upload_batch = batch)
-                                    new_col.save()
-                                    last_order = last_order + 1
+                                    dup_check = MediaCollection.objects.filter(collection = col, media = match)
+                                    if not dup_check:                        
+                                        new_col = MediaCollection(media = match, collection = col, order = last_order, upload_batch = batch)
+                                        new_col.save()
+                                        last_order = last_order + 1
                                 elif entity == 'F':
                                     last_order = 0
                                     col_ordered = FileCollection.objects.filter(collection = col).order_by('-order')
                                     if col_ordered:
                                         last_order = col_ordered[0].order + 1                
-                                    new_col = FileCollection(file = match, collection = col, order = last_order, upload_batch = batch)
-                                    new_col.save()
-                                    last_order = last_order + 1
+                                    dup_check = FileCollection.objects.filter(collection = col, file = match)
+                                    if not dup_check:                        
+                                        new_col = FileCollection(file = match, collection = col, order = last_order, upload_batch = batch)
+                                        new_col.save()
+                                        last_order = last_order + 1
                                 elif entity == 'PO':
                                     last_order = 0
                                     col_ordered = PersonOrgCollection.objects.filter(collection = col).order_by('-order')
                                     if col_ordered:
                                         last_order = col_ordered[0].order + 1                    
-                                    new_col = PersonOrgCollection(personorg = match, collection = col, order = last_order, upload_batch = batch)
-                                    new_col.save()
-                                    last_order = last_order + 1
+                                    dup_check = PersonOrgCollection.objects.filter(collection = col, personorg = match)
+                                    if not dup_check:                        
+                                        new_col = PersonOrgCollection(personorg = match, collection = col, order = last_order, upload_batch = batch)
+                                        new_col.save()
+                                        last_order = last_order + 1  
                                     
                             # PRIVATE
                             if instance.data_upload.private:
@@ -3272,19 +3579,19 @@ class DataUploadAdmin(admin.ModelAdmin):
                         rel_entity = 'PO'
                         
                     if instance.subjects:
-                        matches = instance.subjects
+                        matches = instance.subjects.all()
                         entity = 'S'                        
                     elif instance.locations:
-                        matches = instance.locations
+                        matches = instance.locations.all()
                         entity = 'L'                        
                     elif instance.medias:
-                        matches = instance.medias
+                        matches = instance.medias.all()
                         entity = 'M'
                     elif instance.files:
-                        matches = instance.files
+                        matches = instance.files.all()
                         entity = 'F'                        
                     else:
-                        matches = instance.people
+                        matches = instance.people.all()
                         entity = 'PO'                          
                     
                     # HANDLE RELATIONS
@@ -3864,100 +4171,9 @@ class DescriptivePropertyAdmin(admin.ModelAdmin):
 
 admin.site.register(DescriptiveProperty, DescriptivePropertyAdmin)
 admin.site.register(MediaProperty)
-
-class SubjectPropertyAdmin(admin.ModelAdmin):
-    readonly_fields = ('created', 'modified', 'last_mod_by')
-    fields = ['subject', 'property', 'property_value', 'notes', 'created', 'modified', 'last_mod_by']
-    list_display = ['subject', 'property', 'property_value', 'notes', 'created', 'modified', 'last_mod_by']
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2})},
-    }
-    
-    def save_model(self, request, obj, form, change):
-        obj.last_mod_by = request.user
-        obj.save()
-
-admin.site.register(SubjectProperty, SubjectPropertyAdmin)
 admin.site.register(Relations)
-
-# class MediaSubjectRelationsForm(ModelForm):
-    # class Meta:
-        # widgets = {
-            # 'subject': LinkedSelect
-        # }
-
-class MediaSubjectRelationsAdmin(admin.ModelAdmin):
-    readonly_fields = ('subject', 'created', 'modified', 'last_mod_by')
-    fields = ['media', 'subject', 'notes', 'created', 'modified', 'last_mod_by']
-    list_display = ['media', 'subject', 'notes', 'created', 'modified', 'last_mod_by']
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2})},
-    }
-    search_fields = ['media__title', 'notes']
-#    form = MediaSubjectRelationsForm
-    
-    def save_model(self, request, obj, form, change):
-        obj.last_mod_by = request.user
-        obj.save()
-
-admin.site.register(MediaSubjectRelations, MediaSubjectRelationsAdmin)
 admin.site.register(MediaPersonOrgRelations)
-admin.site.register(PersonOrgProperty)
-
-class LocationPropertyInline(admin.TabularInline):
-    model = LocationProperty
-    fields = ['property', 'property_value', 'notes', 'last_mod_by']
-    readonly_fields = ('last_mod_by',)    
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
-    ordering = ('property__order',)
-    
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'property':
-            kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='AL') | Q(primary_type='SL'))
-        return super(LocationPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
-        
-class MediaLocationRelationsInline(admin.TabularInline):
-    model = MediaLocationRelations
-    fields = ['media', 'notes', 'last_mod_by']
-    readonly_fields = ('last_mod_by',)        
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
-    extra = 1
-    
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'media':
-            kwargs["queryset"] = Media.objects.filter(type__type = 'publication').order_by('title')
-        return super(MediaLocationRelationsInline, self).formfield_for_foreignkey(db_field, request, **kwargs)       
-
-class LocationAdmin(MPTTModelAdmin):
-    readonly_fields = ('title', 'created', 'modified', 'last_mod_by')    
-    inlines = [LocationPropertyInline, MediaLocationRelationsInline, LocationCollectionEntityInline]
-    search_fields = ['title']
-    list_display = ('title', 'notes', 'type', 'ancestors')
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
-    list_filter = ['type']
-    fields = ['title', 'notes', 'type', 'parent', 'created', 'modified', 'last_mod_by']
-    
-    change_form_template = 'admin/base/location/change_form.html'    
-    
-    def save_model(self, request, obj, form, change):
-        obj.last_mod_by = request.user
-        obj.save()
-        
-    def save_formset(self, request, form, formset, change):
-        instances = formset.save(commit=False)
-
-        for instance in instances:
-            if isinstance(instance, LocationProperty) or isinstance(instance, MediaLocationRelations): #Check if it is the correct type of inline
-                instance.last_mod_by = request.user            
-                instance.save()
-
-admin.site.register(Location, LocationAdmin)
+admin.site.register(PersonOrgProperty)      
 
 class PostAdmin(admin.ModelAdmin):
     form = BlogPostForm

@@ -436,7 +436,8 @@ class Subject(models.Model):
         return 'subject'
         
     def has_image(self):
-        files = SubjectFile.objects.filter(subject = self, filetype__startswith = 'image')
+        imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']
+        files = SubjectFile.objects.filter(subject = self, rsid__filetype__in = imgs)
         if files:
             return True
         else:
@@ -546,7 +547,8 @@ class Location(MPTTModel):
         return 'location'
 
     def has_image(self):
-        files = LocationFile.objects.filter(location = self, filetype__startswith = 'image')
+        imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']
+        files = LocationFile.objects.filter(location = self, rsid__filetype__in = imgs)
         if files:
             return True
         else:
@@ -584,15 +586,29 @@ class Location(MPTTModel):
     def get_thumbnail(self):
         """ Returns thumbnail for this object, or if none is set, returns stock "no image". """
         
-        resource_uri = GlobalVars.objects.get(pk=11)
-        no_img = GlobalVars.objects.get(pk=12).val
+        resource_uri = settings.THUMBNAIL_URI
+        no_img = settings.NO_IMG
         thumbs = LocationFile.objects.filter(location = self, thumbnail = True)
         if thumbs:
-            return resource_uri.val + str(thumbs[0].rsid.id)
+            return resource_uri + str(thumbs[0].rsid.id)
         else:
             return no_img
     get_thumbnail.short_description = 'Location'
-    get_thumbnail.allow_tags = True        
+    get_thumbnail.allow_tags = True 
+
+    def get_thumbnail_admin(self):
+        resource_uri = settings.IMAGE_URI
+        no_img = settings.NO_IMG    
+        thumbs = LocationFile.objects.filter(subject = self, thumbnail = True)
+        if thumbs:
+            url = resource_uri + str(thumbs[0].rsid.id)
+            thumbnail = settings.THUMBNAIL_URI + str(thumbs[0].rsid.id)
+        else:
+            url =  no_img
+            thumbnail = no_img
+        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, thumbnail) 
+    get_thumbnail_admin.short_description = 'Location Thumbnail'
+    get_thumbnail_admin.allow_tags = True    
         
     def ancestors(self):
         ancients = self.get_ancestors(include_self=False)
@@ -602,16 +618,18 @@ class Location(MPTTModel):
         return ancs
         
     def next(self):
-        try:
-            return Location.objects.get(pk=self.pk+1)
-        except:
+        next_locs = Location.objects.filter(pk__gt=self.pk).filter(parent = self.parent).order_by('id')
+        if next_locs:
+            return next_locs[0]
+        else:
             return None
             
-    def previous(self):
-        try:
-            return Location.objects.get(pk=self.pk-1)
-        except:
-            return None
+    def prev(self):
+        prev_locs = Location.objects.filter(pk__lt = self.pk).filter(parent = self.parent).order_by('id')
+        if prev_locs:
+            return prev_locs.reverse()[0]
+        else:
+            return None    
 
     class Meta:
         verbose_name = 'Location'    
@@ -804,16 +822,16 @@ class File(models.Model):
     def __unicode__(self):
         return self.title
         
-    # def get_absolute_url(self):
-        # return reverse('filedetail', args=[str(self.id)])
+    def get_absolute_url(self):
+        return reverse('filedetail', args=[str(self.id)])
         
-    # def get_full_absolute_url(self):
-        # domain = settings.ALLOWED_HOSTS[0]
+    def get_full_absolute_url(self):
+        domain = settings.ALLOWED_HOSTS[0]
         
-        # if domain.startswith('.'):
-            # domain = domain[1:]
+        if domain.startswith('.'):
+            domain = domain[1:]
 
-        # return 'http://%s%s' % (domain, self.get_absolute_url())        
+        return 'http://%s%s' % (domain, self.get_absolute_url())        
         
     def save(self, *args, **kwargs):
         """ Auto fills the main title field. If file does not have a value for title1, title2, or title3,
@@ -1021,7 +1039,8 @@ class SubjectControlProperty(models.Model):
 
     class Meta:
         verbose_name = 'Controlled Object Property'    
-        verbose_name_plural = 'Controlled Object Properties'    
+        verbose_name_plural = 'Controlled Object Properties'
+        ordering = ['control_property__order']
 
     def __unicode__(self):
         return self.control_property.property + ': ' + self.control_property_value.title
@@ -1320,7 +1339,8 @@ class FileControlProperty(models.Model):
 
     class Meta:
         verbose_name = 'Controlled File Property'    
-        verbose_name_plural = 'Controlled File Properties'    
+        verbose_name_plural = 'Controlled File Properties'
+        ordering = ['control_property__order']
 
     def __unicode__(self):
         return self.control_property.property + ': ' + self.control_property_value.title
@@ -1359,6 +1379,26 @@ class Collection(models.Model):
         
     def get_absolute_url(self):
         return reverse('collectiondetail', args=[str(self.id)])
+        
+    def get_thumbnail(self):
+        sc = SubjectCollection.objects.filter(collection = self)
+        if sc:
+            return sc[0].subject.get_thumbnail()
+        lc = LocationCollection.objects.filter(collection = self)
+        if lc:
+            return lc[0].location.get_thumbnail()
+        mc = MediaCollection.objects.filter(collection = self)
+        if mc:
+            return mc[0].media.get_thumbnail()
+        poc = PersonOrgCollection.objects.filter(collection = self)
+        if poc:
+            return poc[0].person_org.get_thumbnail()
+        fc = FileCollection.objects.filter(collection = self)
+        if fc:
+            return fc[0].file.get_thumbnail()
+        return settings.NO_IMG
+    get_thumbnail.short_description = 'Collection'
+    get_thumbnail.allow_tags = True 
         
     class Meta:
         ordering = ['title']
@@ -1413,12 +1453,12 @@ class LocationCollection(models.Model):
     get_thumbnail.allow_tags = True    
         
     def get_thumbnail_admin(self):
-        resource_uri = GlobalVars.objects.get(pk=11)
-        no_img = GlobalVars.objects.get(pk=12).val    
+        resource_uri = settings.IMAGE_URI
+        no_img = settings.NO_IMG     
         thumbs = LocationFile.objects.filter(location = self.location, thumbnail = True)
         if thumbs:
             url = resource_uri + str(thumbs[0].rsid.id)
-            thumbnail = GlobalVars.objects.get(pk=13).val + str(thumbs[0].rsid.id)
+            thumbnail = settings.THUMBNAIL_URI + str(thumbs[0].rsid.id)
         else:
             url =  no_img
             thumbnail = no_img
@@ -1647,7 +1687,6 @@ class MediaLocationRelations(models.Model):
 
     media = models.ForeignKey(Media)
     location = models.ForeignKey(Location)
-    relation_type = models.ForeignKey(Relations, blank = True, null = True)
     notes = models.TextField(blank = True, help_text = "Please use this field for specific page or plate information, etc, referring to where this location is mentioned in this media item.")
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
@@ -1658,8 +1697,8 @@ class MediaLocationRelations(models.Model):
         return self.media.title + ":" + self.location.title
         
     class Meta:
-        verbose_name = 'Media-Location Relation'
-        verbose_name_plural = 'Media-Location Relations'        
+        verbose_name = 'Location Record'
+        verbose_name_plural = 'Location Records'        
 
 class LocationSubjectRelations(models.Model):
     """ Related Subjects and Locations """
@@ -1684,7 +1723,6 @@ class LocationPersonOrgRelations(models.Model):
 
     location = models.ForeignKey(Location)
     person_org = models.ForeignKey(PersonOrg)
-    relation_type = models.ForeignKey(Relations, blank = True, null = True)
     notes = models.TextField(blank = True, help_text = "Please use this field for specific page or plate information, etc, referring to where this Person/Organization is mentioned in this media item.")
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)
@@ -1695,8 +1733,8 @@ class LocationPersonOrgRelations(models.Model):
         return self.location.title + ":" + self.person_org.title
 
     class Meta:
-        verbose_name = 'Location-Person/Organization Relation'
-        verbose_name_plural = 'Location-Person/Organization Relations'
+        verbose_name = 'Locations & People'
+        verbose_name_plural = 'Locations & People'
 
 class SubjectPersonOrgRelations(models.Model):
     """ Related subjects and people """
@@ -1930,6 +1968,21 @@ class SiteContent(models.Model):
     
     def __unicode__(self):
         return self.human_title
+        
+class AboutPage(models.Model):
+    """ CMS-style content for about pages on the public website. """
+
+    title = models.CharField(max_length = 200)
+    body = models.TextField()
+    order = models.PositiveIntegerField(blank = True, default = 0)
+	
+    class Meta:
+        verbose_name = 'About Page'
+        verbose_name_plural = 'About Pages'
+        ordering = ['order']
+    
+    def __unicode__(self):
+        return self.title
 
 class PublicationManager(models.Manager):
     def get_query_set(self):

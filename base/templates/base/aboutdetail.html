@@ -1,0 +1,30 @@
+{% extends '_layouts/base.html' %}
+{% load staticfiles %}
+{% load base_tags %}
+
+<!-- Metadata -->
+{% block page_title %}{{ aboutpage.title }}{% endblock %}
+<!-- End Metadata -->
+
+{% block pageheader %}
+    <div class="page-header">
+        <div class="container page-header-content">
+            <h1>{{ aboutpage.title }}</h1>
+        </div>
+        <div class="overlay"></div>
+    </div>
+{% endblock %}
+
+{% block content %}
+
+    <!-- Body Sections-->
+    <div class="container" id="template">
+        <div class="row">
+            <div class="col-md-8">
+                {{ aboutpage.body | safe }}
+            </div>
+        </div>
+    </div>
+    <!-- End Body Sections-->
+    
+{% endblock %}
