@@ -599,7 +599,7 @@ class Location(MPTTModel):
     def get_thumbnail_admin(self):
         resource_uri = settings.IMAGE_URI
         no_img = settings.NO_IMG    
-        thumbs = LocationFile.objects.filter(subject = self, thumbnail = True)
+        thumbs = LocationFile.objects.filter(location = self, thumbnail = True)
         if thumbs:
             url = resource_uri + str(thumbs[0].rsid.id)
             thumbnail = settings.THUMBNAIL_URI + str(thumbs[0].rsid.id)
@@ -1381,6 +1381,9 @@ class Collection(models.Model):
         return reverse('collectiondetail', args=[str(self.id)])
         
     def get_thumbnail(self):
+        """ If the user hasn't set a thumbnail file, tries to find one. """
+        if self.thumbnail:
+            return self.thumbnail.get_thumbnail()
         sc = SubjectCollection.objects.filter(collection = self)
         if sc:
             return sc[0].subject.get_thumbnail()

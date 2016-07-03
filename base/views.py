@@ -112,8 +112,8 @@ def subjectdetail(request, subject_id):
     po_col_title = ''
     
     # properties
-    control_properties = SubjectControlProperty.objects.filter(subject = subject, control_property__visible=True).exclude(control_property__in = DescriptiveProperty.objects.filter(resultproperty__display_field__startswith = 'subj_title'))
-    ff_properties = SubjectProperty.objects.filter(subject = subject, property__visible=True).exclude(property__in = DescriptiveProperty.objects.filter(resultproperty__display_field__startswith = 'subj_title'))
+    control_properties = SubjectControlProperty.objects.filter(subject = subject, control_property__visible=True)
+    ff_properties = SubjectProperty.objects.filter(subject = subject, property__visible=True)
     # magic to combine both property types and sort by their order fields
     sorted_properties = sorted(chain(control_properties, ff_properties), key = lambda property: property.property.order if hasattr(property, 'property') else property.control_property.order)
     # notes

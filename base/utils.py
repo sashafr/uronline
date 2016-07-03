@@ -627,5 +627,5 @@ def flatten_to_csv(filename, qs, entity, is_file=False, is_admin=False):
     # write out the rows, starting with header
     writer.writerow(titles)
     for each_row in rows:
-        writer.writerow(each_row)
+        writer.writerow([unicode(s).encode("utf-8") for s in each_row])
     return response

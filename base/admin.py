@@ -1238,7 +1238,7 @@ class AdminAdvSearchForm(forms.Form):
             }
         )
     )    
-    img = forms.ChoiceField(label='Has Image', required=False, choices=(('default', '---'), ('yes', 'Yes'), ('no', 'No')))
+    img = forms.ChoiceField(label='Image', required=False, choices=(('default', '---'), ('yes', 'Yes'), ('no', 'No')))
     col = forms.ModelChoiceField(label='Collection', required=False, queryset=Collection.objects.all())
     
     # utilities
@@ -1302,7 +1302,7 @@ class LocationAdvSearchForm(forms.Form):
             }
         )
     )    
-    img = forms.ChoiceField(label='Has Image', required=False, choices=(('default', '---'), ('yes', 'Yes'), ('no', 'No')))
+    img = forms.ChoiceField(label='Image', required=False, choices=(('default', '---'), ('yes', 'Yes'), ('no', 'No')))
     col = forms.ModelChoiceField(label='Collection', required=False, queryset=Collection.objects.all())
     
     # utilities
@@ -2133,6 +2133,7 @@ class LocationCollectionEntityInline(admin.TabularInline):
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
+    suit_classes = 'suit-tab suit-tab-collections'     
 
 class MediaCollectionEntityInline(admin.TabularInline):
     model = MediaCollection
@@ -2473,7 +2474,9 @@ class SubjectAdmin(admin.ModelAdmin):
         # RELATED TABLES FILTER
         loc = adv_fields['loc']
         if loc != '':
-            queryset = queryset.filter(locationsubjectrelations__location_id=loc)
+            location = Location.objects.filter(pk=loc)
+            if location:
+                queryset = queryset.filter(locationsubjectrelations__location__in=location[0].get_descendants(include_self = True))
             
         med = adv_fields['med']
         if med != '':
@@ -2485,10 +2488,11 @@ class SubjectAdmin(admin.ModelAdmin):
             
         img = adv_fields['img']
         if img != 'default':
+            imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']
             if img == 'yes':
-                queryset = queryset.filter(subjectfile__isnull = False)
+                queryset = queryset.filter(subjectfile__rsid__filetype__in = imgs)
             else:
-                queryset = queryset.exclude(subjectfile__isnull = True)
+                queryset = queryset.exclude(subjectfile__rsid__filetype__in = imgs)
 
         col = adv_fields['col']
         if col != '':
@@ -2584,17 +2588,78 @@ class SubjectAdmin(admin.ModelAdmin):
 admin.site.register(Subject, SubjectAdmin)
 
 class LocationAdmin(MPTTModelAdmin):
-    readonly_fields = ('title', 'created', 'modified', 'last_mod_by')    
-    inlines = [LocationPropertyInline, MediaLocationRelationsInline, LocationCollectionEntityInline]
-    search_fields = ['title']
-    list_display = ('title', 'notes', 'type', 'ancestors')
+    readonly_fields = ('get_thumbnail_admin', 'title', 'created', 'modified', 'last_mod_by', 'upload_batch')    
+    inlines = [LocationPropertyInline, LocationControlPropertyInline, SubjectLocationRelationsInline, MediaLocationRelationsInline, LocationPersonOrgRelationsInline, LocationFileInline, LocationCollectionEntityInline, LocationLinkedDataInline]
+    search_fields = ['title', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3']
+    list_display = ('get_thumbnail_admin', 'title1', 'title2', 'title3', 'desc1', 'type', 'ancestors', 'public', 'modified', 'last_mod_by')
+    list_filter = ['type', 'public', 'last_mod_by']
+    fields = ['get_thumbnail_admin', 'title', 'notes', 'type', 'parent', 'created', 'modified', 'last_mod_by', 'public', 'upload_batch']
+    list_display_links = ('title1', )
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
-    list_filter = ['type']
-    fields = ['title', 'notes', 'type', 'parent', 'created', 'modified', 'last_mod_by']
+    suit_form_tabs = (('general', 'Object'), ('relations', 'Relations'), ('files', 'Files'), ('collections', 'Collections'), ('linked', 'Linked Data'))
+    fieldsets = [
+        (None, {
+            'classes': ('suit-tab', 'suit-tab-general'),
+            'fields': ['get_thumbnail_admin', 'title', 'notes', 'type', 'parent', 'created', 'modified', 'last_mod_by', 'public', 'upload_batch']
+        }),
+    ]
+    advanced_search_form = LocationAdvSearchForm()
+    actions = [bulk_add_collection, bulk_edit, export_data_json, export_data_xml, export_data_csv, generate_entity_thumbnail]
+    save_as = True    
     
-    change_form_template = 'admin/base/location/change_form.html'    
+    change_list_template = 'admin/base/location/change_list.html'
+    change_form_template = 'admin/base/location/change_form.html'
+
+    class Media:
+        # the django-select2 styles have to be added manually for some reason, otherwise they don't work
+        css = {
+            "all": ("django_select2/css/select2.min.css",)
+        }
+        
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        """ Added to allow browsing by collection """
+    
+        extra_context = extra_context or {}
+        collections = LocationCollection.objects.filter(location_id = object_id)
+        collection_list = []
+        for coll in collections:
+            coll_info = {}
+            current_order = coll.order
+            lt = LocationCollection.objects.filter(collection = coll.collection, order__lt = current_order).order_by('-order')
+            if lt:
+                coll_info['prev'] = lt[0].location_id
+            gt = LocationCollection.objects.filter(collection = coll.collection, order__gt = current_order).order_by('order')
+            if gt:
+                coll_info['next'] = gt[0].location_id
+            if lt or gt:
+                coll_info['name'] = coll.collection.title
+            collection_list.append(coll_info)
+        extra_context['collections'] = collection_list
+        return super(LocationAdmin, self).change_view(request, object_id, form_url, extra_context = extra_context)
+        
+    def response_change(self, request, obj):
+        """
+        Determines the HttpResponse for the change_view stage.
+        """
+        if request.POST.has_key("_viewnext"):
+            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
+                   {'name': force_unicode(obj._meta.verbose_name),
+                    'obj': force_unicode(obj)})
+            next = request.POST.get("next_id")
+            if next:
+                self.message_user(request, msg)
+                return HttpResponseRedirect("../%s/" % next)
+        if request.POST.has_key("_viewprev"):
+            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
+                   {'name': force_unicode(obj._meta.verbose_name),
+                    'obj': force_unicode(obj)})
+            prev = request.POST.get("prev_id")
+            if prev:
+                self.message_user(request, msg)
+                return HttpResponseRedirect("../%s/" % prev)
+        return super(LocationAdmin, self).response_change(request, obj)        
     
     def save_model(self, request, obj, form, change):
         obj.last_mod_by = request.user
@@ -2604,9 +2669,208 @@ class LocationAdmin(MPTTModelAdmin):
         instances = formset.save(commit=False)
 
         for instance in instances:
-            if isinstance(instance, LocationProperty) or isinstance(instance, MediaLocationRelations): #Check if it is the correct type of inline
+            if isinstance(instance, LocationProperty) or isinstance(instance, LocationControlProperty) or isinstance(instance, LocationSubjectRelations) or isinstance(instance, MediaLocationRelations) or isinstance(instance, LocationPersonOrgRelations): #Check if it is the correct type of inline
                 instance.last_mod_by = request.user            
-                instance.save()
+        instance.save()
+        
+    # advanced search form based on https://djangosnippets.org/snippets/2322/ and http://stackoverflow.com/questions/8494200/django-admin-custom-change-list-arguments-override-e-1 
+
+    def get_changelist(self, request, **kwargs):
+        adv_search_fields = {}
+        asf = self.advanced_search_form
+        for key in asf.fields.keys():
+            temp = self.other_search_fields.get(key, None)
+            if temp:
+                adv_search_fields[key] = temp[0]
+            else:
+                adv_search_fields[key] = ''
+        
+        class AdvChangeList(ChangeList):
+            
+            def get_query_string(self, new_params=None, remove=None):
+                """ Overriding get_query_string ensures that the admin still considers
+                the additional search fields as parameters, even tho they are popped from 
+                the request.GET """
+                
+                if new_params is None:
+                    new_params = {}
+                if remove is None:
+                    remove = []
+                p = self.params.copy()
+                for r in remove:
+                    for k in list(p):
+                        if k.startswith(r):
+                            del p[k]
+                for k, v in new_params.items():
+                    if v is None:
+                        if k in p:
+                            del p[k]
+                    else:
+                        p[k] = v
+                
+                extra_params = ''
+                for field, val in adv_search_fields.items():
+                    extra_params += '&' + field + '=' + val
+                
+                return '?%s%s' % (urlencode(sorted(p.items())), extra_params)
+                
+        return AdvChangeList
+        
+    def lookup_allowed(self, key, value):
+        if key in self.advanced_search_form.fields.keys():
+            return True
+        if key == 'attach_type':
+            return True
+        return super(LocationAdmin, self).lookup_allowed(key, value)
+        
+    def changelist_view(self, request, extra_context=None, **kwargs):
+        self.other_search_fields = {}
+        asf = self.advanced_search_form
+        extra_context = {'asf': asf, 'github_uri': settings.GITHUB_BACKUP_URI}
+        
+        request.GET._mutable = True
+        
+        for key in asf.fields.keys():
+            try:
+                temp = request.GET.pop(key)
+            except KeyError:
+                pass
+            else:
+                if temp != ['']:
+                    self.other_search_fields[key] = temp
+                    
+        request.GET._mutable = False
+        return super(LocationAdmin, self).changelist_view(request, extra_context = extra_context)
+        
+    def get_search_results(self, request, queryset, search_term):
+        """ Performs either a simple search using the search_term or an 
+        advanced search using values taken from the AdvancedSearchForm """
+        
+        queryset, use_distinct = super(LocationAdmin, self).get_search_results(request, queryset, search_term)
+        
+        # get all the fields from the adv search form
+        adv_fields = {}
+        asf = self.advanced_search_form
+        for key in asf.fields.keys():
+            temp = self.other_search_fields.get(key, None)
+            if temp:
+                adv_fields[key] = temp[0]
+            else:
+                adv_fields[key] = ''
+        
+        # NOTE: simple search has already been applied
+        
+        # RELATED TABLES FILTER
+        sub = adv_fields['sub']
+        if sub != '':
+            queryset = queryset.filter(locationsubjectrelations__subject_id=sub)
+            
+        med = adv_fields['med']
+        if med != '':
+            queryset = queryset.filter(medialocationrelations__media_id=med)            
+
+        po = adv_fields['po']
+        if po != '':
+            queryset = queryset.filter(locationpersonorgrelations__person_org_id=po)            
+            
+        img = adv_fields['img']
+        if img != 'default':
+            imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']
+            if img == 'yes':
+                queryset = queryset.filter(locationfile__rsid__filetype__in = imgs)
+            else:
+                queryset = queryset.exclude(locationfile__rsid__filetype__in = imgs)
+
+        col = adv_fields['col']
+        if col != '':
+            queryset = queryset.filter(locationcollection__collection_id = col)
+        
+        # CONTROL PROPERTY FILTER
+        for i in range(1, 4):
+            cp = adv_fields['cp' + str(i)]
+            cst = adv_fields['cst' + str(i)]
+            cv = adv_fields['cv' + str(i)]
+            
+            if cp != '' and cv != 'default':
+                cf = ControlField.objects.filter(pk = cv)
+                cf_desc = cf[0].get_descendants(include_self=True)
+                ccq = Q()
+                for field in cf_desc:
+                    if cst == 'exact':
+                        ccq |= Q(locationcontrolproperty__control_property_value = field.id)
+                    else:
+                        ccq &= ~Q(locationcontrolproperty__control_property_value = field.id)
+                        
+                queryset = queryset.filter(ccq)
+                
+        # FREE FORM PROPERTY FILTER
+        for i in range (1, 4):
+            if i != 1:
+                op = adv_fields['op' + str(i - 1)]
+            else:
+                op = ''
+            fp = adv_fields['fp' + str(i)]
+            fst = adv_fields['fst' + str(i)]
+            fv = adv_fields['fv' + str(i)]
+
+            negate = False # whether or not the query will be negated
+            kwargs = {}
+            cq = Q()
+            
+            # remove and save negation, if present
+            if fst.startswith('not'):
+                negate = True
+                fst = fst[4:]
+            
+            if not(fv == '' and fst != 'blank'):
+                
+                if fst == 'blank':
+                    #if property is Any, then skip all b/c query asks for doc with 'any' blank properties
+                    if fp == '':
+                        continue
+                
+                    # BLANK is a special case negation (essentially a double negative), so handle differently
+                    if negate:
+                        cq = Q(locationproperty__property = fp)
+                    else:
+                        cq = ~Q(locationproperty__property = fp)
+                        
+                else:
+                    kwargs = {str('locationproperty__property_value__%s' % fst) : str('%s' % fv)}
+                    
+                    # check if a property was selected and build the current query
+                    if fp == '':
+                        # if no property selected, than search thru ALL properties
+                        if negate:
+                            cq = ~Q(**kwargs)
+                        else:
+                            cq = Q(**kwargs)
+                    else:
+                        if negate:
+                            cq = Q(Q(locationproperty__property = fp) & ~Q(**kwargs))
+                        else:
+                            cq = Q(Q(locationproperty__property = fp) & Q(**kwargs))
+                            
+            # modify query set
+            if op == 'or':
+                queryset = queryset | self.model.objects.filter(cq)
+            else:
+                # if connector wasn't set, use &
+                queryset = queryset.filter(cq)
+        
+        # UTILITY FILTER
+        dup_prop = adv_fields['dup_prop']
+        if dup_prop != '':
+            dups = LocationProperty.objects.filter(property_id = dup_prop).values_list('location', flat = True).annotate(count = Count('property')).filter(count__gt = 1)
+            dups_list = list(dups) # forcing queryset evaluation so next line doesn't throw a MySQLdb error
+            queryset = queryset.filter(id__in = dups_list)
+          
+        if col != '':
+            return queryset.order_by('locationcollection__order').distinct(), use_distinct
+        elif queryset.ordered:
+            return queryset.distinct(), use_distinct
+        else:
+            return queryset.order_by('-modified').distinct(), use_distinct        
 
 admin.site.register(Location, LocationAdmin)
 

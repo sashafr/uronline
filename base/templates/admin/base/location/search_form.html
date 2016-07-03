@@ -1,0 +1,354 @@
+{% load i18n admin_static suit_list admin_list suit_tags base_tags %}
+{% if cl.search_fields or cl.has_filters %}
+  {% suit_bc_value 1.5 'pop' 1.6 '_popup' as POPUP_VAR %}
+  <div id="toolbar" class="clearfix">
+    <form id="changelist-search" action="" method="get" class="form-inline">
+      <div class="search-container">
+        {% if cl.search_fields %}
+          <h1>Simple Search</h1>
+          <input type="text" size="40" name="{{ search_var }}" value="{{ cl.query }}" id="searchbar" placeholder="{% block search_placeholder %}{% trans 'keyword'|capfirst %}{% endblock %}"{{ cl.query|yesno:' class=active,' }}>&nbsp;
+          <script type="text/javascript">document.getElementById("searchbar").focus();</script>
+          <h1>Advanced Search&nbsp;&nbsp;<a class="btn btn-default" id="advSearchButton" href="#advSearch" data-toggle="collapse">Close</a></h1>
+          <div class="in collapse" id="advSearch">
+            <h2>Controlled Properties</h2>
+            <div class="row-fluid">
+              <div class="span2 control_property_select" style="width:initial;">
+                {{ asf.cp1 }}
+              </div>
+              <div class="span2" style="width:initial;">
+                {{ asf.cst1 }}
+              </div>            
+              <div class="span2" style="width:initial;">
+                {{ asf.cv1 }}
+              </div>
+            </div>
+            <div class="row-fluid">
+              <div class="span2 control_property_select" style="width:initial;">
+                {{ asf.cp2 }}
+              </div>
+              <div class="span2" style="width:initial;">
+                {{ asf.cst2 }}
+              </div>            
+              <div class="span2" style="width:initial;">
+                {{ asf.cv2 }}
+              </div>
+            </div>
+            <div class="row-fluid">
+              <div class="span2 control_property_select" style="width:initial;">
+                {{ asf.cp3 }}
+              </div>
+              <div class="span2" style="width:initial;">
+                {{ asf.cst3 }}
+              </div>            
+              <div class="span2" style="width:initial;">
+                {{ asf.cv3 }}
+              </div>
+            </div>            
+            <hr>
+            <h2>Free-Form Properties</h2>
+            <div class="row-fluid">
+              <div class="span2" style="width:initial;">
+                <select style="visibility:hidden;"></select>
+              </div>             
+              <div class="span2" style="width:initial;">
+                {{ asf.fp1 }}
+              </div>
+              <div class="span2" style="width:initial;">
+                {{ asf.fst1 }}
+              </div>            
+              <div class="span2" style="width:initial;">
+                {{ asf.fv1 }}
+              </div>
+            </div> 
+            <div class="row-fluid">
+              <div class="span2" style="width:initial;">
+                {{ asf.op1 }}
+              </div> 
+              <div class="span2" style="width:initial;">
+                {{ asf.fp2 }}
+              </div>
+              <div class="span2" style="width:initial;">
+                {{ asf.fst2 }}
+              </div>            
+              <div class="span2" style="width:initial;">
+                {{ asf.fv2 }}
+              </div>
+            </div> 
+            <div class="row-fluid">
+              <div class="span2" style="width:initial;">
+                {{ asf.op2 }}
+              </div>            
+              <div class="span2" style="width:initial;">
+                {{ asf.fp3 }}
+              </div>
+              <div class="span2" style="width:initial;">
+                {{ asf.fst3 }}
+              </div>            
+              <div class="span2" style="width:initial;">
+                {{ asf.fv3 }}
+              </div>
+            </div>
+            <hr>
+            <h1>Relation Filters</h1>            
+            <div class="row-fluid">
+              <div class="span1">
+                <h3>{{ asf.sub.label }}: </h3>
+              </div>
+              <div class="span2" style="width:initial;">
+                {{ asf.sub }}
+              </div>
+              <div class="span1">
+                <h3>{{ asf.med.label }}: </h3>
+              </div>
+              <div class="span2" style="width:initial;">
+                {{ asf.med }}
+              </div>              
+            </div>
+            <div class="row-fluid">
+              <div class="span1">
+                <h3>{{ asf.po.label }}: </h3>
+              </div>
+              <div class="span2" style="width:initial;">
+                {{ asf.po }}
+              </div>
+              <div class="span1">
+                <h3>{{ asf.img.label }}: </h3>
+              </div>
+              <div class="span2" style="width:initial;">
+                {{ asf.img }}
+              </div>              
+            </div>
+            <div class="row-fluid">
+              <div class="span1">
+                <h3>{{ asf.col.label }}: </h3>
+              </div>
+              <div class="span2" style="width:initial;">
+                {{ asf.col }}
+              </div>            
+            </div>            
+          </div>
+          <hr>
+          <h1>Utilities&nbsp;&nbsp;<a class="btn btn-default" id="utilButton" href="#utilSearch" data-toggle="collapse">Open</a></h1>
+          <div class="collapse" id="utilSearch">
+            <div class="row-fluid">
+              <div class="span2">
+                {{ asf.dup_prop }}
+              </div>                            
+            </div>
+            <hr>              
+          </div>        
+        {% endif %}
+        {% spaceless %}
+          {% if cl.has_filters %}
+            {% block filters %}
+              {% if cl.has_filters %}
+                <span class="search-filters">
+                {% for spec in cl.filter_specs %}
+                  {% suit_list_filter_select cl spec %}
+                  &nbsp;
+                {% endfor %}
+                </span>
+              {% endif %}
+            {% endblock %}
+          {% endif %}
+        {% endspaceless %}
+
+        <input type="submit" value="{% trans 'Search' %}" class="btn btn-info"/>
+        <input id="clear_search" class="btn btn-info" type="button" value="Clear" />
+        &nbsp;
+        {% if show_result_count %}
+          <span class="small quiet result-count">{% blocktrans count counter=cl.result_count %}{{ counter }} result{% plural %}{{ counter }} results{% endblocktrans %}
+            &nbsp; <a href="?{% if cl.is_popup %}{{ POPUP_VAR }}=1{% endif %}">
+              {% blocktrans with full_result_count=cl.full_result_count %}{{ full_result_count }} total{% endblocktrans %}</a></span>
+        {% endif %}
+      </div>
+
+      {% if cl.is_popup %}
+        <input type="hidden" name="{{ POPUP_VAR }}" value="1">
+      {% endif %}
+
+    </form>
+  </div>
+{% endif %}
+
+<!-- Modifications to original Django Suit template begin here -->
+<script type="text/javascript">
+(function($) {
+    $(document).ready(function($) {
+    
+        $('#advSearchButton').click(function () {
+            if($('#advSearch').hasClass('in')) {
+                $(this).text('Open');
+            } else {
+                $(this).text('Close');
+            }
+        }); 
+        $('#utilButton').click(function () {
+            if($('#utilSearch').hasClass('in')) {
+                $(this).text('Open');
+            } else {
+                $(this).text('Close');
+            }
+        });        
+        
+        // build the dictionary to store all possible control field values
+        var control_field_options = {};
+        {% get_control_fields 'SL' as control_fields %}
+        {% for field in control_fields %}
+            control_field_options['{{field.id}}'] = "{% get_control_prop_vals field.id '0' %}";
+        {% endfor %}
+        
+        // on change of control property select box, update values in control property value
+        
+        $('#id_cp1').change(function(){
+            var selectedControlField = $(this).val();
+            var $target = $('#id_cv1');
+            var listItems = control_field_options[selectedControlField];
+            $target.html(listItems);
+        });
+        
+        $('#id_cp2').change(function(){
+            var selectedControlField = $(this).val();
+            var $target = $('#id_cv2');
+            var listItems = control_field_options[selectedControlField];
+            $target.html(listItems);
+        });
+        
+        $('#id_cp3').change(function(){
+            var selectedControlField = $(this).val();
+            var $target = $('#id_cv3');
+            var listItems = control_field_options[selectedControlField];
+            $target.html(listItems);
+        });        
+        
+        // from http://stackoverflow.com/questions/979975/how-to-get-the-value-from-the-url-parameter
+        function getQueryParams(qs) {
+            qs = qs.split("+").join(" ");
+
+            var params = {}, tokens,
+                re = /[?&]?([^=]+)=([^&]*)/g;
+
+            while (tokens = re.exec(qs)) {
+                params[decodeURIComponent(tokens[1])]
+                    = decodeURIComponent(tokens[2]);
+            }
+
+            return params;
+        }
+        
+        var urlparams = getQueryParams(document.location.search);
+        if (urlparams['cp1']) {
+            document.getElementById('id_cp1').value = urlparams['cp1'];
+            var selectedControlField = urlparams['cp1'];
+            var $target = $('#id_cv1');
+            var listItems = control_field_options[selectedControlField];
+            $target.html(listItems);
+        }
+        if (urlparams['cst1']) {
+            document.getElementById('id_cst1').value = urlparams['cst1'];
+        }
+        if (urlparams['cv1']) {
+            document.getElementById('id_cv1').value = urlparams['cv1'];
+        }
+        if (urlparams['cp2']) {
+            document.getElementById('id_cp2').value = urlparams['cp2'];
+            var selectedControlField = urlparams['cp2'];
+            var $target = $('#id_cv2');
+            var listItems = control_field_options[selectedControlField];
+            $target.html(listItems);
+        }
+        if (urlparams['cst2']) {
+            document.getElementById('id_cst2').value = urlparams['cst2'];
+        }
+        if (urlparams['cv2']) {
+            document.getElementById('id_cv2').value = urlparams['cv2'];
+        }
+        if (urlparams['cp3']) {
+            document.getElementById('id_cp3').value = urlparams['cp3'];
+            var selectedControlField = urlparams['cp3'];
+            var $target = $('#id_cv3');
+            var listItems = control_field_options[selectedControlField];
+            $target.html(listItems);
+        }
+        if (urlparams['cst3']) {
+            document.getElementById('id_cst3').value = urlparams['cst3'];
+        }
+        if (urlparams['cv3']) {
+            document.getElementById('id_cv3').value = urlparams['cv3'];
+        }        
+        if (urlparams['fp1']) {
+            document.getElementById('id_fp1').value = urlparams['fp1'];
+        }
+        if (urlparams['fst1']) {
+            document.getElementById('id_fst1').value = urlparams['fst1'];
+        }
+        if (urlparams['fv1']) {
+            document.getElementById('id_fv1').value = urlparams['fv1'];
+        }
+        if (urlparams['op1']) {
+            document.getElementById('id_op1').value = urlparams['op1'];
+        }
+        if (urlparams['fp2']) {
+            document.getElementById('id_fp2').value = urlparams['fp2'];
+        }
+        if (urlparams['fst2']) {
+            document.getElementById('id_fst2').value = urlparams['fst2'];
+        }
+        if (urlparams['fv2']) {
+            document.getElementById('id_fv2').value = urlparams['fv2'];
+        }
+        if (urlparams['op2']) {
+            document.getElementById('id_op2').value = urlparams['op2'];
+        }        
+        if (urlparams['fp3']) {
+            document.getElementById('id_fp3').value = urlparams['fp3'];
+        }
+        if (urlparams['fst3']) {
+            document.getElementById('id_fst3').value = urlparams['fst3'];
+        }
+        if (urlparams['fv3']) {
+            document.getElementById('id_fv3').value = urlparams['fv3'];
+        }
+        if (urlparams['img']) {
+            document.getElementById('id_img').value = urlparams['img'];
+        }
+        if (urlparams['col']) {
+            document.getElementById('id_col').value = urlparams['col'];
+        }
+        if (urlparams['dup_prop']) {
+            document.getElementById('id_dup_prop').value = urlparams['dup_prop'];
+            document.getElementById('utilSearch').className += " in";
+            document.getElementById('utilButton').text = 'Close';
+        }
+        
+        // clears all advanced search fields
+        document.getElementById('clear_search').onclick = function() {
+            document.getElementById('searchbar').value = '';
+            document.getElementById('id_cp1').selectedIndex = 0;
+            document.getElementById('id_cst1').selectedIndex = 0;
+            document.getElementById('id_cv1').selectedIndex = 0;
+            document.getElementById('id_cp2').selectedIndex = 0;
+            document.getElementById('id_cst2').selectedIndex = 0;
+            document.getElementById('id_cv2').selectedIndex = 0; 
+            document.getElementById('id_cp3').selectedIndex = 0;
+            document.getElementById('id_cst3').selectedIndex = 0;
+            document.getElementById('id_cv3').selectedIndex = 0;           
+            document.getElementById('id_fp1').selectedIndex = 0;
+            document.getElementById('id_fst1').selectedIndex = 0;
+            document.getElementById('id_fv1').value = '';            
+            document.getElementById('id_op1').selectedIndex = 0;
+            document.getElementById('id_fp2').selectedIndex = 0;
+            document.getElementById('id_fst2').selectedIndex = 0;
+            document.getElementById('id_fv2').value = '';            
+            document.getElementById('id_op2').selectedIndex = 0;
+            document.getElementById('id_fp3').selectedIndex = 0;
+            document.getElementById('id_fst3').selectedIndex = 0;
+            document.getElementById('id_fv3').value = '';
+            document.getElementById('id_img').selectedIndex = 0;
+            document.getElementById('id_col').selectedIndex = 0;             
+            document.getElementById('id_dup_prop').selectedIndex = 0;
+        }        
+    });
+})(django.jQuery);
+</script>
+<!-- End modifications -->

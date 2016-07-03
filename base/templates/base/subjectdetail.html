@@ -258,6 +258,10 @@
                     {% endif %}
                     <div class="well filters">
                     
+                        <h3>Share</h3>
+                        <p><a href="mailto:?subject=[From UrOnline] View this Object&amp;body=You can view this object at {{ subject.get_full_absolute_url }}" target="_blank"> Email</a> | <a href="{% url 'admin:base_subject_change' subject.id %}" target="_blank"> Edit</a></p>
+                        <hr />
+                        
                         {% if locations %}
                             <h3>Context</h3>
                             {% for location in locations %}
