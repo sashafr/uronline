@@ -552,7 +552,7 @@ def flatten_to_csv(filename, qs, entity, is_file=False, is_admin=False):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="' + filename + '.csv"'
     
-    queryset = queryset.distinct()
+    qs = qs.distinct()
 
     writer = csv.writer(response)
     titles = []

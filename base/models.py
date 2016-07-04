@@ -664,7 +664,8 @@ class Media(models.Model):
         return 'media'
 
     def has_image(self):
-        files = MediaFile.objects.filter(media = self, filetype__startswith = 'image')
+        imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']    
+        files = MediaFile.objects.filter(media = self, rsid__filetype__in = imgs)
         if files:
             return True
         else:
@@ -675,9 +676,6 @@ class Media(models.Model):
         
     def get_full_absolute_url(self):
         domain = settings.ALLOWED_HOSTS[0]
-        
-        if domain.startswith('.'):
-            domain = domain[1:]
 
         return 'http://%s%s' % (domain, self.get_absolute_url())        
         
@@ -702,15 +700,43 @@ class Media(models.Model):
     def get_thumbnail(self):
         """ Returns thumbnail for this object, or if none is set, returns stock "no image". """
         
-        resource_uri = GlobalVars.objects.get(pk=11)
-        no_img = GlobalVars.objects.get(pk=12).val
+        resource_uri = settings.THUMBNAIL_URI
+        no_img = settings.NO_IMG
         thumbs = MediaFile.objects.filter(media = self, thumbnail = True)
         if thumbs:
-            return resource_uri.val + str(thumbs[0].rsid.id)
+            return resource_uri + str(thumbs[0].rsid.id)
         else:
             return no_img
     get_thumbnail.short_description = 'Media'
     get_thumbnail.allow_tags = True
+    
+    def get_thumbnail_admin(self):
+        resource_uri = settings.IMAGE_URI
+        no_img = settings.NO_IMG    
+        thumbs = MediaFile.objects.filter(media = self, thumbnail = True)
+        if thumbs:
+            url = resource_uri + str(thumbs[0].rsid.id)
+            thumbnail = settings.THUMBNAIL_URI + str(thumbs[0].rsid.id)
+        else:
+            url =  no_img
+            thumbnail = no_img
+        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, thumbnail) 
+    get_thumbnail_admin.short_description = 'Media Thumbnail'
+    get_thumbnail_admin.allow_tags = True
+
+    def next(self):
+        next_meds = Media.objects.filter(pk__gt=self.pk).order_by('id')
+        if next_meds:
+            return next_meds[0]
+        else:
+            return None
+            
+    def prev(self):
+        prev_meds = Media.objects.filter(pk__lt = self.pk).order_by('id')
+        if prev_meds:
+            return prev_meds.reverse()[0]
+        else:
+            return None        
 
     class Meta:
         verbose_name = 'Media'
@@ -1487,12 +1513,12 @@ class MediaCollection(models.Model):
     get_thumbnail.allow_tags = True    
         
     def get_thumbnail_admin(self):
-        resource_uri = GlobalVars.objects.get(pk=13)
-        no_img = GlobalVars.objects.get(pk=12).val    
+        resource_uri = settings.IMAGE_URI
+        no_img = settings.NO_IMG    
         thumbs = MediaFile.objects.filter(media = self.media, thumbnail = True)
         if thumbs:
             url = resource_uri + str(thumbs[0].rsid.id)
-            thumbnail = GlobalVars.objects.get(pk=11).val + str(thumbs[0].rsid.id)
+            thumbnail = settings.THUMBNAIL_URI + str(thumbs[0].rsid.id)
         else:
             url =  no_img
             thumbnail = no_img
@@ -1521,12 +1547,12 @@ class PersonOrgCollection(models.Model):
     get_thumbnail.allow_tags = True    
         
     def get_thumbnail_admin(self):
-        resource_uri = GlobalVars.objects.get(pk=11)
-        no_img = GlobalVars.objects.get(pk=12).val    
+        resource_uri = settings.IMAGE_URI
+        no_img = settings.NO_IMG     
         thumbs = PersonOrgFile.objects.filter(person_org = self.person_org, thumbnail = True)
         if thumbs:
             url = resource_uri + str(thumbs[0].rsid.id)
-            thumbnail = GlobalVars.objects.get(pk=13).val + str(thumbs[0].rsid.id)
+            thumbnail = settings.THUMBNAIL_URI + str(thumbs[0].rsid.id)
         else:
             url =  no_img
             thumbnail = no_img
@@ -1752,20 +1778,7 @@ class SubjectPersonOrgRelations(models.Model):
 
     class Meta:
         verbose_name = 'Objects & People'
-        verbose_name_plural = 'Objects & People'        
-        
-"""Related media"""
-class MediaMediaRelations(models.Model):
-    media1 = models.ForeignKey(Media, related_name='media1')
-    media2 = models.ForeignKey(Media, related_name='media2')
-    relation_type = models.ForeignKey(Relations)
-    notes = models.TextField(blank = True)
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User)
-
-    def __unicode__(self):
-        return self.media1.title + ":" + self.media2.title        
+        verbose_name_plural = 'Objects & People'   
 
 """ SITE SETTINGS ETC MODELS """
         
@@ -1982,17 +1995,7 @@ class AboutPage(models.Model):
         ordering = ['order']
     
     def __unicode__(self):
-        return self.title
-
-class PublicationManager(models.Manager):
-    def get_query_set(self):
-        return super(PublicationManager, self).get_query_set().filter(relation_type=2)
-        
-class Publication(MediaSubjectRelations):
-    objects = PublicationManager()
-    
-    class Meta:
-        proxy = True      
+        return self.title     
         
 class Post(models.Model):
     title = models.CharField(max_length=255)
@@ -2017,102 +2020,6 @@ class FileUpload(models.Model):
     title = models.CharField(max_length = 255)
     file = FilerImageField(blank = True)
     attribution = models.TextField(blank = True)
-    
-class LegrainNoteCards(models.Model):
-    media = models.ForeignKey(Media)
-    field_number = models.TextField(blank = True)
-    context = models.TextField(blank = True)
-    catalogue_number = models.TextField(blank = True)
-    museum_number = models.TextField(blank = True)
-    field_photo_number = models.TextField(blank = True)
-    measurements = models.TextField(blank = True)
-    transcription = models.TextField(blank = True)
-    category = models.TextField(blank = True)
-    photo = models.BooleanField(default = False)
-    drawing = models.BooleanField(default = False)
-    done = models.BooleanField(default = False)
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User)
-    
-    class Meta:
-        verbose_name = 'Legrain NoteCard Form'
-        verbose_name_plural = 'Legrain NoteCard Form'     
-    
-class LegrainImages(models.Model):
-
-    class Meta:
-        verbose_name = 'Legrain Image Form'
-        verbose_name_plural = 'Legrain Image Form'   
-
-    UR = 'ur'
-    TRAVEL = 'travel'
-    CAT = (
-        (UR, 'Ur'),
-        (TRAVEL, 'Travel'),
-    )
-    
-    LS = 'ls'
-    PEOPLE = 'people'
-    ARCH = 'arch'
-    EX = 'ex'
-    ILL = 'ill'
-    CITY = 'city'
-    SUB_CAT = (
-        (LS, 'Landscape'),
-        (PEOPLE, 'People'),
-        (ARCH, 'Archaeology'),
-        (EX, 'Excavation'),
-        (ILL, 'Illustration'),
-        (CITY, 'City-scape'),
-    )
-    
-    media = models.ForeignKey(Media)
-    image_category = models.CharField(max_length=6, choices=CAT, default = TRAVEL, blank = True)
-    image_sub_category = models.CharField(max_length=6, choices=SUB_CAT, default = LS, blank = True)
-    image_description = models.TextField(blank = True)
-    done = models.BooleanField(default = False)
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User)    
-    
-class LegrainImageTags(models.Model):
-
-    class Meta:
-        verbose_name = 'Legrain Image Tag'
-        verbose_name_plural = 'Legrain Image Tags' 
-
-    media = models.ForeignKey(Media)
-    tag = models.ForeignKey(ControlField)
-    created = models.DateTimeField(auto_now = False, auto_now_add = True)
-    modified = models.DateTimeField(auto_now = True, auto_now_add = False)
-    last_mod_by = models.ForeignKey(User)
-    
-class LegrainImageManager(models.Manager):
-    def get_query_set(self):
-        return super(LegrainImageManager, self).get_query_set().filter(mediacollection__collection_id = 3)
-        
-class LegrainImage(Media):
-    objects = LegrainImageManager()
-    
-    class Meta:
-        proxy = True
-        verbose_name = 'Legrain Image'
-        verbose_name_plural = 'Legrain Images'
-        ordering = ['title']
-        
-class LegrainNotesManager(models.Manager):
-    def get_query_set(self):
-        return super(LegrainNotesManager, self).get_query_set().filter(mediacollection__collection_id = 4)
-        
-class LegrainNotes(Media):
-    objects = LegrainNotesManager()
-    
-    class Meta:
-        proxy = True
-        verbose_name = 'Legrain Note Card'
-        verbose_name_plural = 'Legrain Note Cards'
-        ordering = ['title']
         
 """ UPCOMING FEATURES """
 

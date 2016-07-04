@@ -1143,40 +1143,7 @@ class ControlFieldTypeListFilter(admin.SimpleListFilter):
     def queryset(self, request, queryset):
         if self.value():
             prop_id = self.value()
-            return queryset.filter(type__id = prop_id)
-            
-class MediaCollectionListFilter(admin.SimpleListFilter):
-    """ Many to many filter to filter based on collections """
-    
-    title = _('collection')
-    parameter_name = 'collection'
-    
-    def lookups(self, request, model_admin):
-        return tuple((col.id, col.title) for col in Collection.objects.all())
-        
-    def queryset(self, request, queryset):
-        if self.value():
-            coll_id = self.value()
-            return queryset.filter(mediacollection__collection_id = coll_id)
-            
-class LegrainDoneListFilter(admin.SimpleListFilter):
-    """ Checking if Legrain media is done TOO BE DELETED"""
-    
-    title = _('done')
-    parameter_name = 'done'
-    
-    def lookups(self, request, model_admin):
-        return (('yes', 'Yes'), ('no', 'No'))
-        
-    def queryset(self, request, queryset):
-        if self.value():
-            done = self.value()
-            if done == 'yes':
-                return queryset.filter(Q(legrainnotecards__done = True) | Q(legrainimages__done = True))
-            elif done == 'no':
-                return queryset.filter(~Q(legrainnotecards__done = True) & ~Q(legrainimages__done = True))
-            else:
-                return queryset            
+            return queryset.filter(type__id = prop_id)        
             
 """ FORMS """
         
@@ -1307,6 +1274,70 @@ class LocationAdvSearchForm(forms.Form):
     
     # utilities
     dup_prop = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='SL') | Q(primary_type='AL')), empty_label = "Find Locations with Multiple...")
+
+class MediaAdvSearchForm(forms.Form):
+    """ Used on the Media Admin page to search objects by related Properties """
+    
+    # controlled properties
+    cp1 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='MP') | Q(primary_type='AL')))
+    cst1 = forms.ChoiceField(label='', required=False, choices=CONTROL_SEARCH_TYPE)
+    cv1 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))
+    cp2 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='MP') | Q(primary_type='AL')))
+    cst2 = forms.ChoiceField(label='', required=False, choices=CONTROL_SEARCH_TYPE)
+    cv2 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))
+    cp3 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='MP') | Q(primary_type='AL')))
+    cst3 = forms.ChoiceField(label='', required=False, choices=CONTROL_SEARCH_TYPE)
+    cv3 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))     
+    
+    # free-form properties
+    fp1 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='MP') | Q(primary_type='AL')))
+    fst1 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
+    fv1 = forms.CharField(label='', required=False)
+    op1 = forms.ChoiceField(label='', required=False, choices=OPERATOR)
+    fp2 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='MP') | Q(primary_type='AL')))
+    fst2 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
+    fv2 = forms.CharField(label='', required=False)
+    op2 = forms.ChoiceField(label='', required=False, choices=OPERATOR)
+    fp3 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='MP') | Q(primary_type='AL')))
+    fst3 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
+    fv3 = forms.CharField(label='', required=False)
+    
+    # filters
+    sub = SubjectChoices(
+        label = Subject._meta.verbose_name.capitalize(),
+        required = False,
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Subject._meta.verbose_name
+            }
+        )
+    )    
+    loc = LocationChoices(
+        label = Location._meta.verbose_name.capitalize(),
+        required = False,
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Location._meta.verbose_name
+            }
+        )
+    )
+    po = PersonOrgChoices(
+        label = PersonOrg._meta.verbose_name.capitalize(),
+        required = False,
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % PersonOrg._meta.verbose_name
+            }
+        )
+    )    
+    img = forms.ChoiceField(label='Image', required=False, choices=(('default', '---'), ('yes', 'Yes'), ('no', 'No')))
+    col = forms.ModelChoiceField(label='Collection', required=False, queryset=Collection.objects.all())
+    
+    # utilities
+    dup_prop = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='MP') | Q(primary_type='AL')), empty_label = "Find Media with Multiple...")
     
 class FileAdminAdvSearchForm(forms.Form):
     
@@ -1766,7 +1797,63 @@ class FileLocationAdminForm(ModelForm):
     )  
     
     class Meta:
-          model = LocationFile          
+          model = LocationFile
+
+class MediaLocationAdminForm(ModelForm):
+    location = LocationChoices(
+        label = Location._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Location._meta.verbose_name
+            }
+        )
+    )     
+    
+    class Meta:
+          model = MediaLocationRelations
+
+class MediaSubjectAdminForm(ModelForm):
+    subject = SubjectChoices(
+        label = Subject._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Subject._meta.verbose_name
+            }
+        )
+    )      
+    
+    class Meta:
+          model = MediaSubjectRelations
+
+class MediaPersonOrgAdminForm(ModelForm):
+    person_org = PersonOrgChoices(
+        label = PersonOrg._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % PersonOrg._meta.verbose_name
+            }
+        )
+    )
+    
+    class Meta:
+          model = MediaPersonOrgRelations
+          
+class FileMediaAdminForm(ModelForm):
+    rsid = FileChoices(
+        label = File._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % File._meta.verbose_name
+            }
+        )
+    )  
+    
+    class Meta:
+          model = MediaFile          
 
 class SubjectFileAdminForm(ModelForm):
     subject = SubjectChoices(
@@ -1846,7 +1933,13 @@ class LocationLinkedDataInline(admin.TabularInline):
     model = LocationLinkedData
     fields = ['source', 'link']
     extra = 1
-    suit_classes = 'suit-tab suit-tab-linked'    
+    suit_classes = 'suit-tab suit-tab-linked'
+    
+class MediaLinkedDataInline(admin.TabularInline):
+    model = MediaLinkedData
+    fields = ['source', 'link']
+    extra = 1
+    suit_classes = 'suit-tab suit-tab-linked'     
     
 class PersonOrgLinkedDataInline(admin.TabularInline):
     model = PersonOrgLinkedData
@@ -1931,6 +2024,39 @@ class LocationControlPropertyInline(admin.TabularInline):
         if db_field.name == 'control_property':
             kwargs["queryset"] = DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='SL') | Q(primary_type='AL'))
         return super(LocationControlPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        
+class MediaPropertyInline(admin.TabularInline):
+    model = MediaProperty
+    fields = ['property', 'property_value', 'inline_notes', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)    
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    ordering = ('property__order',)
+    suit_classes = 'suit-tab suit-tab-general'
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'property':
+            kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='MP') | Q(primary_type='AL')).exclude(control_field = True)
+        return super(MediaPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        
+class MediaControlPropertyInline(admin.TabularInline):   
+    model = MediaControlProperty
+    fields = ['control_property', 'control_property_value', 'inline_notes', 'notes', 'last_mod_by'] 
+    readonly_fields = ('last_mod_by',)
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_classes = 'suit-tab suit-tab-general'
+    extra = 3
+    template = 'admin/base/media/tabular.html'
+    ordering = ('control_property__order',)
+    
+    # for control property form dropdown, only show descriptive properties marked as control_field = true
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'control_property':
+            kwargs["queryset"] = DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='MP') | Q(primary_type='AL'))
+        return super(MediaControlPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)        
         
 class FilePropertyInline(admin.TabularInline):
     model = FileProperty
@@ -2048,6 +2174,47 @@ class LocationFileInline(admin.TabularInline):
     suit_classes = 'suit-tab suit-tab-files'
     extra = 1
     form = FileLocationAdminForm
+    
+class LocationMediaRelationsInline(admin.TabularInline):
+    model = MediaLocationRelations
+    fields = ['location', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)        
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_classes = 'suit-tab suit-tab-relations'
+    extra = 1
+    form = MediaLocationAdminForm 
+
+class SubjectMediaRelationsInline(admin.TabularInline):
+    model = MediaSubjectRelations
+    fields = ['subject', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)        
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_classes = 'suit-tab suit-tab-relations'
+    extra = 1
+    form = MediaSubjectAdminForm
+
+class MediaPersonOrgRelationsInline(admin.TabularInline):
+    model = MediaPersonOrgRelations
+    fields = ['person_org', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)        
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_classes = 'suit-tab suit-tab-relations'
+    extra = 1
+    form = MediaPersonOrgAdminForm
+        
+class MediaFileInline(admin.TabularInline):
+    model = MediaFile
+    fields = ['get_thumbnail_admin', 'rsid', 'thumbnail']
+    readonly_fields = ('get_thumbnail_admin',)        
+    suit_classes = 'suit-tab suit-tab-files'
+    extra = 1
+    form = FileMediaAdminForm    
 
 class FileSubjectRelationsInline(admin.TabularInline):
     model = SubjectFile
@@ -2141,13 +2308,15 @@ class MediaCollectionEntityInline(admin.TabularInline):
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
+    suit_classes = 'suit-tab suit-tab-collections'     
 
 class PersonOrgCollectionEntityInline(admin.TabularInline):
     model = PersonOrgCollection
     fields = ['collection', 'notes', 'order']
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }     
+    } 
+    suit_classes = 'suit-tab suit-tab-collections'     
     
 class FileCollectionInline(admin.TabularInline):
     model = FileCollection
@@ -2872,6 +3041,296 @@ class LocationAdmin(MPTTModelAdmin):
             return queryset.order_by('-modified').distinct(), use_distinct        
 
 admin.site.register(Location, LocationAdmin)
+
+class MediaAdmin(admin.ModelAdmin):
+    fields = ['get_thumbnail_admin', 'title', 'type', 'notes', 'created', 'modified', 'last_mod_by', 'public', 'upload_batch']
+    readonly_fields = ('get_thumbnail_admin', 'title', 'created', 'modified', 'last_mod_by', 'upload_batch')    
+    inlines = [MediaPropertyInline, MediaControlPropertyInline, SubjectMediaRelationsInline, LocationMediaRelationsInline, MediaPersonOrgRelationsInline, MediaFileInline, MediaCollectionEntityInline, MediaLinkedDataInline]
+    search_fields = ['title', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3']
+    list_display = ('get_thumbnail_admin', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3', 'public', 'modified', 'last_mod_by')
+    list_filter = ('public', 'type', 'last_mod_by')
+    list_display_links = ('title1', )
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_form_tabs = (('general', 'Media'), ('relations', 'Relations'), ('files', 'Files'), ('collections', 'Collections'), ('linked', 'Linked Data'))
+    fieldsets = [
+        (None, {
+            'classes': ('suit-tab', 'suit-tab-general'),
+            'fields': ['get_thumbnail_admin', 'title', 'type', 'notes', 'created', 'modified', 'last_mod_by', 'public', 'upload_batch']
+        }),
+    ]
+    advanced_search_form = MediaAdvSearchForm()
+    actions = [bulk_add_collection, bulk_edit, export_data_json, export_data_xml, export_data_csv, generate_entity_thumbnail]
+    save_as = True
+    
+    change_list_template = 'admin/base/media/change_list.html'
+    change_form_template = 'admin/base/media/change_form.html'
+    
+    class Media:
+        # the django-select2 styles have to be added manually for some reason, otherwise they don't work
+        css = {
+            "all": ("django_select2/css/select2.min.css",)
+        }
+        
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        """ Added to allow browsing by collection """
+    
+        extra_context = extra_context or {}
+        collections = MediaCollection.objects.filter(media = object_id)
+        collection_list = []
+        for coll in collections:
+            coll_info = {}
+            current_order = coll.order
+            lt = MediaCollection.objects.filter(collection = coll.collection, order__lt = current_order).order_by('-order')
+            if lt:
+                coll_info['prev'] = lt[0].media_id
+            gt = MediaCollection.objects.filter(collection = coll.collection, order__gt = current_order).order_by('order')
+            if gt:
+                coll_info['next'] = gt[0].media_id
+            if lt or gt:
+                coll_info['name'] = coll.collection.title
+            collection_list.append(coll_info)
+        extra_context['collections'] = collection_list
+        extra_context['admin_site_name'] = settings.SUIT_CONFIG['ADMIN_NAME']        
+        return super(MediaAdmin, self).change_view(request, object_id, form_url, extra_context = extra_context)
+        
+    def response_change(self, request, obj):
+        """
+        Determines the HttpResponse for the change_view stage.
+        """
+        if request.POST.has_key("_viewnext"):
+            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
+                   {'name': force_unicode(obj._meta.verbose_name),
+                    'obj': force_unicode(obj)})
+            next = request.POST.get("next_id")
+            if next:
+                self.message_user(request, msg)
+                return HttpResponseRedirect("../%s/" % next)
+        if request.POST.has_key("_viewprev"):
+            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
+                   {'name': force_unicode(obj._meta.verbose_name),
+                    'obj': force_unicode(obj)})
+            prev = request.POST.get("prev_id")
+            if prev:
+                self.message_user(request, msg)
+                return HttpResponseRedirect("../%s/" % prev)
+        return super(MediaAdmin, self).response_change(request, obj)
+    
+    def save_model(self, request, obj, form, change):
+        obj.last_mod_by = request.user
+        obj.save()
+        
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
+        for instance in instances:
+            if isinstance(instance, MediaProperty) or isinstance (instance, MediaControlProperty) or isinstance (instance, MediaSubjectRelations) or isinstance (instance, MediaLocationRelations) or isinstance (instance, MediaPersonOrgRelations):
+                instance.last_mod_by = request.user
+            instance.save()                
+            
+    # advanced search form based on https://djangosnippets.org/snippets/2322/ and http://stackoverflow.com/questions/8494200/django-admin-custom-change-list-arguments-override-e-1 
+
+    def get_changelist(self, request, **kwargs):
+        adv_search_fields = {}
+        asf = self.advanced_search_form
+        for key in asf.fields.keys():
+            temp = self.other_search_fields.get(key, None)
+            if temp:
+                adv_search_fields[key] = temp[0]
+            else:
+                adv_search_fields[key] = ''
+        
+        class AdvChangeList(ChangeList):
+            
+            def get_query_string(self, new_params=None, remove=None):
+                """ Overriding get_query_string ensures that the admin still considers
+                the additional search fields as parameters, even tho they are popped from 
+                the request.GET """
+                
+                if new_params is None:
+                    new_params = {}
+                if remove is None:
+                    remove = []
+                p = self.params.copy()
+                for r in remove:
+                    for k in list(p):
+                        if k.startswith(r):
+                            del p[k]
+                for k, v in new_params.items():
+                    if v is None:
+                        if k in p:
+                            del p[k]
+                    else:
+                        p[k] = v
+                
+                extra_params = ''
+                for field, val in adv_search_fields.items():
+                    extra_params += '&' + field + '=' + val
+                
+                return '?%s%s' % (urlencode(sorted(p.items())), extra_params)
+                
+        return AdvChangeList
+        
+    def lookup_allowed(self, key, value):
+        if key in self.advanced_search_form.fields.keys():
+            return True
+        if key == 'attach_type':
+            return True
+        return super(MediaAdmin, self).lookup_allowed(key, value)
+        
+    def changelist_view(self, request, extra_context=None, **kwargs):
+        self.other_search_fields = {}
+        asf = self.advanced_search_form
+        extra_context = {'asf': asf, 'github_uri': settings.GITHUB_BACKUP_URI, 'admin_site_name': settings.SUIT_CONFIG['ADMIN_NAME']}
+        
+        request.GET._mutable = True
+        
+        for key in asf.fields.keys():
+            try:
+                temp = request.GET.pop(key)
+            except KeyError:
+                pass
+            else:
+                if temp != ['']:
+                    self.other_search_fields[key] = temp
+                    
+        request.GET._mutable = False
+        return super(MediaAdmin, self).changelist_view(request, extra_context = extra_context)
+        
+    def get_search_results(self, request, queryset, search_term):
+        """ Performs either a simple search using the search_term or an 
+        advanced search using values taken from the AdvancedSearchForm """
+        
+        queryset, use_distinct = super(MediaAdmin, self).get_search_results(request, queryset, search_term)
+        
+        # get all the fields from the adv search form
+        adv_fields = {}
+        asf = self.advanced_search_form
+        for key in asf.fields.keys():
+            temp = self.other_search_fields.get(key, None)
+            if temp:
+                adv_fields[key] = temp[0]
+            else:
+                adv_fields[key] = ''
+        
+        # NOTE: simple search has already been applied
+        
+        # RELATED TABLES FILTER
+        sub = adv_fields['sub']
+        if sub != '':
+            queryset = queryset.filter(mediasubjectrelations__subject_id=sub)        
+        
+        loc = adv_fields['loc']
+        if loc != '':
+            location = Location.objects.filter(pk=loc)
+            if location:
+                queryset = queryset.filter(medialocationrelations__location__in=location[0].get_descendants(include_self = True))         
+
+        po = adv_fields['po']
+        if po != '':
+            queryset = queryset.filter(mediapersonorgrelations__person_org_id=po)
+            
+        img = adv_fields['img']
+        if img != 'default':
+            imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']
+            if img == 'yes':
+                queryset = queryset.filter(mediafile__rsid__filetype__in = imgs)
+            else:
+                queryset = queryset.exclude(mediafile__rsid__filetype__in = imgs)
+
+        col = adv_fields['col']
+        if col != '':
+            queryset = queryset.filter(mediacollection__collection_id = col)
+        
+        # CONTROL PROPERTY FILTER
+        for i in range(1, 4):
+            cp = adv_fields['cp' + str(i)]
+            cst = adv_fields['cst' + str(i)]
+            cv = adv_fields['cv' + str(i)]
+            
+            if cp != '' and cv != 'default':
+                cf = ControlField.objects.filter(pk = cv)
+                cf_desc = cf[0].get_descendants(include_self=True)
+                ccq = Q()
+                for field in cf_desc:
+                    if cst == 'exact':
+                        ccq |= Q(mediacontrolproperty__control_property_value = field.id)
+                    else:
+                        ccq &= ~Q(mediacontrolproperty__control_property_value = field.id)
+                        
+                queryset = queryset.filter(ccq)
+                
+        # FREE FORM PROPERTY FILTER
+        for i in range (1, 4):
+            if i != 1:
+                op = adv_fields['op' + str(i - 1)]
+            else:
+                op = ''
+            fp = adv_fields['fp' + str(i)]
+            fst = adv_fields['fst' + str(i)]
+            fv = adv_fields['fv' + str(i)]
+
+            negate = False # whether or not the query will be negated
+            kwargs = {}
+            cq = Q()
+            
+            # remove and save negation, if present
+            if fst.startswith('not'):
+                negate = True
+                fst = fst[4:]
+            
+            if not(fv == '' and fst != 'blank'):
+                
+                if fst == 'blank':
+                    #if property is Any, then skip all b/c query asks for doc with 'any' blank properties
+                    if fp == '':
+                        continue
+                
+                    # BLANK is a special case negation (essentially a double negative), so handle differently
+                    if negate:
+                        cq = Q(mediaproperty__property = fp)
+                    else:
+                        cq = ~Q(mediaproperty__property = fp)
+                        
+                else:
+                    kwargs = {str('mediaproperty__property_value__%s' % fst) : str('%s' % fv)}
+                    
+                    # check if a property was selected and build the current query
+                    if fp == '':
+                        # if no property selected, than search thru ALL properties
+                        if negate:
+                            cq = ~Q(**kwargs)
+                        else:
+                            cq = Q(**kwargs)
+                    else:
+                        if negate:
+                            cq = Q(Q(mediaproperty__property = fp) & ~Q(**kwargs))
+                        else:
+                            cq = Q(Q(mediaproperty__property = fp) & Q(**kwargs))
+                            
+            # modify query set
+            if op == 'or':
+                queryset = queryset | self.model.objects.filter(cq)
+            else:
+                # if connector wasn't set, use &
+                queryset = queryset.filter(cq)
+        
+        # UTILITY FILTER
+        dup_prop = adv_fields['dup_prop']
+        if dup_prop != '':
+            dups = MediaProperty.objects.filter(property_id = dup_prop).values_list('media', flat = True).annotate(count = Count('property')).filter(count__gt = 1)
+            dups_list = list(dups) # forcing queryset evaluation so next line doesn't throw a MySQLdb error
+            queryset = queryset.filter(id__in = dups_list)
+          
+        if col != '':
+            return queryset.order_by('mediacollection__order').distinct(), use_distinct
+        elif queryset.ordered:
+            return queryset.distinct(), use_distinct
+        else:
+            return queryset.order_by('-modified').distinct(), use_distinct
+
+admin.site.register(Media, MediaAdmin)
 
 class FileAdmin(admin.ModelAdmin):
     fields = ['get_thumbnail_admin', 'get_download_admin', 'title', 'get_uri', 'notes', 'public', 'uploaded', 'upload_batch']
@@ -4052,292 +4511,6 @@ class DataUploadAdmin(admin.ModelAdmin):
                         
 admin.site.register(DataUpload, DataUploadAdmin)
 
-class MediaPropertyInline(admin.TabularInline):
-    model = MediaProperty
-    fields = ['property', 'property_value', 'notes', 'last_mod_by']
-    readonly_fields = ('last_mod_by',)    
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
-    
-    def queryset(self, request):
-        qs = super(MediaPropertyInline, self).queryset(request)
-        return qs.filter(Q(property__primary_type='MP') | Q(property__primary_type='AL'))    
-    
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "property":
-            kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='MP') | Q(primary_type='AL'))
-        return super(MediaPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
-
-class MediaCollectionInline(admin.TabularInline):
-    model = MediaCollection
-    fields = ['collection', 'notes', 'order']
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
-    extra = 1
-    
-class LegrainImagesInline(admin.StackedInline):
-    model = LegrainImages
-    fields = ['image_category', 'image_sub_category', 'image_description', 'done', 'last_mod_by']
-    readonly_fields = ('last_mod_by',)
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
-    extra = 1
-    max_num = 1
-    
-class LegrainNoteCardsInline(admin.StackedInline):
-    model = LegrainNoteCards
-    fields = ['field_number', 'context', 'catalogue_number', 'museum_number', 'field_photo_number', 'measurements', 'transcription', 'category', 'photo', 'drawing', 'done', 'last_mod_by']
-    readonly_fields = ('last_mod_by',)
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
-    extra = 1
-    max_num = 1
-        
-class LegrainImageTagAdminForm(ModelForm):
-    tag = TreeNodeChoiceField(queryset=ControlField.objects.filter(type_id = 154))   
-
-class LegrainImageTagsInline(admin.TabularInline):
-    model = LegrainImageTags
-    fields = ['tag', 'last_mod_by']
-    readonly_fields = ('last_mod_by',)
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
-    form = LegrainImageTagAdminForm
-
-class MediaAdmin(admin.ModelAdmin):
-    readonly_fields = ('created', 'modified', 'last_mod_by')
-    fields = ['title', 'type', 'notes', 'created', 'modified', 'last_mod_by']
-    list_display = ['title', 'type', 'notes', 'created', 'modified', 'last_mod_by']
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2})},
-    }
-    inlines = [MediaPropertyInline, MediaCollectionEntityInline]
-    search_fields = ['title', 'notes']
-    change_form_template = 'admin/base/media/change_form_media.html'
-    suit_form_includes = (
-        ('admin/base/media_img_display.html', 'middle'),
-    )
-    list_filter = (MediaCollectionListFilter,)
-    
-    def save_model(self, request, obj, form, change):
-        obj.last_mod_by = request.user
-        obj.save()
-        
-    def save_formset(self, request, form, formset, change):
-        instances = formset.save(commit=False)
-
-        for instance in instances:
-            if isinstance(instance, MediaProperty):
-                instance.last_mod_by = request.user            
-                instance.save()
-            elif isinstance(instance, MediaCollection):
-                instance.save()
-                
-    def change_view(self, request, object_id, form_url='', extra_context=None):
-        extra_context = extra_context or {}
-        extra_context['rs_refs'] = MediaProperty.objects.filter(property_id = 94, media_id = object_id)
-        collections = MediaCollection.objects.filter(media_id = object_id)
-        collection_list = []
-        for coll in collections:
-            coll_info = {}
-            current_order = coll.order
-            lt = MediaCollection.objects.filter(collection = coll.collection, order__lt = current_order).order_by('-order')
-            if lt:
-                coll_info['prev'] = lt[0].media_id
-            gt = MediaCollection.objects.filter(collection = coll.collection, order__gt = current_order).order_by('order')
-            if gt:
-                coll_info['next'] = gt[0].media_id
-            if lt or gt:
-                coll_info['name'] = coll.collection.title
-            collection_list.append(coll_info)
-        extra_context['collections'] = collection_list
-        return super(MediaAdmin, self).change_view(request, object_id, form_url, extra_context = extra_context)
-        
-    def response_change(self, request, obj):
-        """
-        Determines the HttpResponse for the change_view stage.
-        """
-        if request.POST.has_key("_viewnext"):
-            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
-                   {'name': force_unicode(obj._meta.verbose_name),
-                    'obj': force_unicode(obj)})
-            next = request.POST.get("next_id")
-            if next:
-                self.message_user(request, msg)
-                return HttpResponseRedirect("../%s/" % next)
-        if request.POST.has_key("_viewprev"):
-            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
-                   {'name': force_unicode(obj._meta.verbose_name),
-                    'obj': force_unicode(obj)})
-            prev = request.POST.get("prev_id")
-            if prev:
-                self.message_user(request, msg)
-                return HttpResponseRedirect("../%s/" % prev)
-        return super(MediaAdmin, self).response_change(request, obj)         
-    
-admin.site.register(Media, MediaAdmin)
-
-class LegrainImageAdmin(admin.ModelAdmin):
-    readonly_fields = ('title', 'type', 'notes', 'created', 'modified', 'last_mod_by')
-    fields = ['title', 'type', 'notes', 'created', 'modified', 'last_mod_by']
-    list_display = ['title', 'type', 'notes', 'created', 'modified', 'last_mod_by']
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2})},
-    }
-    inlines = [LegrainImagesInline, LegrainImageTagsInline]
-    search_fields = ['title', 'notes']
-    change_form_template = 'admin/base/media/change_form_media.html'
-    suit_form_includes = (
-        ('admin/base/media_img_display.html', 'middle'),
-    )
-    list_filter = (LegrainDoneListFilter,)
-    
-    def save_model(self, request, obj, form, change):
-        obj.last_mod_by = request.user
-        obj.save()
-        
-    def save_formset(self, request, form, formset, change):
-        instances = formset.save(commit=False)
-
-        for instance in instances:
-            if isinstance(instance, LegrainImages) or isinstance(instance, LegrainImageTags):
-                instance.last_mod_by = request.user            
-                instance.save()
-                
-    def change_view(self, request, object_id, form_url='', extra_context=None):
-        extra_context = extra_context or {}
-        extra_context['rs_refs'] = MediaProperty.objects.filter(property_id = 94, media_id = object_id)
-        collections = MediaCollection.objects.filter(media_id = object_id)
-        collection_list = []
-        for coll in collections:
-            coll_info = {}
-            current_order = coll.order
-            lt = MediaCollection.objects.filter(collection = coll.collection, order__lt = current_order).order_by('-order')
-            if lt:
-                coll_info['prev'] = lt[0].media_id
-            gt = MediaCollection.objects.filter(collection = coll.collection, order__gt = current_order).order_by('order')
-            if gt:
-                coll_info['next'] = gt[0].media_id
-            if lt or gt:
-                coll_info['name'] = coll.collection.title
-            collection_list.append(coll_info)
-        extra_context['collections'] = collection_list
-        return super(LegrainImageAdmin, self).change_view(request, object_id, form_url, extra_context = extra_context)
-        
-    def response_change(self, request, obj):
-        """
-        Determines the HttpResponse for the change_view stage.
-        """
-        if request.POST.has_key("_viewnext"):
-            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
-                   {'name': force_unicode(obj._meta.verbose_name),
-                    'obj': force_unicode(obj)})
-            next = request.POST.get("next_id")
-            if next:
-                self.message_user(request, msg)
-                return HttpResponseRedirect("../%s/" % next)
-        if request.POST.has_key("_viewprev"):
-            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
-                   {'name': force_unicode(obj._meta.verbose_name),
-                    'obj': force_unicode(obj)})
-            prev = request.POST.get("prev_id")
-            if prev:
-                self.message_user(request, msg)
-                return HttpResponseRedirect("../%s/" % prev)                
-        return super(LegrainImageAdmin, self).response_change(request, obj)         
-    
-admin.site.register(LegrainImage, LegrainImageAdmin)
-
-class LegrainNotesAdmin(admin.ModelAdmin):
-    readonly_fields = ('title', 'type', 'notes', 'created', 'modified', 'last_mod_by')
-    fields = ['title', 'type', 'notes', 'created', 'modified', 'last_mod_by']
-    list_display = ['title', 'type', 'notes', 'created', 'modified', 'last_mod_by']
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2})},
-    }
-    inlines = [LegrainNoteCardsInline]
-    search_fields = ['title', 'notes']
-    change_form_template = 'admin/base/media/change_form_media.html'
-    suit_form_includes = (
-        ('admin/base/media_img_display.html', 'middle'),
-    )
-    list_filter = (LegrainDoneListFilter,)
-    
-    def save_model(self, request, obj, form, change):
-        obj.last_mod_by = request.user
-        obj.save()
-        
-    def save_formset(self, request, form, formset, change):
-        instances = formset.save(commit=False)
-
-        for instance in instances:
-            if isinstance(instance, LegrainNoteCards):
-                instance.last_mod_by = request.user            
-                instance.save()
-                
-    def change_view(self, request, object_id, form_url='', extra_context=None):
-        extra_context = extra_context or {}
-        extra_context['rs_refs'] = MediaProperty.objects.filter(property_id = 94, media_id = object_id)
-        collections = MediaCollection.objects.filter(media_id = object_id)
-        collection_list = []
-        for coll in collections:
-            coll_info = {}
-            current_order = coll.order
-            lt = MediaCollection.objects.filter(collection = coll.collection, order__lt = current_order).order_by('-order')
-            if lt:
-                coll_info['prev'] = lt[0].media_id
-            gt = MediaCollection.objects.filter(collection = coll.collection, order__gt = current_order).order_by('order')
-            if gt:
-                coll_info['next'] = gt[0].media_id
-            if lt or gt:
-                coll_info['name'] = coll.collection.title
-            collection_list.append(coll_info)
-        extra_context['collections'] = collection_list
-        return super(LegrainNotesAdmin, self).change_view(request, object_id, form_url, extra_context = extra_context)
-        
-    def response_change(self, request, obj):
-        """
-        Determines the HttpResponse for the change_view stage.
-        """
-        if request.POST.has_key("_viewnext"):
-            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
-                   {'name': force_unicode(obj._meta.verbose_name),
-                    'obj': force_unicode(obj)})
-            next = request.POST.get("next_id")
-            if next:
-                self.message_user(request, msg)
-                return HttpResponseRedirect("../%s/" % next)
-        if request.POST.has_key("_viewprev"):
-            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
-                   {'name': force_unicode(obj._meta.verbose_name),
-                    'obj': force_unicode(obj)})
-            prev = request.POST.get("prev_id")
-            if prev:
-                self.message_user(request, msg)
-                return HttpResponseRedirect("../%s/" % prev)               
-        return super(LegrainNotesAdmin, self).response_change(request, obj)        
-    
-admin.site.register(LegrainNotes, LegrainNotesAdmin)
-
-class MediaPersonOrgRelationsInline(admin.TabularInline):
-    model = MediaPersonOrgRelations
-    fields = ['media', 'notes', 'last_mod_by']
-    readonly_fields = ('last_mod_by',)        
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
-    extra = 1
-    
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'media':
-            kwargs["queryset"] = Media.objects.filter(type__type = 'publication').order_by('title')
-        return super(MediaPersonOrgRelationsInline, self).formfield_for_foreignkey(db_field, request, **kwargs)  
-
 class PersonOrgPropertyInline(admin.TabularInline):
     model = PersonOrgProperty
     extra = 3
@@ -4434,9 +4607,7 @@ class DescriptivePropertyAdmin(admin.ModelAdmin):
         obj.save()
 
 admin.site.register(DescriptiveProperty, DescriptivePropertyAdmin)
-admin.site.register(MediaProperty)
 admin.site.register(Relations)
-admin.site.register(MediaPersonOrgRelations)
 admin.site.register(PersonOrgProperty)      
 
 class PostAdmin(admin.ModelAdmin):

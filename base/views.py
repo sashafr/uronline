@@ -1462,4 +1462,4 @@ def export(request):
         elif type == 'xml':
             return serialize_data(filename, qs, entity, 'xml', request, is_admin=is_admin)
         else:
-            return flatten_to_csv(filename, qs, entity, request, is_file=is_file, is_admin=is_admin)
+            return flatten_to_csv(filename, qs, entity, is_file=is_file, is_admin=is_admin)

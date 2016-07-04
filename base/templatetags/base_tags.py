@@ -416,6 +416,18 @@ def location_search_form(context, cl):
         'search_var': SEARCH_VAR
     }    
     
+@register.inclusion_tag('admin/base/media/search_form.html', takes_context=True)
+def media_search_form(context, cl):
+    """ Displays an advanced search form for searching the list.
+    
+    Includes context. """
+    return {
+        'asf': context.get('asf'),
+        'cl': cl,
+        'show_result_count': cl.result_count != cl.full_result_count,
+        'search_var': SEARCH_VAR
+    }    
+        
 @register.inclusion_tag('admin/base/file/search_form.html', takes_context=True)
 def file_search_form(context, cl):
     """ Displays an advanced search form for searching the list.
