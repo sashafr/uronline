@@ -1,15 +1,15 @@
 {% extends "_layouts/base.html" %}
-{% load staticfiles %}
-{% load base_tags %}
+{% load staticfiles base_tags %}
+{% load render_table from django_tables2 %}
 
 <!-- Metadata -->
-{% block page_title %}Media Detail{% endblock %}
+{% block page_title %}{{ media.title }}{% endblock %}
 <!-- End Metadata -->
 
 {% block pageheader %}
     <div class="page-header detail">
         <div class="container page-header-content">
-            <h1>Media Detail</h1>
+            <h1>{{ media.title }}</h1>
         </div>
         <div class="overlay"></div>
     </div>
@@ -20,105 +20,278 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-8">
-
-                    <table class="table table-striped">
-                        {% for property in properties %}
-                            <tr>
-                                <td>
-                                    <a href="{% url 'propertydetail' property.property.id %}?type=m" data-toggle="popover" data-html="true" data-content="{{ property.property.notes }}">{{ property.property }}:</a>
-                                </td>
-                                <td>
-                                    {{ property.property_value|safe }}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </table>
-                    {% if images %}
-                        <hr />
-                        <h3>Files</h3>
-                        <ul class="enlarge">
-                            {% for image in images %}
-                            <li style="border: 1px solid #ddd; border-radius: 4px; margin: 10px; padding: 10px;">
-                                <a data-lightbox="image-{{ image }}" href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">
-                                    <img class="img-responsive" src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}&size=thm" alt="">
-                                </a>
-                                <p style="text-align: center;">
-                                {% if request.GET.isfile != 'true' %}
-                                {% img_id_from_rsref image as img_id %}
-                                <a href="{% url 'mediadetail' img_id %}?isfile=true">View Details</a> | 
-                                {% endif %}
-                                <a href="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ image }}">Download</a></p>
-                            </li>
-                            {% endfor %}
-                        </ul>                            
-                    {% endif %}
-                    {% if related_objects %}
-                        <hr />
-                        <h3>Related Objects</h3>
-                        <ul class="list-group">
-                            {% for object_relation in related_objects %}
-                                <a href="{% url 'subjectdetail' object_relation.subject.id %}"><li class="list-group-item">
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <img class="img-responsive" src="{{ object_relation.subject.get_thumbnail }}" alt=""></img>    
-                                        </div>
-                                        <div class="col-md-9">
-                                            <table class="table table-striped">
-                                                {% get_visible_subj_props object_relation.subject as subject_props %}
-                                                {% for subject_prop in subject_props %}
-                                                    <tr>
-                                                        <td>{{ subject_prop.property }}</td>
-                                                        <td>{{ subject_prop.property_value }}</td>
-                                                    </tr>
-                                                {% endfor %}
-                                            </table>
-                                        </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            {% if properties %}
+                                <ul class="nav nav-tabs">
+                                    <li><a href="#general" data-toggle="tab">General</a></li>
+                                    {% for key, property_group in properties.items %}
+                                        {% if key != 'General' %}
+                                            <li><a href="#{{ key|slug }}" data-toggle="tab">{{ key }}</a></li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                                <div class="tab-content">
+                                    {% for key, property_group in properties.items %}
+                                        {% if key == 'General'%}
+                                            <div id="general" class="tab-pane active">
+                                        {% else %}
+                                            <div id="{{ key|slug }}" class="tab-pane">
+                                        {% endif %}
+                                        <table class="table table-striped">
+                                            {% for property in property_group %}
+                                                <tr>
+                                                    {% if property.control_property %}
+                                                        <td>
+                                                            <a href="{% url 'propertydetail' property.control_property.id %}" data-toggle="popover" data-html="true" data-content="{{ property.control_property.notes }}">{{ property.control_property }}:</a>
+                                                        </td>
+                                                        <td>
+                                                            {% if property.control_property_value.get_ancestors %}
+                                                                {% for anc in property.control_property_value.get_ancestors %}
+                                                                    <a href="{% url 'termdetail' anc.id %}" data-toggle="popover" data-html="true" data-content="{{ anc.definition }}">{{ anc.title }}</a> >>
+                                                                {% endfor %}
+                                                            {% endif %}
+                                                            <a href="{% url 'termdetail' property.control_property_value.id %}" data-toggle="popover" data-html="true" data-content="{{ property.control_property_value.definition }}">{{ property.control_property_value.title }}</a>
+                                                            {% get_linked_data_url property.control_property_value as linked_data %}
+                                                            {% if linked_data %}
+                                                                {% for link_url in linked_data %}
+                                                                    <a href="{{ link_url.link }}"><span class="glyphicon glyphicon-link"></span></a>
+                                                                {% endfor %}
+                                                            {% endif %}
+                                                            {% if property.notes %}<sup>{{ property.fn }}</sup>{% endif %}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% if property.inline_notes %}<small class="text-muted">{{ property.inline_notes }}</small>{% endif %}  
+                                                        </td>
+                                                    {% else %}
+                                                        <td>
+                                                            <a href="{% url 'propertydetail' property.property.id %}" data-toggle="popover" data-html="true" data-content="{{ property.property.notes }}">{{ property.property }}:</a>
+                                                        </td>
+                                                        <td>
+                                                            {{ property.property_value }}{% if property.notes %}<sup>{{ property.fn }}</sup>{% endif %}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% if property.inline_notes %}<small class="text-muted">{{ property.inline_notes }}</small>{% endif %}
+                                                        </td>       
+                                                    {% endif %}
+                                                </tr>
+                                            {% endfor %}
+                                        </table>
                                     </div>
-                                </li></a><br/>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
-
-                </div>
-                <div class="col-md-4">
+                                {% endfor %}
+                                </div>                                
+                                <table>
+                                    {% for fn in footnotes %}
+                                        <tr>
+                                           <td><small>[{{ forloop.counter }}] {{ fn }}</small></td> 
+                                        </tr>
+                                    {% endfor %}
+                                </table>                                
+                            {% else %}
+                                <div class="alert alert-warning" role="alert">
+                                    <p>No details available on this media at this time.</p>
+                                </div>                                
+                            {% endif %}
+                        </div>
+                    </div>
                     
-                    {% if media.medialocationrelations_set.all %}
-                    <div class="well filters">
-                        
-                        <h3>Related Contexts</h3>
-                        {% for location_relation in media.medialocationrelations_set.all|slice:":5" %}
-                            <p>{% get_loc_ancestors location_relation.location as location_tree %}
-                            {% for loc in location_tree %}
-                                {% if forloop.counter0 > 0 %} >> {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
-                            {% endfor %}
-                            {% if location_relation.notes %}: {{ location_relation.notes }}{% endif %}</p>
-                        {% endfor %}
-                        {% if media.medialocationrelations_set.all|slice:"5:" %}
-                        <span class="collapse" id="mediaLocCollapse">
-                        {% for location_relation in media.medialocationrelations_set.all|slice:"5:" %}
-                            <p>{% get_loc_ancestors location_relation.location as location_tree %}
-                            {% for loc in location_tree %}
-                                {% if forloop.counter0 > 0 %} >> {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
-                            {% endfor %}
-                            {% if location_relation.notes %}: {{ location_relation.notes }}{% endif %}</p>
-                        {% endfor %}
-                        </span>
-                        <h4><a data-toggle="collapse" id="mediaCollapse" href="#mediaLocCollapse">See More</a></h4>                                
-                        {% endif %}
+                    {% if files %}
+                        <div class="row" id="files">
+                            <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-sm-10">
+                                        <h3>Files</h3>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-log-12">
+                                        <ul class="nav nav-tabs">
+                                            <li><a href="#general-files" data-toggle="tab">General</a></li>     
+                                            {% for key, file_group in files.items %}
+                                                {% if key != 'General' %} 
+                                                    <li><a href="#{{ key|slug }}-files" data-toggle="tab">{{ key }}</a></li>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </ul>
+                                        <div class="tab-content">
+                                            {% for key, file_group in files.items %}
+                                                {% if key == 'General' %}
+                                                    <div id="general-files" class="tab-pane active">
+                                                {% else %}
+                                                    <div id="{{ key|slug }}-files" class="tab-pane">
+                                                {% endif %} 
+                                                <ul class="list-unstyled">
+                                                    <div class="row enlarge">
+                                                        {% for file in file_group %}
+                                                            <div class="enlarge col-sm-4 col-md-3">
+                                                                <a data-lightbox="media-file" href="{% load_globals 'image_uri' %}{{ file.rsid.id }}" data-title="{{ file.rsid.caption }}">
+                                                                    <img class="img-responsive" src="{% load_globals 'thumbnail_uri' %}{{ file.rsid.id }}">
+                                                                </a>
+                                                                <p><a href="{% url 'filedetail' file.rsid.id %}">{{ file.rsid.title }}</a> - <a href="{{ file.rsid.get_download }}">Download</a></p>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </ul>
+                                            </div>
+                                        {% endfor %}   
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if subjects %}
+                    <div class="row" id="subjects">
+                        <div class="col-lg-12">
+                            <div class="row">
+                                <div class="col-sm-10">
+                                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
+                                        Objects: {{ media.title }}
+                                        <small>Export: </small>
+                                        <a class="sub-ex" href="{% url 'mediadetailexport' media.id %}?col={{ sub_col }}&entity=subject&format=json"><small>JSON</small></a>
+                                        <small> - </small>
+                                        <a class="sub-ex" href="{% url 'mediadetailexport' media.id %}?col={{ sub_col }}&entity=subject&format=xml"><small>XML</small></a>
+                                        <small> - </small>
+                                        <a class="sub-ex" href="{% url 'mediadetailexport' media.id %}?col={{ sub_col }}&entity=subject&format=csv"><small>CSV</small></a>
+                                        <small style="float: right; margin: 10px 0 20px;">{{ sub_col_title }}</small>
+                                    </h3>
+                                </div>
+                                <div class="col-sm-2">
+                                    {% if subject_collections %}
+                                        <button class="btn btn-default dropdown-toggle" style="margin: 40px 0 0;" type="button" data-toggle="dropdown">
+                                            Collection:
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li><a href="{% url 'mediadetail' media.id %}?subcol=0">All Objects</a></li>
+                                            {% for collection in subject_collections %}
+                                                <li><a href="{% url 'mediadetail' media.id %}?subcol={{ collection.id }}">{{ collection.title }}</a></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div id="sub-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
+                                <p>Exporting large queries may take several minutes, please do not leave this page until the download completes.</p>
+                            </div>
+                            {% render_table subject_table %}
+                        </div>
+                    </div>
+                    {% endif %}                     
+                    
+                    {% if locations %}
+                    <div class="row" id="locations">
+                        <div class="col-lg-12">
+                            <div class="row">
+                                <div class="col-sm-10">
+                                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
+                                        Locations: {{ media.title }}
+                                        <small>Export: </small>
+                                        <a class="loc-ex" href="{% url 'mediadetailexport' media.id %}?col={{ loc_col }}&entity=location&format=json"><small>JSON</small></a>
+                                        <small> - </small>
+                                        <a class="loc-ex" href="{% url 'mediadetailexport' media.id %}?col={{ loc_col }}&entity=location&format=xml"><small>XML</small></a>
+                                        <small> - </small>
+                                        <a class="loc-ex" href="{% url 'mediadetailexport' media.id %}?col={{ loc_col }}&entity=location&format=csv"><small>CSV</small></a>
+                                        <small style="float: right; margin: 10px 0 20px;">{{ loc_col_title }}</small>
+                                    </h3>
+                                </div>
+                                <div class="col-sm-2">
+                                    {% if location_collections %}
+                                        <button class="btn btn-default dropdown-toggle" style="margin: 40px 0 0;" type="button" data-toggle="dropdown">
+                                            Collection:
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li><a href="{% url 'mediadetail' media.id %}?loccol=0">All Locations</a></li>
+                                            {% for collection in location_collections %}
+                                                <li><a href="{% url 'mediadetail' media.id %}?loccol={{ collection.id }}">{{ collection.title }}</a></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div id="loc-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
+                                <p>Exporting large queries may take several minutes, please do not leave this page until the download completes.</p>
+                            </div>
+                            {% render_table location_table %}
+                        </div>
                     </div>
                     {% endif %}
 
-                    {% if related_web %}
-                    <div class="well filters">
-                        <h3>Linked Resources</h3>
-                        {% for web in related_web %}
-                            <p><a target="_blank" href="{{ web.link }}">{{ web.source.title }}</a></p>
-                        {% endfor %}
-                    </div>              
+                    {% if people %}
+                    <div class="row" id="people">
+                        <div class="col-lg-12">
+                            <div class="row">
+                                <div class="col-sm-10">
+                                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
+                                        People: {{ media.title }}
+                                        <small>Export: </small>
+                                        <a class="po-ex" href="{% url 'mediadetailexport' media.id %}?col={{ po_col }}&entity=people&format=json"><small>JSON</small></a>
+                                        <small> - </small>
+                                        <a class="po-ex" href="{% url 'mediadetailexport' media.id %}?col={{ po_col }}&entity=people&format=xml"><small>XML</small></a>
+                                        <small> - </small>
+                                        <a class="po-ex" href="{% url 'mediadetailexport' media.id %}?col={{ po_col }}&entity=people&format=csv"><small>CSV</small></a>
+                                        <small style="float: right; margin: 10px 0 20px;">{{ po_col_title }}</small>
+                                    </h3>
+                                </div>
+                                <div class="col-sm-2">
+                                    {% if people_collections %}
+                                        <button class="btn btn-default dropdown-toggle" style="margin: 40px 0 0;" type="button" data-toggle="dropdown">
+                                            Collection:
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li><a href="{% url 'mediadetail' media.id %}?pocol=0">All People</a></li>
+                                            {% for collection in people_collections %}
+                                                <li><a href="{% url 'mediadetail' media.id %}?pocol={{ collection.id }}">{{ collection.title }}</a></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div id="po-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
+                                <p>Exporting large queries may take several minutes, please do not leave this page until the download completes.</p>
+                            </div>
+                            {% render_table people_table %}
+                        </div>
+                    </div>
+                    {% endif %}                   
+                    </div>
+                <div class="col-md-4">
+                    {% if media.get_thumbnail != 'http://ur.iaas.upenn.edu/static/img/no_img.jpg' %}
+                        <img class="img-responsive img-full-width" src="{% load_globals 'image_uri' %}{{ media.get_thumbnail }}">
                     {% endif %}
-
-                </div>                
-            </div>  
+                    <div class="well filters">
+                    
+                        <h3>Share</h3>
+                        <p><a href="mailto:?subject=[From {{ site_name }}] View this Media Item&amp;body=You can view this media item at {{ media.get_full_absolute_url }}" target="_blank"> Email</a> | <a href="{% url 'admin:base_media_change' media.id %}" target="_blank"> Edit</a></p>
+                        <hr />
+                        
+                        {% if locations %}
+                            <h3>Context</h3>
+                            {% for location in locations %}
+                                <p>{% get_loc_ancestors location as location_tree %}
+                                {% has_spec_context location_tree as spec_context %}
+                                {% if spec_context %}{{ spec_context }}{% endif %}
+                                {% for loc in location_tree %}
+                                    {% if forloop.counter0 > 0 %} >> {% endif %}<a href="{% url 'locationdetail' loc.id %}">{{ loc.title }}</a>
+                                {% endfor %}</p>
+                            {% endfor %}
+                            <hr />
+                        {% endif %}
+                        {% if linked_data %}
+                            <h3>Linked Resources</h3>
+                            {% for web in linked_data %}
+                                <p>
+                                    <a href="{{ web.link }}">{{ web.source.title }}</a>
+                                </p>
+                            {% endfor %}
+                        {% endif %}
+                        {% if collections %}
+                            <h3>Collections</h3>
+                            {% for collection in collections %}
+                                <img class="img-responsive" src="{{ collection.collection.get_thumbnail }}" />
+                                <p><a href="{% url 'collectiondetail' collection.collection.id %}">{{ collection.collection.title }}</a></p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>                    
+            </div>
         </div>
     </section>
 {% endblock %}
@@ -129,17 +302,18 @@
 
   <script type="text/javascript">
     $(document).ready(function(){
+
+        $('.collapse-button').click(function () {
+            if(!$(this).hasClass('collapsed')) {
+                $(this).html('  + Expand');
+            } else {
+                $(this).html('  - Collapse');
+            }
+        });    
+    
         $("[data-toggle=popover]").popover({
             trigger : 'hover'
-        }); 
-
-        $('#mediaCollapse').click(function () {
-            if($('#mediaLocCollapse').hasClass('in')) {
-                $(this).html('See More');
-            } else {
-                $(this).html('See Less');
-            }
-        });
+        });   
     });
   </script>
 

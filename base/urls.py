@@ -29,6 +29,7 @@ urlpatterns = patterns('base.views',
     url(r'^personorg/(?P<personorg_id>\d+)/$', 'personorgdetail', name='personorgdetail'),
     # ex: /ur.iaas.upenn.edu/media/5/
     url(r'^media_item/(?P<media_id>\d+)/$', 'mediadetail', name='mediadetail'),
+    url(r'^media_export/(?P<media_id>\d+)/$', 'mediadetailexport', name='mediadetailexport'),        
     url(r'^file-detail/(?P<file_id>\d+)/$', 'filedetail', name='filedetail'),
     url(r'^about/(?P<about_id>\d+)/$', 'aboutdetail', name='aboutdetail'),
     url(r'^property/(?P<prop_id>\d+)/$', 'propertydetail', name='propertydetail'),
