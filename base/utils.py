@@ -510,6 +510,9 @@ class XMLResponse(HttpResponse):
         super (XMLResponse, self).__init__(content, **kwargs)
         
 def serialize_data(filename, queryset, entity, serialize_type, request, is_admin=False):
+
+    queryset = queryset.distinct()
+
     if entity == 'subject':
         if is_admin:
             serializer = SubjectAdminSerializer(queryset, context={'request': request}, many=True)
@@ -548,6 +551,8 @@ def flatten_to_csv(filename, qs, entity, is_file=False, is_admin=False):
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="' + filename + '.csv"'
+    
+    queryset = queryset.distinct()
 
     writer = csv.writer(response)
     titles = []

@@ -1,5 +1,5 @@
 {% extends "_layouts/base.html" %}
-{% load staticfiles base_tags mptt_tags %}
+{% load staticfiles base_tags %}
 {% load render_table from django_tables2 %}
 
 <!-- Metadata -->
@@ -18,49 +18,62 @@
 {% block content %}
     <section>
         <div class="container">
-            <div class="row">                
-                <div class="col-lg-8">
+            <div class="row">
+                <div class="col-md-8">
                     <div class="row">
-                        <div class="col-lg-12">
-                           {% if properties %}
-                                {% for key, property_group in properties.items %}
-                                    {% if key != '' %}
-                                        <h2>{{ key }}</h2>
-                                    {% endif %}
-                                    <table class="table table-striped">
-                                        {% for property in property_group %}
-                                            <tr>
-                                                {% if property.control_property %}
-                                                    <td>
-                                                        <a href="{% url 'propertydetail' property.control_property.id %}" data-toggle="popover" data-html="true" data-content="{{ property.control_property.notes }}">{{ property.control_property }}:</a>
-                                                    </td>
-                                                    <td>
-                                                        {% if property.control_property_value.get_ancestors %}
-                                                            {% for anc in property.control_property_value.get_ancestors %}
-                                                                <a href="{% url 'termdetail' anc.id %}" data-toggle="popover" data-html="true" data-content="{{ anc.definition }}">{{ anc.title }}</a> >>
-                                                            {% endfor %}
-                                                        {% endif %}
-                                                        <a href="{% url 'termdetail' property.control_property_value.id %}" data-toggle="popover" data-html="true" data-content="{{ property.control_property_value.definition }}">{{ property.control_property_value.title }}</a>
-                                                        {% get_linked_data_url property.control_property_value as linked_data %}
-                                                        {% if linked_data %}
-                                                            {% for link_url in linked_data %}
-                                                                <a href="{{ link_url.link }}"><span class="glyphicon glyphicon-link"></span></a>
-                                                            {% endfor %}
-                                                        {% endif %}
-                                                        {% if property.notes %}<sup>{{ property.fn }}</sup>{% endif %}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% if property.inline_notes %}<small class="text-muted">{{ property.inline_notes }}</small>{% endif %}
-                                                    </td>                                                   
-                                                {% else %}
-                                                    <td>
-                                                        <a href="{% url 'propertydetail' property.property.id %}" data-toggle="popover" data-html="true" data-content="{{ property.property.notes }}">{{ property.property }}:</a>
-                                                    </td>
-                                                    <td>
-                                                        {{ property.property_value }}{% if property.notes %}<sup>{{ property.fn }}</sup>{% endif %}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% if property.inline_notes %}<small class="text-muted">{{ property.inline_notes }}</small>{% endif %}
-                                                    </td>                                               
-                                                {% endif %}
-                                            </tr>
-                                        {% endfor %}
-                                    </table>
+                        <div class="col-md-12">
+                            {% if properties %}
+                                <ul class="nav nav-tabs">
+                                    <li><a href="#general" data-toggle="tab">General</a></li>
+                                    {% for key, property_group in properties.items %}
+                                        {% if key != 'General' %}
+                                            <li><a href="#{{ key|slug }}" data-toggle="tab">{{ key }}</a></li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                                <div class="tab-content">
+                                    {% for key, property_group in properties.items %}
+                                        {% if key == 'General'%}
+                                            <div id="general" class="tab-pane active">
+                                        {% else %}
+                                            <div id="{{ key|slug }}" class="tab-pane">
+                                        {% endif %}
+                                        <table class="table table-striped">
+                                            {% for property in property_group %}
+                                                <tr>
+                                                    {% if property.control_property %}
+                                                        <td>
+                                                            <a href="{% url 'propertydetail' property.control_property.id %}" data-toggle="popover" data-html="true" data-content="{{ property.control_property.notes }}">{{ property.control_property }}:</a>
+                                                        </td>
+                                                        <td>
+                                                            {% if property.control_property_value.get_ancestors %}
+                                                                {% for anc in property.control_property_value.get_ancestors %}
+                                                                    <a href="{% url 'termdetail' anc.id %}" data-toggle="popover" data-html="true" data-content="{{ anc.definition }}">{{ anc.title }}</a> >>
+                                                                {% endfor %}
+                                                            {% endif %}
+                                                            <a href="{% url 'termdetail' property.control_property_value.id %}" data-toggle="popover" data-html="true" data-content="{{ property.control_property_value.definition }}">{{ property.control_property_value.title }}</a>
+                                                            {% get_linked_data_url property.control_property_value as linked_data %}
+                                                            {% if linked_data %}
+                                                                {% for link_url in linked_data %}
+                                                                    <a href="{{ link_url.link }}"><span class="glyphicon glyphicon-link"></span></a>
+                                                                {% endfor %}
+                                                            {% endif %}
+                                                            {% if property.notes %}<sup>{{ property.fn }}</sup>{% endif %}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% if property.inline_notes %}<small class="text-muted">{{ property.inline_notes }}</small>{% endif %}  
+                                                        </td>
+                                                    {% else %}
+                                                        <td>
+                                                            <a href="{% url 'propertydetail' property.property.id %}" data-toggle="popover" data-html="true" data-content="{{ property.property.notes }}">{{ property.property }}:</a>
+                                                        </td>
+                                                        <td>
+                                                            {{ property.property_value }}{% if property.notes %}<sup>{{ property.fn }}</sup>{% endif %}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% if property.inline_notes %}<small class="text-muted">{{ property.inline_notes }}</small>{% endif %}
+                                                        </td>       
+                                                    {% endif %}
+                                                </tr>
+                                            {% endfor %}
+                                        </table>
+                                    </div>
                                 {% endfor %}
+                                </div>                                
                                 <table>
                                     {% for fn in footnotes %}
                                         <tr>
@@ -71,28 +84,54 @@
                             {% else %}
                                 <div class="alert alert-warning" role="alert">
                                     <p>No details available on this location at this time.</p>
-                                </div>
+                                </div>                                
                             {% endif %}
-                        </div>                            
+                        </div>
                     </div>
                     
                     {% if files %}
-                        <div id="files">
-                            <hr />
-                            <ul class="list-unstyled">
-                                <div class="row enlarge">
-                                {% for key, file_group in files.items %}
-                                    {% for file in file_group %}
-                                        <div class="enlarge-file col-sm-4 col-md-3">
-                                            <a data-lightbox="subject-file" href="{% load_globals 'image_uri' %}{{ file.rsid.id }}" data-title="{{ file.rsid.caption }}">
-                                                <span class="glyphicon glyphicon-search"></span>
-                                                <img class="img-responsive" src="{% load_globals 'thumbnail_uri' %}{{ file.rsid.id }}">
-                                            </a>
-                                        </div>
-                                    {% endfor %}
-                                {% endfor %}
+                        <div class="row" id="files">
+                            <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-sm-10">
+                                        <h3>Files</h3>
+                                    </div>
                                 </div>
-                            </ul>
+                                <div class="row">
+                                    <div class="col-log-12">
+                                        <ul class="nav nav-tabs">
+                                            <li><a href="#general-files" data-toggle="tab">General</a></li>     
+                                            {% for key, file_group in files.items %}
+                                                {% if key != 'General' %} 
+                                                    <li><a href="#{{ key|slug }}-files" data-toggle="tab">{{ key }}</a></li>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </ul>
+                                        <div class="tab-content">
+                                            {% for key, file_group in files.items %}
+                                                {% if key == 'General' %}
+                                                    <div id="general-files" class="tab-pane active">
+                                                {% else %}
+                                                    <div id="{{ key|slug }}-files" class="tab-pane">
+                                                {% endif %} 
+                                                <ul class="list-unstyled">
+                                                    <div class="row enlarge">
+                                                        {% for file in file_group %}
+                                                            <div class="enlarge col-sm-4 col-md-3">
+                                                                <a data-lightbox="location-file" href="{% load_globals 'image_uri' %}{{ file.rsid.id }}" data-title="{{ file.rsid.caption }}">
+                                                                    <img class="img-responsive" src="{% load_globals 'thumbnail_uri' %}{{ file.rsid.id }}">
+                                                                </a>
+                                                                <p><a href="{% url 'filedetail' file.rsid.id %}">{{ file.rsid.title }}</a> - <a href="{{ file.rsid.get_download }}">Download</a></p>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </ul>
+                                            </div>
+                                        {% endfor %}   
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         </div>
                     {% endif %}
                     
@@ -104,11 +143,11 @@
                                     <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
                                         Objects: {{ location.title }}
                                         <small>Export: </small>
-                                        <a class="subj-ex" href="{% url 'locationdetailexport' location.id %}?col={{ sub_col }}&entity=subject&format=json"><small>JSON</small></a>
+                                        <a class="sub-ex" href="{% url 'locationdetailexport' location.id %}?col={{ sub_col }}&entity=subject&format=json"><small>JSON</small></a>
                                         <small> - </small>
-                                        <a class="subj-ex" href="{% url 'locationdetailexport' location.id %}?col={{ sub_col }}&entity=subject&format=xml"><small>XML</small></a>
+                                        <a class="sub-ex" href="{% url 'locationdetailexport' location.id %}?col={{ sub_col }}&entity=subject&format=xml"><small>XML</small></a>
                                         <small> - </small>
-                                        <a class="subj-ex" href="{% url 'locationdetailexport' location.id %}?col={{ sub_col }}&entity=subject&format=csv"><small>CSV</small></a>
+                                        <a class="sub-ex" href="{% url 'locationdetailexport' location.id %}?col={{ sub_col }}&entity=subject&format=csv"><small>CSV</small></a>
                                         <small style="float: right; margin: 10px 0 20px;">{{ sub_col_title }}</small>
                                     </h3>
                                 </div>
@@ -127,30 +166,164 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            <div id="subj-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
+                            <div id="sub-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
                                 <p>Exporting large queries may take several minutes, please do not leave this page until the download completes.</p>
                             </div>
                             {% render_table subject_table %}
                         </div>
                     </div>
-                    {% endif %}
-                    
-                </div>
-                <div class="col-md-4">
-                    <div class="row">
-                        <div class="col-sm-11">
-                            <div class="well filters">                    
-                                <h3>References</h3>
-                                {% for media_relation in related_media %}
-                                    <p>
-                                        <a href="{% url 'mediadetail' media_relation.media.id %}">{% get_bib_ref media_relation.media %}{% if media_relation.notes %}, {{ media_relation.notes }}{% endif %}.</a>
-                                    </p>
-                                {% endfor %}
+                    {% endif %}       
+
+                    {% if media %}
+                    <div class="row" id="media">
+                        <div class="col-lg-12">
+                            <div class="row">
+                                <div class="col-sm-10">
+                                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
+                                        Media: {{ location.title }}
+                                        <small>Export: </small>
+                                        <a class="med-ex" href="{% url 'locationdetailexport' location.id %}?col={{ med_col }}&entity=media&format=json"><small>JSON</small></a>
+                                        <small> - </small>
+                                        <a class="med-ex" href="{% url 'locationdetailexport' location.id %}?col={{ med_col }}&entity=media&format=xml"><small>XML</small></a>
+                                        <small> - </small>
+                                        <a class="med-ex" href="{% url 'locationdetailexport' location.id %}?col={{ med_col }}&entity=media&format=csv"><small>CSV</small></a>
+                                        <small style="float: right; margin: 10px 0 20px;">{{ med_col_title }}</small>
+                                    </h3>
+                                </div>
+                                <div class="col-sm-2">
+                                    {% if media_collections %}
+                                        <button class="btn btn-default dropdown-toggle" style="margin: 40px 0 0;" type="button" data-toggle="dropdown">
+                                            Collection:
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li><a href="{% url 'locationdetail' location.id %}?medcol=0">All Media</a></li>
+                                            {% for collection in media_collections %}
+                                                <li><a href="{% url 'locationdetail' location.id %}?medcol={{ collection.id }}">{{ collection.title }}</a></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
                             </div>
+                            <div id="med-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
+                                <p>Exporting large queries may take several minutes, please do not leave this page until the download completes.</p>
+                            </div>
+                            {% render_table media_table %}
                         </div>
                     </div>
-                </div>                
-            </div>  
+                    {% endif %}
+
+                    {% if people %}
+                    <div class="row" id="people">
+                        <div class="col-lg-12">
+                            <div class="row">
+                                <div class="col-sm-10">
+                                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
+                                        People: {{ location.title }}
+                                        <small>Export: </small>
+                                        <a class="po-ex" href="{% url 'locationdetailexport' location.id %}?col={{ po_col }}&entity=people&format=json"><small>JSON</small></a>
+                                        <small> - </small>
+                                        <a class="po-ex" href="{% url 'locationdetailexport' location.id %}?col={{ po_col }}&entity=people&format=xml"><small>XML</small></a>
+                                        <small> - </small>
+                                        <a class="po-ex" href="{% url 'locationdetailexport' location.id %}?col={{ po_col }}&entity=people&format=csv"><small>CSV</small></a>
+                                        <small style="float: right; margin: 10px 0 20px;">{{ po_col_title }}</small>
+                                    </h3>
+                                </div>
+                                <div class="col-sm-2">
+                                    {% if people_collections %}
+                                        <button class="btn btn-default dropdown-toggle" style="margin: 40px 0 0;" type="button" data-toggle="dropdown">
+                                            Collection:
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li><a href="{% url 'locationdetail' location.id %}?pocol=0">All People</a></li>
+                                            {% for collection in people_collections %}
+                                                <li><a href="{% url 'locationdetail' location.id %}?pocol={{ collection.id }}">{{ collection.title }}</a></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div id="po-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
+                                <p>Exporting large queries may take several minutes, please do not leave this page until the download completes.</p>
+                            </div>
+                            {% render_table people_table %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if location.get_siblings %}
+                    <div class="row" id="siblings">
+                        <div class="col-lg-12">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <h3>Sibling Locations</h3>
+                                </div>
+                            </div>
+                            <p>
+                                {% for sibling in location.get_siblings %}
+                                    {% if forloop.counter0 > 0 %} - {% endif %}<a href="{% url 'locationdetail' sibling.id %}">{{ sibling.title }}</a>
+                                {% endfor %}
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if location.get_children %}
+                    <div class="row" id="children">
+                        <div class="col-lg-12">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <h3>Child Locations</h3>
+                                </div>
+                            </div>
+                            <p>
+                                {% for child in location.get_children %}
+                                    {% if forloop.counter0 > 0 %} - {% endif %}<a href="{% url 'locationdetail' child.id %}">{{ child.title }}</a>
+                                {% endfor %}
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}    
+                    
+                    </div>
+                <div class="col-md-4">
+                    {% if location.get_thumbnail != 'http://ur.iaas.upenn.edu/static/img/no_img.jpg' %}
+                        <img class="img-responsive img-full-width" src="{% load_globals 'image_uri' %}{{ location.get_thumbnail }}">
+                    {% endif %}
+                    <div class="well filters">
+                    
+                        <h3>Share</h3>
+                        <p><a href="mailto:?subject=[From {{ site_name }}] View this Location&amp;body=You can view this location at {{ location.get_full_absolute_url }}" target="_blank"> Email</a> | <a href="{% url 'admin:base_location_change' location.id %}" target="_blank"> Edit</a></p>
+                        <hr />
+
+                        {% if media %}
+                            <h3>References</h3>
+                            {% for media_relation in media %}
+                                <p>
+                                    <a href="{% url 'mediadetail' media_relation.id %}">{% get_bib_ref media_relation %}.</a>
+                                </p>
+                            {% endfor %}
+                            <hr />
+                        {% endif %}
+                        {% if linked_data %}
+                            <h3>Linked Resources</h3>
+                            {% for web in linked_data %}
+                                <p>
+                                    <a href="{{ web.link }}">{{ web.source.title }}</a>
+                                </p>
+                            {% endfor %}
+                        {% endif %}
+                        {% if collections %}
+                            <h3>Collections</h3>
+                            {% for collection in collections %}
+                                <img class="img-responsive" src="{{ collection.collection.get_thumbnail }}" />
+                                <p><a href="{% url 'collectiondetail' collection.collection.id %}">{{ collection.collection.title }}</a></p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>                    
+            </div>
         </div>
     </section>
 {% endblock %}
@@ -161,6 +334,15 @@
 
   <script type="text/javascript">
     $(document).ready(function(){
+
+        $('.collapse-button').click(function () {
+            if(!$(this).hasClass('collapsed')) {
+                $(this).html('  + Expand');
+            } else {
+                $(this).html('  - Collapse');
+            }
+        });    
+    
         $("[data-toggle=popover]").popover({
             trigger : 'hover'
         });   
