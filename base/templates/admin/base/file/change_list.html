@@ -71,7 +71,7 @@
                     <i class="icon-file icon-white"></i>&nbsp;
                     Download Full Export
                   </a>                  
-                  <a href="mailto:?subject=[From UrOnline Admin] {{ request.user.first_name }} {{ request.user.last_name }} shared some Files&amp;body=You can view these files at www.ur-online.org{{ request.get_full_path|urlencode }}" target="_blank" class="btn btn-success">
+                  <a href="mailto:?subject=[From {{ admin_site_name }}] {{ request.user.first_name }} {{ request.user.last_name }} shared some Files&amp;body=You can view these files at {{ request.META.HTTP_HOST }}{{ request.get_full_path|urlencode }}" target="_blank" class="btn btn-success">
                     <i class="icon-envelope icon-alpha75"></i>&nbsp;
                     Email Current Search
                   </a>                

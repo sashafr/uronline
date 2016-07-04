@@ -509,32 +509,32 @@ class XMLResponse(HttpResponse):
         kwargs['content_type'] = 'text/xml'
         super (XMLResponse, self).__init__(content, **kwargs)
         
-def serialize_data(filename, queryset, entity, serialize_type, is_admin=False):
+def serialize_data(filename, queryset, entity, serialize_type, request, is_admin=False):
     if entity == 'subject':
         if is_admin:
-            serializer = SubjectAdminSerializer(queryset, many=True)
+            serializer = SubjectAdminSerializer(queryset, context={'request': request}, many=True)
         else:
-            serializer = SubjectSerializer(queryset, many=True)
+            serializer = SubjectSerializer(queryset, context={'request': request},  many=True)
     elif entity == 'location':
         if is_admin:
-            serializer = LocationAdminSerializer(queryset, many=True)
+            serializer = LocationAdminSerializer(queryset, context={'request': request},  many=True)
         else:
-            serializer = LocationSerializer(queryset, many=True)
+            serializer = LocationSerializer(queryset, context={'request': request},  many=True)
     elif entity == 'media':
         if is_admin:
-            serializer = MediaAdminSerializer(queryset, many=True)
+            serializer = MediaAdminSerializer(queryset, context={'request': request},  many=True)
         else:
-            serializer = MediaSerializer(queryset, many=True)        
+            serializer = MediaSerializer(queryset, context={'request': request},  many=True)        
     elif entity == 'people':
         if is_admin:
-            serializer = PersonOrgAdminSerializer(queryset, many=True)
+            serializer = PersonOrgAdminSerializer(queryset, context={'request': request},  many=True)
         else:
-            serializer = PersonOrgSerializer(queryset, many=True)            
+            serializer = PersonOrgSerializer(queryset, context={'request': request},  many=True)
     elif entity == 'file':
         if is_admin:
-            serializer = FileAdminSerializer(queryset, many=True)
+            serializer = FileAdminSerializer(queryset, context={'request': request},  many=True)
         else:
-            serializer = FileSerializer(queryset, many=True)            
+            serializer = FileSerializer(queryset, context={'request': request},  many=True)
     if serialize_type == 'json':
         response = JSONResponse(serializer.data)
         response['Content-Disposition'] = 'attachment; filename="' + filename + '.json"'
@@ -556,6 +556,9 @@ def flatten_to_csv(filename, qs, entity, is_file=False, is_admin=False):
         titles.append('__URL__')
     if is_file:
         titles.append('__Download__')
+    if entity == 'location':
+        titles.append('Type')
+        titles.append('Parent')
     rows = []
     for result in qs:
         row = []
@@ -567,6 +570,12 @@ def flatten_to_csv(filename, qs, entity, is_file=False, is_admin=False):
             row_dict[1] = result.get_full_absolute_url()
         if is_file:
             row_dict[1] = result.get_download()
+        if entity == 'location':
+            row_dict[2] = result.type
+            if result.parent:
+                row_dict[3] = result.parent.title
+            else:
+                row_dict[3] = 'None'
         
         # controlled properties
         if entity == 'subject':

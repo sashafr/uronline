@@ -209,8 +209,10 @@ def subjectdetail(request, subject_id):
     # determine if menu is needed
     if locations or media or people:
         show_contents = 'true'
+        
+    site_name = settings.SITE_NAME
     
-    return render(request, 'base/subjectdetail.html', {'subject': subject, 'properties': properties, 'footnotes': footnotes, 'locations': locations, 'media': media, 'people': people, 'location_table': location_table, 'media_table': media_table, 'people_table': people_table, 'location_collections': location_collections, 'media_collections': media_collections, 'po_collections': po_collections, 'loc_col': loc_coll_id, 'med_col': med_coll_id, 'po_col': po_coll_id, 'loc_col_title': loc_col_title, 'med_col_title': med_col_title, 'po_col_title': po_col_title, 'files': files, 'collections': collections, 'linked_data': linked_data, 'show_contents': show_contents })
+    return render(request, 'base/subjectdetail.html', {'subject': subject, 'properties': properties, 'footnotes': footnotes, 'locations': locations, 'media': media, 'people': people, 'location_table': location_table, 'media_table': media_table, 'people_table': people_table, 'location_collections': location_collections, 'media_collections': media_collections, 'po_collections': po_collections, 'loc_col': loc_coll_id, 'med_col': med_coll_id, 'po_col': po_coll_id, 'loc_col_title': loc_col_title, 'med_col_title': med_col_title, 'po_col_title': po_col_title, 'files': files, 'collections': collections, 'linked_data': linked_data, 'show_contents': show_contents, 'site_name': site_name })
     
 def mediadetail(request, media_id):
     """ Detailed view of a media record """
@@ -1532,8 +1534,8 @@ def export(request):
         filename += datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
         
         if type == 'json':
-            return serialize_data(filename, qs, entity, 'json', is_admin=is_admin)
+            return serialize_data(filename, qs, entity, 'json', request, is_admin=is_admin)
         elif type == 'xml':
-            return serialize_data(filename, qs, entity, 'xml', is_admin=is_admin)
+            return serialize_data(filename, qs, entity, 'xml', request, is_admin=is_admin)
         else:
-            return flatten_to_csv(filename, qs, entity, is_file=is_file, is_admin=is_admin)
+            return flatten_to_csv(filename, qs, entity, request, is_file=is_file, is_admin=is_admin)

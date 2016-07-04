@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer, StringRelatedField, ListSerializer, CharField, HyperlinkedModelSerializer
-from base.models import SubjectControlProperty, SubjectProperty, Subject, LocationControlProperty, LocationProperty, Location, MediaControlProperty, MediaProperty, Media, PersonOrgControlProperty, PersonOrgProperty, PersonOrg, FileControlProperty, FileProperty, File
+from base.models import SubjectControlProperty, SubjectProperty, Subject, LocationControlProperty, LocationProperty, Location, MediaControlProperty, MediaProperty, Media, PersonOrgControlProperty, PersonOrgProperty, PersonOrg, FileControlProperty, FileProperty, File, ObjectType
 
 class VisibleCPListSerializer(ListSerializer):
     
@@ -17,7 +17,7 @@ class VisibleEntityListSerializer(ListSerializer):
     
     def to_representation(self, data):
         data = data.filter(public = True)
-        return super(VisibleEntityListSerializer, self).to_representation(data)
+        return super(VisibleEntityListSerializer, self).to_representation(data)       
 
 class SubjectControlPropertySerializer(ModelSerializer):
     property = StringRelatedField(source='control_property')
@@ -68,16 +68,18 @@ class LocationPropertySerializer(ModelSerializer):
     class Meta:
         list_serializer_class = VisibleFFPListSerializer
         model = LocationProperty
-        fields = ('prop', 'property_value', 'inline_note', 'footnote')        
+        fields = ('prop', 'property_value', 'inline_note', 'footnote')      
         
 class LocationSerializer(HyperlinkedModelSerializer):
     url = CharField(source='get_full_absolute_url', read_only=True)
     control_properties = LocationControlPropertySerializer(source='locationcontrolproperty_set', many=True, read_only=True)
     free_form_properties = LocationPropertySerializer(source='locationproperty_set', many=True, read_only=True)
+    type = StringRelatedField()
+    parent = StringRelatedField()    
     
     class Meta:
         model = Location
-        fields = ('id', 'url', 'title', 'control_properties', 'free_form_properties')
+        fields = ('id', 'url', 'title', 'type', 'parent', 'control_properties', 'free_form_properties')
         
 class MediaControlPropertySerializer(ModelSerializer):
     property = StringRelatedField(source='control_property')
@@ -217,16 +219,25 @@ class LocationPropertyAdminSerializer(ModelSerializer):
 
     class Meta:
         model = LocationProperty
-        fields = ('prop', 'property_value', 'inline_note', 'footnote')        
-        
+        fields = ('prop', 'property_value', 'inline_note', 'footnote')
+
+class LocationParentAdminSerializer(ModelSerializer):
+    title = CharField(source='title')
+
+    class Meta:
+        model = Location
+        fields = ('title')
+
 class LocationAdminSerializer(HyperlinkedModelSerializer):
     url = CharField(source='get_full_absolute_url', read_only=True)
     control_properties = LocationControlPropertyAdminSerializer(source='locationcontrolproperty_set', many=True, read_only=True)
     free_form_properties = LocationPropertyAdminSerializer(source='locationproperty_set', many=True, read_only=True)
+    type = StringRelatedField()   
+    parent = StringRelatedField()      
     
     class Meta:
         model = Location
-        fields = ('id', 'url', 'title', 'control_properties', 'free_form_properties')
+        fields = ('id', 'url', 'title', 'type', 'parent', 'control_properties', 'free_form_properties')
         
 class MediaControlPropertyAdminSerializer(ModelSerializer):
     property = StringRelatedField(source='control_property')

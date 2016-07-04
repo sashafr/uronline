@@ -43,9 +43,17 @@
 
 {% endblock %}
 
+<!-- Modifications to original Django Suit template begin here -->
+<!-- This is necessary on all forms using my tabular.html because their widths because something is broken in the Django Suit old templates -->
 {% block extrastyle %}
   {{ block.super }}
+    <style>
+        table select, table textarea {
+            width: 100%;
+        }
+    </style>  
 {% endblock %}
+<!-- End modifications --> 
 
 {% block content_title_value %}
   {% trans 'Add' %} {{ opts.verbose_name }}
@@ -118,7 +126,7 @@
                 
                 <!-- Modifications to original Django Suit template begin here -->
                 <li>
-                  <a href="mailto:?subject=[From UrOnline Admin] {{ request.user.first_name }} {{ request.user.last_name }} shared {{ original.title }}&amp;body=You can view this object at http://www.ur-online.org{% url opts|admin_urlname:'change' original.pk|admin_urlquote %}" target="_blank">
+                  <a href="mailto:?subject=[From {{ admin_site_name }}] {{ request.user.first_name }} {{ request.user.last_name }} shared {{ original.title }}&amp;body=You can view this object at {{ request.META.HTTP_HOST }}{% url opts|admin_urlname:'change' original.pk|admin_urlquote %}" target="_blank">
                     <i class="icon-envelope icon-alpha75"></i>
                     Email
                   </a>

@@ -2348,6 +2348,7 @@ class SubjectAdmin(admin.ModelAdmin):
                 coll_info['name'] = coll.collection.title
             collection_list.append(coll_info)
         extra_context['collections'] = collection_list
+        extra_context['admin_site_name'] = settings.SUIT_CONFIG['ADMIN_NAME']        
         return super(SubjectAdmin, self).change_view(request, object_id, form_url, extra_context = extra_context)
         
     def response_change(self, request, obj):
@@ -2437,7 +2438,7 @@ class SubjectAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None, **kwargs):
         self.other_search_fields = {}
         asf = self.advanced_search_form
-        extra_context = {'asf': asf, 'github_uri': settings.GITHUB_BACKUP_URI}
+        extra_context = {'asf': asf, 'github_uri': settings.GITHUB_BACKUP_URI, 'admin_site_name': settings.SUIT_CONFIG['ADMIN_NAME']}
         
         request.GET._mutable = True
         
@@ -2589,15 +2590,12 @@ admin.site.register(Subject, SubjectAdmin)
 
 class LocationAdmin(MPTTModelAdmin):
     readonly_fields = ('get_thumbnail_admin', 'title', 'created', 'modified', 'last_mod_by', 'upload_batch')    
-    inlines = [LocationPropertyInline, LocationControlPropertyInline, SubjectLocationRelationsInline, MediaLocationRelationsInline, LocationPersonOrgRelationsInline, LocationFileInline, LocationCollectionEntityInline, LocationLinkedDataInline]
+    inlines = [LocationControlPropertyInline, LocationPropertyInline, SubjectLocationRelationsInline, MediaLocationRelationsInline, LocationPersonOrgRelationsInline, LocationFileInline, LocationCollectionEntityInline, LocationLinkedDataInline]
     search_fields = ['title', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3']
     list_display = ('get_thumbnail_admin', 'title1', 'title2', 'title3', 'desc1', 'type', 'ancestors', 'public', 'modified', 'last_mod_by')
     list_filter = ['type', 'public', 'last_mod_by']
     fields = ['get_thumbnail_admin', 'title', 'notes', 'type', 'parent', 'created', 'modified', 'last_mod_by', 'public', 'upload_batch']
     list_display_links = ('title1', )
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
     suit_form_tabs = (('general', 'Object'), ('relations', 'Relations'), ('files', 'Files'), ('collections', 'Collections'), ('linked', 'Linked Data'))
     fieldsets = [
         (None, {
@@ -2637,6 +2635,7 @@ class LocationAdmin(MPTTModelAdmin):
                 coll_info['name'] = coll.collection.title
             collection_list.append(coll_info)
         extra_context['collections'] = collection_list
+        extra_context['admin_site_name'] = settings.SUIT_CONFIG['ADMIN_NAME']        
         return super(LocationAdmin, self).change_view(request, object_id, form_url, extra_context = extra_context)
         
     def response_change(self, request, obj):
@@ -2726,7 +2725,7 @@ class LocationAdmin(MPTTModelAdmin):
     def changelist_view(self, request, extra_context=None, **kwargs):
         self.other_search_fields = {}
         asf = self.advanced_search_form
-        extra_context = {'asf': asf, 'github_uri': settings.GITHUB_BACKUP_URI}
+        extra_context = {'asf': asf, 'github_uri': settings.GITHUB_BACKUP_URI, 'admin_site_name': settings.SUIT_CONFIG['ADMIN_NAME']}
         
         request.GET._mutable = True
         
@@ -2923,6 +2922,7 @@ class FileAdmin(admin.ModelAdmin):
                 coll_info['name'] = coll.collection.title
             collection_list.append(coll_info)
         extra_context['collections'] = collection_list
+        extra_context['admin_site_name'] = settings.SUIT_CONFIG['ADMIN_NAME']
         return super(FileAdmin, self).change_view(request, object_id, form_url, extra_context = extra_context)
         
     def response_change(self, request, obj):
@@ -3009,7 +3009,7 @@ class FileAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None, **kwargs):
         self.other_search_fields = {}
         asf = self.advanced_search_form
-        extra_context = {'asf': asf, 'github_uri': settings.GITHUB_BACKUP_URI}
+        extra_context = {'asf': asf, 'github_uri': settings.GITHUB_BACKUP_URI, 'admin_site_name': settings.SUIT_CONFIG['ADMIN_NAME']}
         
         request.GET._mutable = True
         

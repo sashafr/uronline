@@ -448,11 +448,8 @@ class Subject(models.Model):
         
     def get_full_absolute_url(self):
         domain = settings.ALLOWED_HOSTS[0]
-        
-        if domain.startswith('.'):
-            domain = domain[1:]
 
-        return 'http://%s%s' % (domain, self.get_absolute_url())        
+        return 'http://www%s%s' % (domain, self.get_absolute_url())        
         
     def save(self, *args, **kwargs):
         """ Auto fills the main title field. If object does not have a value for title1, title2, or title3,
