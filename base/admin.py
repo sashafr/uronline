@@ -182,11 +182,10 @@ def import_data(modeladmin, request, queryset):
                 # GET ENTITY MATCHES
                 if matchers:
                     
-                    q = Q()
                     match_msg = "Tried to match on: "
                     
                     for matcher in matchers:
-                        match_msg += matcher.title + ', '
+                        match_msg += row[matcher.column_index].strip() + ', '
                         if matcher.property.control_field:
                             if entity == 'S':
                                 cq = Q(Q(subjectcontrolproperty__control_property = matcher.property) & Q(subjectcontrolproperty__control_property_value__title = row[matcher.column_index].strip()))
@@ -211,15 +210,14 @@ def import_data(modeladmin, request, queryset):
                                 cq = Q(Q(personorgproperty__property = matcher.property) & Q(personorgproperty__property_value = row[matcher.column_index].strip()))
                                 
                         if matcher.matching_required:
-                            q &= cq
+                            matches = matches.filter(cq).distinct()
                         else:
-                            q |= cq
+                            matches = matches | matches.model.objects.filter(cq)
                     
-                    matches = matches.filter(q).distinct()
                     match_count = matches.count()
                     
                 if match_count == 0 and not create:
-                    match_error = MatchImportError(data_upload = upload, row = row_index, error_text = 'MATCH FAILED test: ' + match_msg, batch = batch)
+                    match_error = MatchImportError(data_upload = upload, row = row_index, error_text = 'MATCH FAILED: ' + match_msg, batch = batch)
                     match_error.save()
                     continue
                 elif match_count > 1 and not upload.allow_multiple:
@@ -240,14 +238,12 @@ def import_data(modeladmin, request, queryset):
                         parent_columns = Column.objects.filter(data_upload = upload, loc_parent = True)
                         if parent_columns:
                             parent_matches = Location.objects.all()
-                            pq = Q()
                             for pc in parent_columns:
                                 if pc.property.control_field:
                                     cq = Q(Q(locationcontrolproperty__control_property = pc.property) & Q(locationcontrolproperty__control_property_value__title = row[pc.column_index].strip()))
                                 else:
                                     cq = Q(Q(locationproperty__property = pc.property) & Q(locationproperty__property_value = row[pc.column_index].strip()))
-                                pq &= cq
-                            parent_matches = parent_matches.filter(pq).distinct()
+                                parent_matches = parent_matches.filter(cq).distinct()
                             parent_match_count = parent_matches.count()
                             if parent_match_count == 1:
                                 new_match = Location(parent = parent_matches[0], last_mod_by = request.user, upload_batch = batch)
@@ -773,9 +769,9 @@ def export_data(modeladmin, request, queryset, format):
     filename += datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
     
     if format == 'json':
-        return serialize_data(filename, queryset, entity, 'json', is_admin = True) 
+        return serialize_data(filename, queryset, entity, 'json', request, is_admin = True) 
     elif format == 'xml':
-        return serialize_data(filename, queryset, entity, 'xml', is_admin = True)
+        return serialize_data(filename, queryset, entity, 'xml', request, is_admin = True)
     elif format == 'csv':
         if queryset.model is File:
             is_file = True
@@ -1338,6 +1334,70 @@ class MediaAdvSearchForm(forms.Form):
     
     # utilities
     dup_prop = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='MP') | Q(primary_type='AL')), empty_label = "Find Media with Multiple...")
+
+class PersonOrgAdvSearchForm(forms.Form):
+    """ Used on the PersonOrg Admin page to search objects by related Properties """
+    
+    # controlled properties
+    cp1 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='PO') | Q(primary_type='AL')))
+    cst1 = forms.ChoiceField(label='', required=False, choices=CONTROL_SEARCH_TYPE)
+    cv1 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))
+    cp2 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='PO') | Q(primary_type='AL')))
+    cst2 = forms.ChoiceField(label='', required=False, choices=CONTROL_SEARCH_TYPE)
+    cv2 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))
+    cp3 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='PO') | Q(primary_type='AL')))
+    cst3 = forms.ChoiceField(label='', required=False, choices=CONTROL_SEARCH_TYPE)
+    cv3 = forms.ChoiceField(label='', required=False, choices=(('default', 'Select a Property'),))     
+    
+    # free-form properties
+    fp1 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='PO') | Q(primary_type='AL')))
+    fst1 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
+    fv1 = forms.CharField(label='', required=False)
+    op1 = forms.ChoiceField(label='', required=False, choices=OPERATOR)
+    fp2 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='PO') | Q(primary_type='AL')))
+    fst2 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
+    fv2 = forms.CharField(label='', required=False)
+    op2 = forms.ChoiceField(label='', required=False, choices=OPERATOR)
+    fp3 = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='PO') | Q(primary_type='AL')))
+    fst3 = forms.ChoiceField(label='', required=False, choices=SEARCH_TYPE)
+    fv3 = forms.CharField(label='', required=False)
+    
+    # filters
+    sub = SubjectChoices(
+        label = Subject._meta.verbose_name.capitalize(),
+        required = False,
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Subject._meta.verbose_name
+            }
+        )
+    )    
+    loc = LocationChoices(
+        label = Location._meta.verbose_name.capitalize(),
+        required = False,
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Location._meta.verbose_name
+            }
+        )
+    )
+    med = MediaChoices(
+        label = Media._meta.verbose_name.capitalize(),
+        required = False,
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Media._meta.verbose_name
+            }
+        )
+    )   
+    img = forms.ChoiceField(label='Image', required=False, choices=(('default', '---'), ('yes', 'Yes'), ('no', 'No')))
+    col = forms.ModelChoiceField(label='Collection', required=False, queryset=Collection.objects.all())
+    
+    # utilities
+    dup_prop = forms.ModelChoiceField(label='', required=False, queryset=DescriptiveProperty.objects.filter(Q(primary_type='PO') | Q(primary_type='AL')), empty_label = "Find People with Multiple...")
     
 class FileAdminAdvSearchForm(forms.Form):
     
@@ -1853,7 +1913,63 @@ class FileMediaAdminForm(ModelForm):
     )  
     
     class Meta:
-          model = MediaFile          
+          model = MediaFile
+
+class PersonOrgSubjectAdminForm(ModelForm):
+    subject = SubjectChoices(
+        label = Subject._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Subject._meta.verbose_name
+            }
+        )
+    )      
+    
+    class Meta:
+          model = SubjectPersonOrgRelations
+          
+class PersonOrgLocationAdminForm(ModelForm):
+    location = LocationChoices(
+        label = Location._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Location._meta.verbose_name
+            }
+        )
+    )     
+    
+    class Meta:
+          model = LocationPersonOrgRelations
+
+class PersonOrgMediaAdminForm(ModelForm):
+    media = MediaChoices(
+        label = Media._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Media._meta.verbose_name
+            }
+        )
+    )
+    
+    class Meta:
+          model = MediaPersonOrgRelations
+          
+class FilePersonOrgAdminForm(ModelForm):
+    rsid = FileChoices(
+        label = File._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % File._meta.verbose_name
+            }
+        )
+    )  
+    
+    class Meta:
+          model = PersonOrgFile          
 
 class SubjectFileAdminForm(ModelForm):
     subject = SubjectChoices(
@@ -1947,7 +2063,8 @@ class PersonOrgLinkedDataInline(admin.TabularInline):
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
-    extra = 1 
+    extra = 1
+    suit_classes = 'suit-tab suit-tab-linked'       
 
 class FileLinkedDataInline(admin.TabularInline):
     model = FileLinkedData
@@ -2056,7 +2173,40 @@ class MediaControlPropertyInline(admin.TabularInline):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'control_property':
             kwargs["queryset"] = DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='MP') | Q(primary_type='AL'))
-        return super(MediaControlPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)        
+        return super(MediaControlPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+class PersonOrgPropertyInline(admin.TabularInline):
+    model = PersonOrgProperty
+    fields = ['property', 'property_value', 'inline_notes', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)    
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    ordering = ('property__order',)
+    suit_classes = 'suit-tab suit-tab-general'
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'property':
+            kwargs["queryset"] = DescriptiveProperty.objects.filter(Q(primary_type='PO') | Q(primary_type='AL')).exclude(control_field = True)
+        return super(PersonOrgPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+class PersonOrgControlPropertyInline(admin.TabularInline):   
+    model = PersonOrgControlProperty
+    fields = ['control_property', 'control_property_value', 'inline_notes', 'notes', 'last_mod_by'] 
+    readonly_fields = ('last_mod_by',)
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_classes = 'suit-tab suit-tab-general'
+    extra = 3
+    template = 'admin/base/personorg/tabular.html'
+    ordering = ('control_property__order',)
+    
+    # for control property form dropdown, only show descriptive properties marked as control_field = true
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'control_property':
+            kwargs["queryset"] = DescriptiveProperty.objects.filter(control_field = True).filter(Q(primary_type='PO') | Q(primary_type='AL'))
+        return super(PersonOrgControlPropertyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)        
         
 class FilePropertyInline(admin.TabularInline):
     model = FileProperty
@@ -2214,7 +2364,48 @@ class MediaFileInline(admin.TabularInline):
     readonly_fields = ('get_thumbnail_admin',)        
     suit_classes = 'suit-tab suit-tab-files'
     extra = 1
-    form = FileMediaAdminForm    
+    form = FileMediaAdminForm
+
+class PersonOrgLocationRelationsInline(admin.TabularInline):
+    model = LocationPersonOrgRelations
+    fields = ['location', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)        
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_classes = 'suit-tab suit-tab-relations'
+    extra = 1
+    form = PersonOrgLocationAdminForm 
+
+class PersonOrgSubjectRelationsInline(admin.TabularInline):
+    model = SubjectPersonOrgRelations
+    fields = ['subject', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)        
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_classes = 'suit-tab suit-tab-relations'
+    extra = 1
+    form = PersonOrgSubjectAdminForm
+
+class PersonOrgMediaRelationsInline(admin.TabularInline):
+    model = MediaPersonOrgRelations
+    fields = ['media', 'notes', 'last_mod_by']
+    readonly_fields = ('last_mod_by',)        
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_classes = 'suit-tab suit-tab-relations'
+    extra = 1
+    form = PersonOrgMediaAdminForm
+        
+class PersonOrgFileInline(admin.TabularInline):
+    model = PersonOrgFile
+    fields = ['get_thumbnail_admin', 'rsid', 'thumbnail']
+    readonly_fields = ('get_thumbnail_admin',)        
+    suit_classes = 'suit-tab suit-tab-files'
+    extra = 1
+    form = FilePersonOrgAdminForm     
 
 class FileSubjectRelationsInline(admin.TabularInline):
     model = SubjectFile
@@ -2657,11 +2848,11 @@ class SubjectAdmin(admin.ModelAdmin):
             queryset = queryset.filter(subjectpersonorgrelations__person_org_id=po)            
             
         img = adv_fields['img']
-        if img != 'default':
+        if img != '':
             imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']
             if img == 'yes':
                 queryset = queryset.filter(subjectfile__rsid__filetype__in = imgs)
-            else:
+            elif img == 'no':            
                 queryset = queryset.exclude(subjectfile__rsid__filetype__in = imgs)
 
         col = adv_fields['col']
@@ -2839,7 +3030,7 @@ class LocationAdmin(MPTTModelAdmin):
         for instance in instances:
             if isinstance(instance, LocationProperty) or isinstance(instance, LocationControlProperty) or isinstance(instance, LocationSubjectRelations) or isinstance(instance, MediaLocationRelations) or isinstance(instance, LocationPersonOrgRelations): #Check if it is the correct type of inline
                 instance.last_mod_by = request.user            
-        instance.save()
+            instance.save()
         
     # advanced search form based on https://djangosnippets.org/snippets/2322/ and http://stackoverflow.com/questions/8494200/django-admin-custom-change-list-arguments-override-e-1 
 
@@ -2942,11 +3133,11 @@ class LocationAdmin(MPTTModelAdmin):
             queryset = queryset.filter(locationpersonorgrelations__person_org_id=po)            
             
         img = adv_fields['img']
-        if img != 'default':
+        if img != '':
             imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']
             if img == 'yes':
                 queryset = queryset.filter(locationfile__rsid__filetype__in = imgs)
-            else:
+            elif img == 'no':
                 queryset = queryset.exclude(locationfile__rsid__filetype__in = imgs)
 
         col = adv_fields['col']
@@ -3232,11 +3423,11 @@ class MediaAdmin(admin.ModelAdmin):
             queryset = queryset.filter(mediapersonorgrelations__person_org_id=po)
             
         img = adv_fields['img']
-        if img != 'default':
+        if img != '':
             imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']
             if img == 'yes':
                 queryset = queryset.filter(mediafile__rsid__filetype__in = imgs)
-            else:
+            elif img == 'no':
                 queryset = queryset.exclude(mediafile__rsid__filetype__in = imgs)
 
         col = adv_fields['col']
@@ -3331,6 +3522,296 @@ class MediaAdmin(admin.ModelAdmin):
             return queryset.order_by('-modified').distinct(), use_distinct
 
 admin.site.register(Media, MediaAdmin)
+
+class PersonOrgAdmin(admin.ModelAdmin):
+    fields = ['get_thumbnail_admin', 'title', 'notes', 'created', 'modified', 'last_mod_by', 'public', 'upload_batch']
+    readonly_fields = ('get_thumbnail_admin', 'title', 'created', 'modified', 'last_mod_by', 'upload_batch')    
+    inlines = [PersonOrgPropertyInline, PersonOrgControlPropertyInline, PersonOrgSubjectRelationsInline, PersonOrgLocationRelationsInline, PersonOrgMediaRelationsInline, PersonOrgFileInline, PersonOrgCollectionEntityInline, PersonOrgLinkedDataInline]
+    search_fields = ['title', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3']
+    list_display = ('get_thumbnail_admin', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3', 'public', 'modified', 'last_mod_by')
+    list_filter = ('public', 'last_mod_by')
+    list_display_links = ('title1', )
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    suit_form_tabs = (('general', 'Person/Organization'), ('relations', 'Relations'), ('files', 'Files'), ('collections', 'Collections'), ('linked', 'Linked Data'))
+    fieldsets = [
+        (None, {
+            'classes': ('suit-tab', 'suit-tab-general'),
+            'fields': ['get_thumbnail_admin', 'title', 'notes', 'created', 'modified', 'last_mod_by', 'public', 'upload_batch']
+        }),
+    ]
+    advanced_search_form = PersonOrgAdvSearchForm()
+    actions = [bulk_add_collection, bulk_edit, export_data_json, export_data_xml, export_data_csv, generate_entity_thumbnail]
+    save_as = True
+    
+    change_list_template = 'admin/base/personorg/change_list.html'
+    change_form_template = 'admin/base/personorg/change_form.html'
+    
+    class Media:
+        # the django-select2 styles have to be added manually for some reason, otherwise they don't work
+        css = {
+            "all": ("django_select2/css/select2.min.css",)
+        }
+        
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        """ Added to allow browsing by collection """
+    
+        extra_context = extra_context or {}
+        collections = PersonOrgCollection.objects.filter(person_org_id = object_id)
+        collection_list = []
+        for coll in collections:
+            coll_info = {}
+            current_order = coll.order
+            lt = PersonOrgCollection.objects.filter(collection = coll.collection, order__lt = current_order).order_by('-order')
+            if lt:
+                coll_info['prev'] = lt[0].person_org_id
+            gt = PersonOrgCollection.objects.filter(collection = coll.collection, order__gt = current_order).order_by('order')
+            if gt:
+                coll_info['next'] = gt[0].person_org_id
+            if lt or gt:
+                coll_info['name'] = coll.collection.title
+            collection_list.append(coll_info)
+        extra_context['collections'] = collection_list
+        extra_context['admin_site_name'] = settings.SUIT_CONFIG['ADMIN_NAME']        
+        return super(PersonOrgAdmin, self).change_view(request, object_id, form_url, extra_context = extra_context)
+        
+    def response_change(self, request, obj):
+        """
+        Determines the HttpResponse for the change_view stage.
+        """
+        if request.POST.has_key("_viewnext"):
+            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
+                   {'name': force_unicode(obj._meta.verbose_name),
+                    'obj': force_unicode(obj)})
+            next = request.POST.get("next_id")
+            if next:
+                self.message_user(request, msg)
+                return HttpResponseRedirect("../%s/" % next)
+        if request.POST.has_key("_viewprev"):
+            msg = (_('The %(name)s "%(obj)s" was changed successfully.') %
+                   {'name': force_unicode(obj._meta.verbose_name),
+                    'obj': force_unicode(obj)})
+            prev = request.POST.get("prev_id")
+            if prev:
+                self.message_user(request, msg)
+                return HttpResponseRedirect("../%s/" % prev)
+        return super(PersonOrgAdmin, self).response_change(request, obj)
+    
+    def save_model(self, request, obj, form, change):
+        obj.last_mod_by = request.user
+        obj.save()
+        
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
+        for instance in instances:
+            if isinstance(instance, PersonOrgProperty) or isinstance (instance, PersonOrgControlProperty) or isinstance (instance, PersonOrgSubjectRelations) or isinstance (instance, PersonOrgLocationRelations) or isinstance (instance, PersonOrgMediaRelations):
+                instance.last_mod_by = request.user
+            instance.save()                
+            
+    # advanced search form based on https://djangosnippets.org/snippets/2322/ and http://stackoverflow.com/questions/8494200/django-admin-custom-change-list-arguments-override-e-1 
+
+    def get_changelist(self, request, **kwargs):
+        adv_search_fields = {}
+        asf = self.advanced_search_form
+        for key in asf.fields.keys():
+            temp = self.other_search_fields.get(key, None)
+            if temp:
+                adv_search_fields[key] = temp[0]
+            else:
+                adv_search_fields[key] = ''
+        
+        class AdvChangeList(ChangeList):
+            
+            def get_query_string(self, new_params=None, remove=None):
+                """ Overriding get_query_string ensures that the admin still considers
+                the additional search fields as parameters, even tho they are popped from 
+                the request.GET """
+                
+                if new_params is None:
+                    new_params = {}
+                if remove is None:
+                    remove = []
+                p = self.params.copy()
+                for r in remove:
+                    for k in list(p):
+                        if k.startswith(r):
+                            del p[k]
+                for k, v in new_params.items():
+                    if v is None:
+                        if k in p:
+                            del p[k]
+                    else:
+                        p[k] = v
+                
+                extra_params = ''
+                for field, val in adv_search_fields.items():
+                    extra_params += '&' + field + '=' + val
+                
+                return '?%s%s' % (urlencode(sorted(p.items())), extra_params)
+                
+        return AdvChangeList
+        
+    def lookup_allowed(self, key, value):
+        if key in self.advanced_search_form.fields.keys():
+            return True
+        if key == 'attach_type':
+            return True
+        return super(PersonOrgAdmin, self).lookup_allowed(key, value)
+        
+    def changelist_view(self, request, extra_context=None, **kwargs):
+        self.other_search_fields = {}
+        asf = self.advanced_search_form
+        extra_context = {'asf': asf, 'github_uri': settings.GITHUB_BACKUP_URI, 'admin_site_name': settings.SUIT_CONFIG['ADMIN_NAME']}
+        
+        request.GET._mutable = True
+        
+        for key in asf.fields.keys():
+            try:
+                temp = request.GET.pop(key)
+            except KeyError:
+                pass
+            else:
+                if temp != ['']:
+                    self.other_search_fields[key] = temp
+                    
+        request.GET._mutable = False
+        return super(PersonOrgAdmin, self).changelist_view(request, extra_context = extra_context)
+        
+    def get_search_results(self, request, queryset, search_term):
+        """ Performs either a simple search using the search_term or an 
+        advanced search using values taken from the AdvancedSearchForm """
+        
+        queryset, use_distinct = super(PersonOrgAdmin, self).get_search_results(request, queryset, search_term)
+        
+        # get all the fields from the adv search form
+        adv_fields = {}
+        asf = self.advanced_search_form
+        for key in asf.fields.keys():
+            temp = self.other_search_fields.get(key, None)
+            if temp:
+                adv_fields[key] = temp[0]
+            else:
+                adv_fields[key] = ''
+        
+        # NOTE: simple search has already been applied
+        
+        # RELATED TABLES FILTER
+        sub = adv_fields['sub']
+        if sub != '':
+            queryset = queryset.filter(subjectpersonorgrelations__subject_id=sub)          
+        
+        loc = adv_fields['loc']
+        if loc != '':
+            location = Location.objects.filter(pk=loc)
+            if location:
+                queryset = queryset.filter(locationpersonorgrelations__location__in=location[0].get_descendants(include_self = True))
+            
+        med = adv_fields['med']
+        if med != '':
+            queryset = queryset.filter(mediapersonorgrelations__media_id=med)          
+            
+        img = adv_fields['img']
+        if img != '':
+            imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']
+            if img == 'yes':
+                queryset = queryset.filter(personorgfile__rsid__filetype__in = imgs)
+            elif img == 'no':
+                queryset = queryset.exclude(personorgfile__rsid__filetype__in = imgs)
+
+        col = adv_fields['col']
+        if col != '':
+            queryset = queryset.filter(personorgcollection__collection_id = col)
+        
+        # CONTROL PROPERTY FILTER
+        for i in range(1, 4):
+            cp = adv_fields['cp' + str(i)]
+            cst = adv_fields['cst' + str(i)]
+            cv = adv_fields['cv' + str(i)]
+            
+            if cp != '' and cv != 'default':
+                cf = ControlField.objects.filter(pk = cv)
+                cf_desc = cf[0].get_descendants(include_self=True)
+                ccq = Q()
+                for field in cf_desc:
+                    if cst == 'exact':
+                        ccq |= Q(personorgcontrolproperty__control_property_value = field.id)
+                    else:
+                        ccq &= ~Q(personorgcontrolproperty__control_property_value = field.id)
+                        
+                queryset = queryset.filter(ccq)
+                
+        # FREE FORM PROPERTY FILTER
+        for i in range (1, 4):
+            if i != 1:
+                op = adv_fields['op' + str(i - 1)]
+            else:
+                op = ''
+            fp = adv_fields['fp' + str(i)]
+            fst = adv_fields['fst' + str(i)]
+            fv = adv_fields['fv' + str(i)]
+
+            negate = False # whether or not the query will be negated
+            kwargs = {}
+            cq = Q()
+            
+            # remove and save negation, if present
+            if fst.startswith('not'):
+                negate = True
+                fst = fst[4:]
+            
+            if not(fv == '' and fst != 'blank'):
+                
+                if fst == 'blank':
+                    #if property is Any, then skip all b/c query asks for doc with 'any' blank properties
+                    if fp == '':
+                        continue
+                
+                    # BLANK is a special case negation (essentially a double negative), so handle differently
+                    if negate:
+                        cq = Q(personorgproperty__property = fp)
+                    else:
+                        cq = ~Q(personorgproperty__property = fp)
+                        
+                else:
+                    kwargs = {str('personorgproperty__property_value__%s' % fst) : str('%s' % fv)}
+                    
+                    # check if a property was selected and build the current query
+                    if fp == '':
+                        # if no property selected, than search thru ALL properties
+                        if negate:
+                            cq = ~Q(**kwargs)
+                        else:
+                            cq = Q(**kwargs)
+                    else:
+                        if negate:
+                            cq = Q(Q(personorgproperty__property = fp) & ~Q(**kwargs))
+                        else:
+                            cq = Q(Q(personorgproperty__property = fp) & Q(**kwargs))
+                            
+            # modify query set
+            if op == 'or':
+                queryset = queryset | self.model.objects.filter(cq)
+            else:
+                # if connector wasn't set, use &
+                queryset = queryset.filter(cq)
+        
+        # UTILITY FILTER
+        dup_prop = adv_fields['dup_prop']
+        if dup_prop != '':
+            dups = PersonOrgProperty.objects.filter(property_id = dup_prop).values_list('person_org', flat = True).annotate(count = Count('property')).filter(count__gt = 1)
+            dups_list = list(dups) # forcing queryset evaluation so next line doesn't throw a MySQLdb error
+            queryset = queryset.filter(id__in = dups_list)
+          
+        if col != '':
+            return queryset.order_by('personorgcollection__order').distinct(), use_distinct
+        elif queryset.ordered:
+            return queryset.distinct(), use_distinct
+        else:
+            return queryset.order_by('-modified').distinct(), use_distinct
+
+admin.site.register(PersonOrg, PersonOrgAdmin)
 
 class FileAdmin(admin.ModelAdmin):
     fields = ['get_thumbnail_admin', 'get_download_admin', 'title', 'get_uri', 'notes', 'public', 'uploaded', 'upload_batch']
@@ -4511,39 +4992,6 @@ class DataUploadAdmin(admin.ModelAdmin):
                         
 admin.site.register(DataUpload, DataUploadAdmin)
 
-class PersonOrgPropertyInline(admin.TabularInline):
-    model = PersonOrgProperty
-    extra = 3
-    fields = ['property', 'property_value', 'notes', 'last_mod_by']
-    readonly_fields = ('last_mod_by',) 
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }    
-
-class PersonOrgAdmin(admin.ModelAdmin):
-    readonly_fields = ('created', 'modified', 'last_mod_by')
-    fields = ['title', 'notes', 'created', 'modified', 'last_mod_by']
-    list_display = ['title', 'notes', 'created', 'modified', 'last_mod_by']
-    inlines = [PersonOrgPropertyInline, MediaPersonOrgRelationsInline, PersonOrgLinkedDataInline, PersonOrgCollectionEntityInline]
-    search_fields = ['title']
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2})},
-    } 
-
-    def save_model(self, request, obj, form, change):
-        obj.last_mod_by = request.user
-        obj.save()
-        
-    def save_formset(self, request, form, formset, change):
-        instances = formset.save(commit=False)
-
-        for instance in instances:
-            if isinstance(instance, PersonOrgProperty) or isinstance(instance, MediaPersonOrgRelations) or isinstance(instance, PersonOrgLinkedData) : #Check if it is the correct type of inline
-                instance.last_mod_by = request.user            
-                instance.save()    
-
-admin.site.register(PersonOrg, PersonOrgAdmin)
-
 class GlobalVarsAdmin(admin.ModelAdmin):
     readonly_fields = ('human_title', 'variable')
     list_display = ['human_title', 'val']
@@ -4607,8 +5055,7 @@ class DescriptivePropertyAdmin(admin.ModelAdmin):
         obj.save()
 
 admin.site.register(DescriptiveProperty, DescriptivePropertyAdmin)
-admin.site.register(Relations)
-admin.site.register(PersonOrgProperty)      
+admin.site.register(Relations)      
 
 class PostAdmin(admin.ModelAdmin):
     form = BlogPostForm

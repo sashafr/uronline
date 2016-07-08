@@ -1,0 +1,295 @@
+{% extends '_layouts/base.html' %}
+{% load base_tags %}
+{% load mptt_tags %}
+{% load widget_tweaks %}
+
+<!-- Metadata -->
+{% block page_title %}Search{% endblock %}
+<!-- End Metadata -->
+
+{% block pageheader %}
+    <div class="page-header search">
+        <div class="container page-header-content">
+
+            <form method="get" action=".">
+                <div class="row search-form" id="basicsearch">
+                    <div class="col-sm-6 col-md-5">
+                        <div class="form-group combo-group">
+                            <label>{{ form.keyword.label }}</label>
+                            {{ form.keyword|add_class:"form-control"|attr:"placeholder:Search by keyword" }}
+                        </div>
+                        <div class="form-group combo-group">
+                            <label>Types</label>
+                            {{ form.models|add_class:"selectpicker"|attr:"multiple"|attr:"title:All types" }}
+                        </div>
+                    </div>
+                    <div class="col-sm-3 col-md-2">
+                        <div class="form-group">
+                            <label>{{ form.object_type.label }}</label>
+                            {{ form.object_type|add_class:"selectpicker"|attr:"title:All object types" }}
+                        </div>
+                    </div>
+                    <div class="col-sm-2 hidden-sm">
+                        <div class="form-group">
+                            <label>Museum</label>
+                            {{ form.museum|add_class:"selectpicker"|attr:"title:All museums" }}
+                        </div>
+                    </div>
+                    <div class="col-sm-3 col-md-2">
+                        <div class="btn-group pull-right" role="group">
+                            <input type="submit" class="btn btn-default" id="search" value="Search">
+                            <button class="btn btn-default {% adv_searchform_has_changed request as asf_changed %}{% if asf_changed %}active{% endif %}" data-toggle="collapse" id="searchCollapse" href="#advancedsearch"><span class="glyphicon glyphicon-triangle-bottom"></span></button>
+                        </div>
+                    </div>
+                </div>
+
+                                                             
+                <div class="search-form {% adv_searchform_has_changed request as asf_changed %}{% if asf_changed %}in{% endif %} collapse" id="advancedsearch">
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <label>{{ form.unum.label }}</label>
+                            {{ form.unum|add_class:"form-control"|attr:"placeholder:e.g. 1765" }}
+                        </div>
+                        <div class="col-sm-3">
+                            <label>{{ form.museum_num.label }}</label>
+                            {{ form.museum_num|add_class:"form-control"|attr:"placeholder:A21345" }}
+                        </div>
+                        <div class="col-sm-3">
+                            <label>{{ form.material.label }}</label>
+                            {{ form.material|add_class:"selectpicker" }}
+                        </div>
+                        <div class="col-sm-3 visible-sm">
+                            <label>Museum</label>
+                            {{ form.museum|add_class:"selectpicker"|attr:"title:All museums" }}
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-sm-3 col-sm-offset-2 col-md-offset-1">
+                            <label>{{ form.property.label }}</label>
+                            {{ form.property|add_class:"selectpicker" }}
+                        </div>
+                        <div class="col-sm-3">
+                            <label>{{ form.search_type.label }}</label>
+                            {{ form.search_type|add_class:"selectpicker" }}
+                        </div>
+                        <div class="col-sm-4">
+                            <label>{{ form.q.label }}</label>
+                            {{ form.q|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-2 col-md-1">
+                            <label>{{ form.op.label }}</label>
+                            {{ form.op|add_class:"selectpicker mini" }}
+                        </div>
+                        <div class="col-sm-3">
+                            <label>{{ form.property2.label }}</label>
+                            {{ form.property2|add_class:"selectpicker" }}
+                        </div>
+                        <div class="col-sm-3">
+                            <label>{{ form.search_type2.label }}</label>
+                            {{ form.search_type2|add_class:"selectpicker" }}
+                        </div>
+                        <div class="col-sm-4">
+                            <label>{{ form.q2.label }}</label>
+                            {{ form.q2|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-2 col-md-1">
+                            <label>{{ form.op2.label }}</label>
+                            {{ form.op2|add_class:"selectpicker mini" }}
+                        </div>
+                        <div class="col-sm-3">
+                            <label>{{ form.property3.label }}</label>
+                            {{ form.property3|add_class:"selectpicker" }}
+                        </div>
+                        <div class="col-sm-3">
+                            <label>{{ form.search_type3.label }}</label>
+                            {{ form.search_type3|add_class:"selectpicker" }}
+                        </div>
+                        <div class="col-sm-4">
+                            <label>{{ form.q3.label }}</label>
+                            {{ form.q3|add_class:"form-control" }}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="overlay"></div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    {% if query or page.object_list %}
+        <div class="results">
+            <div class="container">
+                <h1><strong>{{ page.paginator.count }}</strong> Results</h1>
+                <div id="sort-export" class="pull-right hidden-xs hidden-sm">
+                    <form method="get" action=".">
+                        {{ form.order|add_class:"selectpicker"|attr:"id:sortby" }}
+                        <input type="submit" class="btn btn-default" id="export" value="Export Results">
+                    </form>
+                </div>
+
+                <div class="row">
+                    <!-- Results Column -->
+                    <div class="col-md-8">
+                        {% for result in page.object_list %}
+                            {% include 'search/_result_object.html' %}
+                        {% empty %}
+                            <h1 class="text-center">No results found!</h1>
+                            <h4 class="text-center"><em>Try broadening or adjusting your search criteria.</em></h4>
+                        {% endfor %}
+    
+                        {% if page.has_previous or page.has_next %}
+                            <div class="text-center">
+                                <ul class="pager">
+                                    {% if page.has_previous %}
+                                        <li class="previous"><a href="?{{ request.GET.urlencode }}&amp;page={{ page.previous_page_number }}">&laquo; Previous</a></li>
+                                    {% else %}
+                                        <li class="previous disabled"><a href="#" disabled>&laquo; Previous</a></li>
+                                    {% endif %}
+                                    <span class="current">
+                                        &nbsp;Page {{ page.number }} of {{ page.paginator.num_pages }}
+                                    </span>
+                                    {% if page.has_next %}
+                                        <li class="next"><a href="?{{ request.GET.urlencode }}&amp;page={{ page.next_page_number }}">Next &raquo;</a></li>
+                                    {% else %}
+                                        <li class="next disabled"><a href="#" disabled>Next &raquo;</a></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <!-- End Results Column -->
+
+                    <!-- Facets Column -->
+                    <div class="col-md-4">
+                        <div class="well filters">
+                            <!-- Begin faceting -->
+                            <div id="ot_facetname"><h5>Filter by Object Type</h5></div>
+                            <ul>
+                                {% get_facet_values 19 as facet_values %}
+                                {% build_facet_counts facets.fields.facet_prop_19 as facet_counts %}
+                                {% recursetree facet_values %}
+                                    {% get_node_facet_count facet_counts node as current_total %}
+                                    {% if current_total > 0 %}
+                                    <li>
+                                        <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_19:{{ node.id|urlencode }}"><span class="badge">{{ current_total }}</span>{{ node.title }}</a>
+                                        {% if not node.is_leaf_node %}
+                                            <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse">  +</a>
+                                            <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
+                                                <ul>
+                                                    {{ children }}
+                                                </ul>
+                                            </div>
+                                        {% endif %}
+                                    </li>
+                                    {% endif %}
+                                {% endrecursetree %}
+                            </ul>
+                        </div>
+                        <div class="well filters">
+                            <div id="m_facetname"><h5>Filter by Material</h5></div>
+                            <ul>
+                                {% get_facet_values 12 as facet_values %}
+                                {% build_facet_counts facets.fields.facet_prop_12 as facet_counts %}
+                                {% recursetree facet_values %}
+                                    {% get_node_facet_count facet_counts node as current_total %}
+                                    {% if current_total > 0 %}
+                                    <li>
+                                        <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_12:{{ node.id|urlencode }}"><span class="badge">{{ current_total }}</span>{{ node.title }}</a>
+                                        {% if not node.is_leaf_node %}
+                                            <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse">  +</a>
+                                            <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
+                                                <ul>
+                                                    {{ children }}
+                                                </ul>
+                                            </div>
+                                        {% endif %}
+                                    </li>
+                                    {% endif %}
+                                {% endrecursetree %}
+                            </ul> 
+                        </div>
+                        <div class="well filters">
+                            <div id="muse_facetname"><h5>Filter by Museum</h5></div>
+                            <ul>
+                                {% get_facet_values 59 as facet_values %}
+                                {% build_facet_counts facets.fields.facet_prop_59 as facet_counts %}
+                                {% recursetree facet_values %}
+                                    {% get_node_facet_count facet_counts node as current_total %}
+                                    {% if current_total > 0 %}
+                                    <li>
+                                        <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_59:{{ node.id|urlencode }}"><span class="badge">{{ current_total }}</span>{{ node.title }}</a>
+                                        {% if not node.is_leaf_node %}
+                                            <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse">  +</a>
+                                            <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
+                                                <ul>
+                                                    {{ children }}
+                                                </ul>
+                                            </div>
+                                        {% endif %}
+                                    </li>
+                                    {% endif %}
+                                {% endrecursetree %}
+                            </ul>                                 
+                        </div>  
+                    </div>
+                </div>
+            </div>
+
+        {% else %}
+            <div class="results">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-8 col-lg-offset-2">
+                            <h1 class="text-center">Search the collection above</h1>
+                            <h4 class="text-center"><em>Not sure what to search for? How about <a href="/search/?keyword=rams&models=base.subject&object_type=56&museum=&unum=&museum_num=&material=&property=&search_type=contains&q=&op=and&property2=&search_type2=contains&q2=&op2=and&property3=&search_type3=contains&q3=">figural objects of rams</a>, explore the <a href="/search/?keyword=&models=base.personorg&object_type=&museum=&unum=&museum_num=&material=&property=&search_type=contains&q=&op=and&property2=&search_type2=contains&q2=&op2=and&property3=&search_type3=contains&q3=">people involved in the excavations</a>, or daily objects used for <a href="/search/?order=3&selected_facets=facet_prop_19:113">gaming and fun</a> in Ur.</em></h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+{% endblock %}
+
+<!-- Search Unique JS -->
+{% block js %}
+
+{{ block.super }}
+
+  <script>
+    $(document).ready(function () {
+
+        var active = true;
+
+        $('.selectpicker').selectpicker();
+        $('.collapse-button').on('click', function(){
+            var txt = $(this).next().hasClass('in') ? '+' : '-';
+            $(this).text(txt)
+        });
+        $('#sortby').on('changed.bs.select', function (e) {
+            $('form').submit();
+        });
+
+        $('#searchCollapse').on('click tap', function(){
+            $(this).toggleClass('active');
+        });
+        
+        $("#export").click(function() {
+            $(this).closest("form").attr('action', "{% query_params_getlist request 'selected_facets' as facets %}{% url 'search_export' facets %}");
+        });
+        
+        $("#search").click(function() {
+            $(this).closest("form").attr('action', ".");
+        });
+
+    });
+  </script>
+
+{% endblock %}
+<!-- End Search Unique JS -->

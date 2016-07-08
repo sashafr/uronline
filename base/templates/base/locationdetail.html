@@ -9,7 +9,9 @@
 {% block pageheader %}
     <div class="page-header detail">
         <div class="container page-header-content">
-            <h1>{{ location.title }}</h1>
+            <h1>
+                {{ location.title }}
+            </h1>
         </div>
         <div class="overlay"></div>
     </div>
@@ -21,7 +23,7 @@
             <div class="row">
                 <div class="col-md-8">
                     <div class="row">
-                        <div class="col-md-12">
+                        <div class="col-md-12">                       
                             {% if properties %}
                                 <ul class="nav nav-tabs">
                                     <li><a href="#general" data-toggle="tab">General</a></li>
@@ -296,6 +298,17 @@
                         <h3>Share</h3>
                         <p><a href="mailto:?subject=[From {{ site_name }}] View this Location&amp;body=You can view this location at {{ location.get_full_absolute_url }}" target="_blank"> Email</a> | <a href="{% url 'admin:base_location_change' location.id %}" target="_blank"> Edit</a></p>
                         <hr />
+                        
+                        {% if location.get_ancestors %}
+                            <h3>Context</h3>
+                                <p>
+                                    {% for anc in location.get_ancestors %}
+                                        <a href="{% url 'locationdetail' anc.id %}">{{ anc.title1 }}</a> >
+                                    {% endfor %}
+                                    {{ location.title }}
+                                </p>                                
+                            <hr />                                
+                        {% endif %}
 
                         {% if media %}
                             <h3>References</h3>

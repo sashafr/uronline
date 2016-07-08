@@ -560,7 +560,7 @@ class Location(MPTTModel):
         if domain.startswith('.'):
             domain = domain[1:]
 
-        return 'http://%s%s' % (domain, self.get_absolute_url())
+        return 'http://www%s%s' % (domain, self.get_absolute_url())
 
     def save(self, *args, **kwargs):
         """ Auto fills the main title field. If l does not have a value for title1, title2, or title3,
@@ -677,7 +677,7 @@ class Media(models.Model):
     def get_full_absolute_url(self):
         domain = settings.ALLOWED_HOSTS[0]
 
-        return 'http://%s%s' % (domain, self.get_absolute_url())        
+        return 'http://www%s%s' % (domain, self.get_absolute_url())        
         
     def save(self, *args, **kwargs):
         """ Auto fills the main title field. If object does not have a value for title1, title2, or title3,
@@ -770,22 +770,20 @@ class PersonOrg(models.Model):
         return 'person_org'  
 
     def has_image(self):
-        files = PersonOrgFile.objects.filter(person_org = self, filetype__startswith = 'image')
+        imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']
+        files = PersonOrgFile.objects.filter(person_org = self, rsid__filetype__in = imgs)
         if files:
             return True
         else:
-            return False        
+            return False
 
     def get_absolute_url(self):
         return reverse('personorgdetail', args=[str(self.id)])
         
     def get_full_absolute_url(self):
         domain = settings.ALLOWED_HOSTS[0]
-        
-        if domain.startswith('.'):
-            domain = domain[1:]
 
-        return 'http://%s%s' % (domain, self.get_absolute_url())
+        return 'http://www%s%s' % (domain, self.get_absolute_url())
 
     def save(self, *args, **kwargs):
         """ Auto fills the main title field. If object does not have a value for title1, title2, or title3,
@@ -808,15 +806,43 @@ class PersonOrg(models.Model):
     def get_thumbnail(self):
         """ Returns thumbnail for this object, or if none is set, returns stock "no image". """
         
-        resource_uri = GlobalVars.objects.get(pk=11)
-        no_img = GlobalVars.objects.get(pk=12).val
+        resource_uri = settings.THUMBNAIL_URI
+        no_img = settings.NO_IMG
         thumbs = PersonOrgFile.objects.filter(person_org = self, thumbnail = True)
         if thumbs:
-            return resource_uri.val + str(thumbs[0].rsid.id)
+            return resource_uri + str(thumbs[0].rsid.id)
         else:
             return no_img
     get_thumbnail.short_description = 'Person/Organization'
-    get_thumbnail.allow_tags = True        
+    get_thumbnail.allow_tags = True  
+
+    def get_thumbnail_admin(self):
+        resource_uri = settings.IMAGE_URI
+        no_img = settings.NO_IMG    
+        thumbs = PersonOrgFile.objects.filter(person_org = self, thumbnail = True)
+        if thumbs:
+            url = resource_uri + str(thumbs[0].rsid.id)
+            thumbnail = settings.THUMBNAIL_URI + str(thumbs[0].rsid.id)
+        else:
+            url =  no_img
+            thumbnail = no_img
+        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, thumbnail) 
+    get_thumbnail_admin.short_description = 'Person Thumbnail'
+    get_thumbnail_admin.allow_tags = True
+
+    def next(self):
+        next_pos = PersonOrg.objects.filter(pk__gt=self.pk).order_by('id')
+        if next_pos:
+            return next_pos[0]
+        else:
+            return None
+            
+    def prev(self):
+        prev_pos = PersonOrg.objects.filter(pk__lt = self.pk).order_by('id')
+        if prev_pos:
+            return prev_pos.reverse()[0]
+        else:
+            return None        
     
     class Meta:
         verbose_name = 'Person'
@@ -1705,8 +1731,8 @@ class MediaPersonOrgRelations(models.Model):
         return self.media.title + ":" + self.person_org.title
 
     class Meta:
-        verbose_name = 'Media-Person/Organization Relation'
-        verbose_name_plural = 'Media-Person/Organization Relations'
+        verbose_name = 'Person/Organization Record'
+        verbose_name_plural = 'Person/Organization Records'
         
 class MediaLocationRelations(models.Model):
     """ Related media and locations """
@@ -1811,7 +1837,7 @@ class DataUpload(models.Model):
     private = models.BooleanField(default=False, verbose_name='Set to Private', help_text='Check this box to set all matched and created entities to private.')
     
     class Meta:
-        ordering = ['upload_time']
+        ordering = ['-upload_time']
         verbose_name = 'Data Import File'
         verbose_name_plural = 'Data Import Files'          
             

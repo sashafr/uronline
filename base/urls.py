@@ -1,7 +1,7 @@
 """urlconf for the base application"""
 
 from django.conf.urls import url, patterns, include
-from forms import AdvancedSearchForm, AdvFacetedSearchForm, AdvModelSearchForm
+from forms import *
 from haystack.views import SearchView, search_view_factory, FacetedSearchView
 from haystack.query import SearchQuerySet
 
@@ -59,4 +59,9 @@ urlpatterns = patterns('base.views',
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^bulk_upload_file/', 'bulk_upload_file', name='bulk_upload_file'),
     url(r'^export/$', 'export', name='export'),
+    url(r'^search_locations/', FacetedSearchView(
+        form_class = LocationFacetedSearchForm,
+        searchqueryset = sqs,
+        template = 'search/search_locations.html',
+    ), name='haystack_search_locations'),    
 )
