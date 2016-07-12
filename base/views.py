@@ -700,7 +700,7 @@ def filedetail(request, file_id):
     if subjects or locations or media or people:
         show_contents = 'true'
     
-    return render(request, 'base/filedetail.html', {'file': file, 'properties': properties, 'footnotes': footnotes, 'subject_table': subject_table, 'location_table': location_table, 'media_table': media_table, 'people_table': people_table, 'subject_collections': subject_collections, 'location_collections': location_collections, 'media_collections': media_collections, 'po_collections': po_collections, 'sub_col': sub_coll_id, 'loc_col': loc_coll_id, 'med_col': med_coll_id, 'po_col': po_coll_id, 'sub_col_title': sub_col_title, 'loc_col_title': loc_col_title, 'med_col_title': med_col_title, 'po_col_title': po_col_title, 'collections': collections, 'linked_data': linked_data, 'show_contents': show_contents })
+    return render(request, 'base/filedetail.html', {'file': file, 'properties': properties, 'footnotes': footnotes, 'subject_table': subject_table, 'locations': locations, 'subjects': subjects, 'people': people, 'media': media, 'location_table': location_table, 'media_table': media_table, 'people_table': people_table, 'subject_collections': subject_collections, 'location_collections': location_collections, 'media_collections': media_collections, 'po_collections': po_collections, 'sub_col': sub_coll_id, 'loc_col': loc_coll_id, 'med_col': med_coll_id, 'po_col': po_coll_id, 'sub_col_title': sub_col_title, 'loc_col_title': loc_col_title, 'med_col_title': med_col_title, 'po_col_title': po_col_title, 'collections': collections, 'linked_data': linked_data, 'show_contents': show_contents })
     
 def subjectdetailexport (request, subject_id):
     
@@ -937,6 +937,77 @@ def peopledetailexport (request, person_org_id):
         # csv - evil, evil, flattened csv
         elif format == 'csv':
             return flatten_to_csv(filename, qs, entity, is_file=False, is_admin=False)             
+    
+def filedetailexport (request, file_id):
+    
+    # get the parameters
+    file = get_object_or_404(File, pk=file_id)
+    coll_id = request.GET.get('col', '')
+    entity = request.GET.get('entity', '')
+    format = request.GET.get('format', '')
+    
+    filename = file.title
+    
+    # subject export
+    if entity == 'subject':
+        filename += '_objects_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        qs = Subject.objects.filter(subjectfile__file = file)
+        
+        # if a specific collection was requested, get only objects in selected collection
+        if coll_id != '' and coll_id != '0':
+            selected_cols = Collection.objects.filter(pk=coll_id)
+            if selected_cols:
+                qs = qs.filter(subjectcollection__collection = selected_cols[0])
+                filename += '_collection-' + format_filename(selected_cols[0].title)
+
+    # location export
+    if entity == 'location':
+        filename += '_locations_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        qs = Location.objects.filter(locationfile__file = file)
+        
+        # if a specific collection was requested, get only objects in selected collection
+        if coll_id != '' and coll_id != '0':
+            selected_cols = Collection.objects.filter(pk=coll_id)
+            if selected_cols:
+                qs = qs.filter(locationcollection__collection = selected_cols[0])
+                filename += '_collection-' + format_filename(selected_cols[0].title)
+                
+    # media export
+    if entity == 'media':
+        filename += '_media_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        qs = Media.objects.filter(mediafile__file = file)
+        
+        # if a specific collection was requested, get only media in selected collection
+        if coll_id != '' and coll_id != '0':
+            selected_cols = Collection.objects.filter(pk=coll_id)
+            if selected_cols:
+                qs = qs.filter(mediacollection__collection = selected_cols[0])
+                filename += '_collection-' + format_filename(selected_cols[0].title)                
+
+    # people export
+    if entity == 'people':
+        filename += '_people_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        qs = PersonOrg.objects.filter(personorgfile__file = file)
+        
+        # if a specific collection was requested, get only people in selected collection
+        if coll_id != '' and coll_id != '0':
+            selected_cols = Collection.objects.filter(pk=coll_id)
+            if selected_cols:
+                qs = qs.filter(personorgcollection__collection = selected_cols[0])
+                filename += '_collection-' + format_filename(selected_cols[0].title)     
+                
+    if qs:
+        # json
+        if format == 'json':
+            return serialize_data(filename, qs, entity, 'json', request, is_admin=False)
+            
+        # xml
+        elif format == 'xml':
+            return serialize_data(filename, qs, entity, 'xml', request, is_admin=False)
+            
+        # csv - evil, evil, flattened csv
+        elif format == 'csv':
+            return flatten_to_csv(filename, qs, entity, is_file=True, is_admin=False)
     
 def search_help(request):
 

@@ -2014,6 +2014,9 @@ class AboutPage(models.Model):
     title = models.CharField(max_length = 200)
     body = models.TextField()
     order = models.PositiveIntegerField(blank = True, default = 0)
+    
+    def get_absolute_url(self):
+        return reverse('aboutdetail', args=[str(self.id)])    
 	
     class Meta:
         verbose_name = 'About Page'
