@@ -1606,7 +1606,21 @@ class PersonOrgCollectionForm(ModelForm):
 
     class Meta:
           model = PersonOrgCollection          
-        
+
+class FileCollectionForm(ModelForm):
+    file = FileChoices(
+        label = File._meta.verbose_name.capitalize(),
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % File._meta.verbose_name
+            }
+        )
+    )
+
+    class Meta:
+          model = FileCollection
+          
 class DataUploadForm(ModelForm):
     """ Used to make certain the uploaded file is CSV. """
     file = FileChoices(        
@@ -2478,7 +2492,17 @@ class PersonOrgCollectionInline(SortableTabularInline):
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
     form = PersonOrgCollectionForm
-    sortable = 'order'   
+    sortable = 'order'
+
+class FileCollectionAdminInline(SortableTabularInline):
+    model = FileCollection
+    fields = ['get_thumbnail_admin', 'file', 'notes', 'order']
+    readonly_fields = ('get_thumbnail_admin',)
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    form = FileCollectionForm
+    sortable = 'order'    
 
 class SubjectCollectionEntityInline(admin.TabularInline):
     model = SubjectCollection
@@ -4112,14 +4136,17 @@ admin.site.register(File, FileAdmin)
 """ COLLECTION ADMIN """    
     
 class CollectionAdmin(admin.ModelAdmin):
-    readonly_fields = ('created', 'modified', 'owner')    
-    inlines = [SubjectCollectionInline, LocationCollectionInline, MediaCollectionInline, PersonOrgCollectionInline]
-    search_fields = ['title', 'notes']
-    list_display = ('title', 'notes', 'created', 'modified', 'owner')
+    readonly_fields = ('get_thumbnail_admin', 'created', 'modified', 'owner')    
+    inlines = [SubjectCollectionInline, LocationCollectionInline, MediaCollectionInline, PersonOrgCollectionInline, FileCollectionAdminInline]
+    search_fields = ['title', 'definition']
+    list_display = ('get_thumbnail_admin', 'title', 'created', 'modified', 'owner', 'public')
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
     }
-    fields = ['title', 'notes', 'created', 'modified', 'owner']
+    fields = ['get_thumbnail_admin', 'title', 'definition', 'notes', 'created', 'modified', 'owner', 'public']
+    list_filter = ('public', 'owner')
+    list_display_links = ('title', )
+    form = ControlFieldForm #I can use this because both wysiwyg fields are called notes
     
     change_form_template = 'admin/base/collection/change_form.html' 
     
@@ -4127,7 +4154,7 @@ class CollectionAdmin(admin.ModelAdmin):
         # the django-select2 styles have to be added manually for some reason, otherwise they don't work
         css = {
             "all": ("django_select2/css/select2.min.css",)
-        }
+        }        
         
     def save_model(self, request, obj, form, change):
         if obj.pk is None:

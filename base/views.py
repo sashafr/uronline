@@ -211,8 +211,9 @@ def subjectdetail(request, subject_id):
         show_contents = 'true'
         
     site_name = settings.SITE_NAME
+    no_img = settings.NO_IMG    
     
-    return render(request, 'base/subjectdetail.html', {'subject': subject, 'properties': properties, 'footnotes': footnotes, 'locations': locations, 'media': media, 'people': people, 'location_table': location_table, 'media_table': media_table, 'people_table': people_table, 'location_collections': location_collections, 'media_collections': media_collections, 'po_collections': po_collections, 'loc_col': loc_coll_id, 'med_col': med_coll_id, 'po_col': po_coll_id, 'loc_col_title': loc_col_title, 'med_col_title': med_col_title, 'po_col_title': po_col_title, 'files': files, 'collections': collections, 'linked_data': linked_data, 'show_contents': show_contents, 'site_name': site_name })
+    return render(request, 'base/subjectdetail.html', {'subject': subject, 'properties': properties, 'footnotes': footnotes, 'locations': locations, 'media': media, 'people': people, 'location_table': location_table, 'media_table': media_table, 'people_table': people_table, 'location_collections': location_collections, 'media_collections': media_collections, 'po_collections': po_collections, 'loc_col': loc_coll_id, 'med_col': med_coll_id, 'po_col': po_coll_id, 'loc_col_title': loc_col_title, 'med_col_title': med_col_title, 'po_col_title': po_col_title, 'files': files, 'collections': collections, 'linked_data': linked_data, 'show_contents': show_contents, 'site_name': site_name, 'no_img': no_img })
     
 def locationdetail(request, location_id):
 
@@ -331,9 +332,10 @@ def locationdetail(request, location_id):
     if subjects or media or people or location.get_siblings or location.get_children:
         show_contents = 'true'
         
-    site_name = settings.SITE_NAME        
+    site_name = settings.SITE_NAME
+    no_img = settings.NO_IMG    
     
-    return render(request, 'base/locationdetail.html', {'location': location, 'subjects': subjects, 'media': media, 'people': people, 'show_contents': show_contents, 'subject_table': subject_table, 'media_table': media_table, 'people_table': people_table, 'subject_collections': subject_collections, 'media_collections': media_collections, 'po_collections': po_collections, 'sub_col': sub_coll_id, 'med_col': med_coll_id, 'po_col': po_coll_id, 'sub_col_title': sub_col_title, 'med_col_title': med_col_title, 'po_col_title': po_col_title, 'files': files, 'properties': properties, 'footnotes': footnotes, 'collections': collections, 'linked_data': linked_data, 'site_name': site_name })
+    return render(request, 'base/locationdetail.html', {'location': location, 'subjects': subjects, 'media': media, 'people': people, 'show_contents': show_contents, 'subject_table': subject_table, 'media_table': media_table, 'people_table': people_table, 'subject_collections': subject_collections, 'media_collections': media_collections, 'po_collections': po_collections, 'sub_col': sub_coll_id, 'med_col': med_coll_id, 'po_col': po_coll_id, 'sub_col_title': sub_col_title, 'med_col_title': med_col_title, 'po_col_title': po_col_title, 'files': files, 'properties': properties, 'footnotes': footnotes, 'collections': collections, 'linked_data': linked_data, 'site_name': site_name, 'no_img': no_img })
     
 def mediadetail(request, media_id):
     """ Detailed view of a media record """
@@ -454,8 +456,9 @@ def mediadetail(request, media_id):
         show_contents = 'true'
         
     site_name = settings.SITE_NAME
+    no_img = settings.NO_IMG    
     
-    return render(request, 'base/mediadetail.html', {'media': media, 'properties': properties, 'footnotes': footnotes, 'locations': locations, 'subjects': subjects, 'people': people, 'location_table': location_table, 'subject_table': subject_table, 'people_table': people_table, 'location_collections': location_collections, 'subject_collections': subject_collections, 'po_collections': po_collections, 'loc_col': loc_coll_id, 'sub_col': sub_coll_id, 'po_col': po_coll_id, 'loc_col_title': loc_col_title, 'sub_col_title': sub_col_title, 'po_col_title': po_col_title, 'files': files, 'collections': collections, 'linked_data': linked_data, 'show_contents': show_contents, 'site_name': site_name })    
+    return render(request, 'base/mediadetail.html', {'media': media, 'properties': properties, 'footnotes': footnotes, 'locations': locations, 'subjects': subjects, 'people': people, 'location_table': location_table, 'subject_table': subject_table, 'people_table': people_table, 'location_collections': location_collections, 'subject_collections': subject_collections, 'po_collections': po_collections, 'loc_col': loc_coll_id, 'sub_col': sub_coll_id, 'po_col': po_coll_id, 'loc_col_title': loc_col_title, 'sub_col_title': sub_col_title, 'po_col_title': po_col_title, 'files': files, 'collections': collections, 'linked_data': linked_data, 'show_contents': show_contents, 'site_name': site_name, 'no_img': no_img })    
     
 def personorgdetail(request, personorg_id):
     """ Detailed view of a person/organization record """
@@ -576,8 +579,9 @@ def personorgdetail(request, personorg_id):
         show_contents = 'true'
         
     site_name = settings.SITE_NAME
+    no_img = settings.NO_IMG    
     
-    return render(request, 'base/personorgdetail.html', {'person_org': person_org, 'properties': properties, 'footnotes': footnotes, 'locations': locations, 'subjects': subjects, 'media': media, 'location_table': location_table, 'subject_table': subject_table, 'media_table': media_table, 'location_collections': location_collections, 'subject_collections': subject_collections, 'media_collections': media_collections, 'loc_col': loc_coll_id, 'sub_col': sub_coll_id, 'med_col': med_coll_id, 'loc_col_title': loc_col_title, 'sub_col_title': sub_col_title, 'med_col_title': med_col_title, 'files': files, 'collections': collections, 'linked_data': linked_data, 'show_contents': show_contents, 'site_name': site_name })
+    return render(request, 'base/personorgdetail.html', {'person_org': person_org, 'properties': properties, 'footnotes': footnotes, 'locations': locations, 'subjects': subjects, 'media': media, 'location_table': location_table, 'subject_table': subject_table, 'media_table': media_table, 'location_collections': location_collections, 'subject_collections': subject_collections, 'media_collections': media_collections, 'loc_col': loc_coll_id, 'sub_col': sub_coll_id, 'med_col': med_coll_id, 'loc_col_title': loc_col_title, 'sub_col_title': sub_col_title, 'med_col_title': med_col_title, 'files': files, 'collections': collections, 'linked_data': linked_data, 'show_contents': show_contents, 'site_name': site_name, 'no_img': no_img })
 
 def filedetail(request, file_id):
     """ Detailed view of a file """
@@ -699,8 +703,10 @@ def filedetail(request, file_id):
     # determine if menu is needed
     if subjects or locations or media or people:
         show_contents = 'true'
+        
+    no_img = settings.NO_IMG
     
-    return render(request, 'base/filedetail.html', {'file': file, 'properties': properties, 'footnotes': footnotes, 'subject_table': subject_table, 'locations': locations, 'subjects': subjects, 'people': people, 'media': media, 'location_table': location_table, 'media_table': media_table, 'people_table': people_table, 'subject_collections': subject_collections, 'location_collections': location_collections, 'media_collections': media_collections, 'po_collections': po_collections, 'sub_col': sub_coll_id, 'loc_col': loc_coll_id, 'med_col': med_coll_id, 'po_col': po_coll_id, 'sub_col_title': sub_col_title, 'loc_col_title': loc_col_title, 'med_col_title': med_col_title, 'po_col_title': po_col_title, 'collections': collections, 'linked_data': linked_data, 'show_contents': show_contents })
+    return render(request, 'base/filedetail.html', {'file': file, 'properties': properties, 'footnotes': footnotes, 'subject_table': subject_table, 'locations': locations, 'subjects': subjects, 'people': people, 'media': media, 'location_table': location_table, 'media_table': media_table, 'people_table': people_table, 'subject_collections': subject_collections, 'location_collections': location_collections, 'media_collections': media_collections, 'po_collections': po_collections, 'sub_col': sub_coll_id, 'loc_col': loc_coll_id, 'med_col': med_coll_id, 'po_col': po_coll_id, 'sub_col_title': sub_col_title, 'loc_col_title': loc_col_title, 'med_col_title': med_col_title, 'po_col_title': po_col_title, 'collections': collections, 'linked_data': linked_data, 'show_contents': show_contents, 'no_img': no_img })
     
 def subjectdetailexport (request, subject_id):
     
@@ -1383,19 +1389,25 @@ def mapdetail(request, location_id):
 def collectiondetail(request, collection_id):
     
     # get the parameters
-    collection = get_object_or_404(Collection, pk=collection_id)    
+    collection = get_object_or_404(Collection, pk=collection_id)  
+
+    # if collection is not set to public, return 404
+    if not collection.public:
+        raise Http404("This page does not exist")    
     
     show_contents = 'false'
     
     # objects
-    subjects = Subject.objects.filter(subjectcollection__collection = collection).distinct()
+    subjects = Subject.objects.filter(subjectcollection__collection = collection).filter(public = True).order_by('subjectcollection__order').distinct()
     # locations
-    locations = Location.objects.filter(locationcollection__collection = collection).distinct()    
+    locations = Location.objects.filter(locationcollection__collection = collection).filter(public = True).order_by('locationcollection__order').distinct()    
     # media
-    media = Media.objects.filter(mediacollection__collection = collection).distinct()    
+    media = Media.objects.filter(mediacollection__collection = collection).filter(public = True).order_by('mediacollection__order').distinct()
     # people
-    people = PersonOrg.objects.filter(personorgcollection__collection = collection).distinct()    
-            
+    people = PersonOrg.objects.filter(personorgcollection__collection = collection).filter(public = True).order_by('personorgcollection__order').distinct()    
+    # files
+    files = File.objects.filter(filecollection__collection = collection).filter(public = True).order_by('filecollection__order').distinct()
+    
     # create the object table
     subject_table = SubjectTable(subjects, prefix='subj-')
     RequestConfig(request).configure(subject_table)
@@ -1407,13 +1419,15 @@ def collectiondetail(request, collection_id):
     RequestConfig(request).configure(media_table)  
     # create the people table
     people_table = PersonOrgTable(people, prefix='po-')
-    RequestConfig(request).configure(people_table)  
+    RequestConfig(request).configure(people_table)   
     
     # determine if menu is needed
-    if subjects or locations or media or people:
+    if subjects or locations or media or people or files:
         show_contents = 'true'
+        
+    no_img = settings.NO_IMG
     
-    return render(request, 'base/collectiondetail.html', {'collection': collection, 'subjects': subjects, 'locations': locations, 'media': media, 'people': people, 'show_contents': show_contents, 'subject_table': subject_table, 'location_table': location_table, 'media_table': media_table, 'people_table': people_table })
+    return render(request, 'base/collectiondetail.html', {'collection': collection, 'subjects': subjects, 'locations': locations, 'media': media, 'people': people, 'files': files, 'show_contents': show_contents, 'subject_table': subject_table, 'location_table': location_table, 'media_table': media_table, 'people_table': people_table, 'no_img': no_img })
         
 def export_property_details(request, prop_id):
     order = request.GET.get('o', '')
@@ -1614,6 +1628,11 @@ def collectiondetailexport(request, collection_id):
     format = request.GET.get('format', '')
     all = request.GET.get('a', '')
     
+    if entity == 'file':
+        is_file = True
+    else:
+        is_file = False
+    
     filename = collection.title
     
     # subject export
@@ -1634,133 +1653,33 @@ def collectiondetailexport(request, collection_id):
     # person/org export
     if entity == 'people':
         filename += '_people_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
-        qs = PersonOrg.objects.filter(personorgcollection__collection = collection)        
+        qs = PersonOrg.objects.filter(personorgcollection__collection = collection)
+
+    # file export
+    if entity == 'file':
+        filename += '_file_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        qs = File.objects.filter(filecollection__collection = collection)        
                         
     if qs:
         # json
         if format == 'json':
-            if all == 'y':
-                if entity == 'location':
-                    serializer = LocationAdminSerializer(qs, many=True)
-                elif entity == 'media':
-                    serializer = MediaAdminSerializer(qs, many=True)
-                elif entity == 'people':
-                    serializer = PersonOrgAdminSerializer(qs, many=True)                
-                else:
-                    serializer = SubjectAdminSerializer(qs, many=True)
+            if all == 'y' and request.user.is_authenticated():
+                return serialize_data(filename, qs, entity, 'json', request, is_admin=True)
             else:
-                if entity == 'location':
-                    serializer = LocationSerializer(qs, many=True)
-                elif entity == 'media':
-                    serializer = MediaSerializer(qs, many=True)
-                elif entity == 'people':
-                    serializer = PersonOrgSerializer(qs, many=True)                
-                else:
-                    serializer = SubjectSerializer(qs, many=True)            
-            response = JSONResponse(serializer.data)
-            response['Content-Disposition'] = 'attachment; filename="' + filename + '.json"'
-            return response
-            
+                return serialize_data(filename, qs, entity, 'json', request, is_admin=False)
         # xml
         elif format == 'xml':
-            if all == 'y':
-                if entity == 'location':
-                    serializer = LocationAdminSerializer(qs, many=True)
-                elif entity == 'media':
-                    serializer = MediaAdminSerializer(qs, many=True)
-                elif entity == 'people':
-                    serializer = PersonOrgAdminSerializer(qs, many=True)                 
-                else:
-                    serializer = SubjectAdminSerializer(qs, many=True)
+            if all == 'y' and request.user.is_authenticated():
+                return serialize_data(filename, qs, entity, 'xml', request, is_admin=True)
             else:
-                if entity == 'location':
-                    serializer = LocationSerializer(qs, many=True)
-                elif entity == 'media':
-                    serializer = MediaSerializer(qs, many=True)
-                elif entity == 'people':
-                    serializer = PersonOrgSerializer(qs, many=True)                 
-                else:
-                    serializer = SubjectSerializer(qs, many=True)
-            
-            response = XMLResponse(serializer.data)
-            response['Content-Disposition'] = 'attachment; filename="' + filename + '.xml"'
-            return response
+                return serialize_data(filename, qs, entity, 'xml', request, is_admin=False)
             
         # csv - evil, evil, flattened csv
         elif format == 'csv':
-            response = HttpResponse(content_type='text/csv')
-            response['Content-Disposition'] = 'attachment; filename="' + filename + '.csv"'
-
-            writer = csv.writer(response)
-            titles = []
-            titles.append('__Title__')
-            titles.append('__URL__')
-            rows = []
-            for result in qs:
-                row = []
-                row_dict = {}
-                
-                # store title and url
-                row_dict[0] = result.title
-                row_dict[1] = result.get_full_absolute_url()
-                
-                # controlled properties
-                if entity == 'location':
-                    cps = result.locationcontrolproperty_set.all()
-                elif entity == 'media':
-                    cps = result.mediacontrolproperty_set.all()
-                elif entity == 'people':
-                    cps = result.personorgcontrolproperty_set.all()
-                else:
-                    cps = result.subjectcontrolproperty_set.all()
-                for each_prop in cps:
-                    if each_prop.control_property.visible:
-                        prop_name = each_prop.control_property.property.strip()
-                        prop_value = each_prop.control_property_value.title.strip()
-                        if not (prop_name in titles):
-                            column_index = len(titles)                        
-                            titles.append(prop_name)
-                        else:
-                            column_index = titles.index(prop_name)
-                            if column_index in row_dict:
-                                prop_value = row_dict[column_index] + '; ' + prop_value
-                        row_dict[column_index] = prop_value
-                
-                # free-form properties
-                if entity == 'location':
-                    ps = result.locationproperty_set.all()
-                elif entity == 'media':
-                    ps = result.mediaproperty_set.all()
-                elif entity == 'people':
-                    ps = result.personorgproperty_set.all()                    
-                else:
-                    ps = result.subjectproperty_set.all()                
-                for each_prop in ps:
-                    if each_prop.property.visible:
-                        prop_name = each_prop.property.property.strip()
-                        prop_value = each_prop.property_value.strip()
-                        if not (prop_name in titles):
-                            column_index = len(titles)                        
-                            titles.append(prop_name)
-                        else:
-                            column_index = titles.index(prop_name)
-                            if column_index in row_dict:
-                                prop_value = row_dict[column_index] + '; ' + prop_value
-                        row_dict[column_index] = prop_value                    
-                                
-                # store row in list
-                for i in range(len(titles)):
-                    if i in row_dict:
-                        row.append(row_dict[i])
-                    else:
-                        row.append('')
-                rows.append(row)
-
-            # write out the rows, starting with header
-            writer.writerow(titles)
-            for each_row in rows:
-                writer.writerow(each_row)
-            return response
+            if all == 'y' and request.user.is_authenticated():        
+                return flatten_to_csv(filename, qs, entity, is_file=False, is_admin=True)
+            else:        
+                return flatten_to_csv(filename, qs, entity, is_file=False, is_admin=False)                
             
 def bulk_upload_file(request):
     tasks.bulk_file_upload()

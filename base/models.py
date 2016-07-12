@@ -482,6 +482,19 @@ class Subject(models.Model):
     get_thumbnail.short_description = 'Object'
     get_thumbnail.allow_tags = True
     
+    def get_image(self):
+        """ Returns large thumbnail for this entity, or if none is set, returns stock "no image". """
+        
+        resource_uri = settings.IMAGE_URI
+        no_img = settings.NO_IMG
+        thumbs = SubjectFile.objects.filter(subject = self, thumbnail = True)
+        if thumbs:
+            return resource_uri + str(thumbs[0].rsid.id)
+        else:
+            return no_img
+    get_image.short_description = 'Image'
+    get_image.allow_tags = True    
+    
     def get_thumbnail_admin(self):
         resource_uri = settings.IMAGE_URI
         no_img = settings.NO_IMG    
@@ -591,7 +604,20 @@ class Location(MPTTModel):
         else:
             return no_img
     get_thumbnail.short_description = 'Location'
-    get_thumbnail.allow_tags = True 
+    get_thumbnail.allow_tags = True
+ 
+    def get_image(self):
+        """ Returns large thumbnail for this entity, or if none is set, returns stock "no image". """
+        
+        resource_uri = settings.IMAGE_URI
+        no_img = settings.NO_IMG
+        thumbs = LocationFile.objects.filter(location = self, thumbnail = True)
+        if thumbs:
+            return resource_uri + str(thumbs[0].rsid.id)
+        else:
+            return no_img
+    get_image.short_description = 'Image'
+    get_image.allow_tags = True  
 
     def get_thumbnail_admin(self):
         resource_uri = settings.IMAGE_URI
@@ -710,6 +736,19 @@ class Media(models.Model):
     get_thumbnail.short_description = 'Media'
     get_thumbnail.allow_tags = True
     
+    def get_image(self):
+        """ Returns large thumbnail for this entity, or if none is set, returns stock "no image". """
+        
+        resource_uri = settings.IMAGE_URI
+        no_img = settings.NO_IMG
+        thumbs = MediaFile.objects.filter(media = self, thumbnail = True)
+        if thumbs:
+            return resource_uri + str(thumbs[0].rsid.id)
+        else:
+            return no_img
+    get_image.short_description = 'Image'
+    get_image.allow_tags = True     
+    
     def get_thumbnail_admin(self):
         resource_uri = settings.IMAGE_URI
         no_img = settings.NO_IMG    
@@ -814,7 +853,20 @@ class PersonOrg(models.Model):
         else:
             return no_img
     get_thumbnail.short_description = 'Person/Organization'
-    get_thumbnail.allow_tags = True  
+    get_thumbnail.allow_tags = True
+
+    def get_image(self):
+        """ Returns large thumbnail for this entity, or if none is set, returns stock "no image". """
+        
+        resource_uri = settings.IMAGE_URI
+        no_img = settings.NO_IMG
+        thumbs = PersonOrgFile.objects.filter(person_org = self, thumbnail = True)
+        if thumbs:
+            return resource_uri + str(thumbs[0].rsid.id)
+        else:
+            return no_img
+    get_image.short_description = 'Image'
+    get_image.allow_tags = True     
 
     def get_thumbnail_admin(self):
         resource_uri = settings.IMAGE_URI
@@ -904,14 +956,31 @@ class File(models.Model):
     def get_thumbnail(self):
         """ Returns thumbnail for this object, or if none is set, returns stock "no image". """
         
-        resource_uri = settings.THUMBNAIL_URI
-        return resource_uri + str(self.id)
+        imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']
+        if self.filetype in imgs:
+            resource_uri = settings.THUMBNAIL_URI
+            return resource_uri + str(self.id)
+        return settings.NO_IMG
     get_thumbnail.short_description = 'Thumbnail'
     get_thumbnail.allow_tags = True
     
+    def get_image(self):
+        """ Returns large thumbnail for this entity, or if none is set, returns stock "no image". """
+
+        imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']
+        if self.filetype in imgs:        
+            resource_uri = settings.IMAGE_URI
+            return resource_uri + str(self.id)
+        return settings.NO_IMG
+    get_image.short_description = 'Image'
+    get_image.allow_tags = True     
+    
     def get_thumbnail_admin(self):
-        url = settings.IMAGE_URI + str(self.id)
-        return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, self.get_thumbnail())
+        imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']
+        if self.filetype in imgs:    
+            url = settings.IMAGE_URI + str(self.id)
+            return u'<a href="{0}" target="_blank"><img src="{1}" /></a>'.format(url, self.get_thumbnail())
+        return settings.NO_IMG
     get_thumbnail_admin.short_description = 'Thumbnail'
     get_thumbnail_admin.allow_tags = True
     
@@ -1416,7 +1485,8 @@ class Collection(models.Model):
     """ Groupings of Entities """
 
     title = models.CharField(max_length=60)
-    notes = models.TextField(blank = True)
+    notes = models.TextField('Addtional Details Page (HTML)', blank = True, help_text = "This field will be used to generate 'Additional Information' section of this property's Details page. Please define the property and add any other useful information here.")
+    definition = models.TextField(blank = True, help_text = "Please use this field to provide a short definition of the meaning of this term.")
     thumbnail = models.ForeignKey(File, blank = True, null = True)
     created = models.DateTimeField(auto_now = False, auto_now_add = True)
     modified = models.DateTimeField(auto_now = True, auto_now_add = False)    
@@ -1450,7 +1520,29 @@ class Collection(models.Model):
             return fc[0].file.get_thumbnail()
         return settings.NO_IMG
     get_thumbnail.short_description = 'Collection'
-    get_thumbnail.allow_tags = True 
+    get_thumbnail.allow_tags = True
+
+    def get_thumbnail_admin(self):
+        if self.thumbnail:
+            return self.thumbnail.get_thumbnail_admin()
+        sc = SubjectCollection.objects.filter(collection = self)
+        if sc:
+            return sc[0].subject.get_thumbnail_admin()
+        lc = LocationCollection.objects.filter(collection = self)
+        if lc:
+            return lc[0].location.get_thumbnail_admin()
+        mc = MediaCollection.objects.filter(collection = self)
+        if mc:
+            return mc[0].media.get_thumbnail_admin()
+        poc = PersonOrgCollection.objects.filter(collection = self)
+        if poc:
+            return poc[0].person_org.get_thumbnail_admin()
+        fc = FileCollection.objects.filter(collection = self)
+        if fc:
+            return fc[0].file.get_thumbnail_admin()
+        return '<img src="' + settings.NO_IMG + '" />'
+    get_thumbnail_admin.short_description = 'Collection Thumbnail'
+    get_thumbnail_admin.allow_tags = True    
         
     class Meta:
         ordering = ['title']
@@ -1600,6 +1692,16 @@ class FileCollection(models.Model):
     
     def __unicode__(self):
         return self.file.title + " [Collection: " + self.collection.title + "]"
+        
+    def get_thumbnail(self):
+        return self.file.get_thumbnail()
+    get_thumbnail.short_description = 'File'
+    get_thumbnail.allow_tags = True    
+        
+    def get_thumbnail_admin(self):
+        return self.file.get_thumbnail_admin()
+    get_thumbnail_admin.short_description = 'Thumbnail'
+    get_thumbnail_admin.allow_tags = True              
 
     class Meta:
         verbose_name = 'Collection Item (File)'

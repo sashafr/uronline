@@ -557,10 +557,10 @@ def flatten_to_csv(filename, qs, entity, is_file=False, is_admin=False):
     writer = csv.writer(response)
     titles = []
     titles.append('__Title__')
-    if not is_file:
-        titles.append('__URL__')
-    if is_file:
+    if entity == 'file':
         titles.append('__Download__')
+    else:
+        titles.append('__URL__')
     if entity == 'location':
         titles.append('Type')
         titles.append('Parent')
@@ -571,10 +571,10 @@ def flatten_to_csv(filename, qs, entity, is_file=False, is_admin=False):
         
         # store title and url
         row_dict[0] = result.title
-        if not is_file:
+        if entity == 'file':
+            row_dict[1] = result.get_download()        
+        else:
             row_dict[1] = result.get_full_absolute_url()
-        if is_file:
-            row_dict[1] = result.get_download()
         if entity == 'location':
             row_dict[2] = result.type
             if result.parent:

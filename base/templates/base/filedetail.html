@@ -246,8 +246,8 @@
                     {% endif %}                   
                     </div>
                 <div class="col-md-4">
-                    {% if file.get_thumbnail != 'http://ur.iaas.upenn.edu/static/img/no_img.jpg' %}
-                        <img class="img-responsive img-full-width" src="{% load_globals 'image_uri' %}{{ file.get_thumbnail }}">
+                    {% if file.get_thumbnail != no_img %}
+                        <img class="img-responsive img-full-width" src="{{ file.get_image }}">
                     {% endif %}
                     <div class="well filters">
                     

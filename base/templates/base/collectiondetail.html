@@ -10,7 +10,7 @@
     <div class="page-header collection">
         <div class="container page-header-content">
             <h1>{{ collection.title }}</h1>
-            <p>{% if collection.notes and collection.notes != '' %}{{ collection.notes }}{% endif %}</p>
+            <p>{% if collection.definition and collection.definition != '' %}{{ collection.definition }}{% endif %}</p>
         </div>
         <div class="overlay"></div>
     </div>
@@ -21,29 +21,213 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-12">
+                    {% if collection.notes and collection.notes != '' %}
+                        <div class="row">
+                            <div class="col-lg-12">
+                                {{ collection.notes|safe }}
+                            </div>
+                        </div>
+                        <hr />
+                    {% endif %}
                     <div class="flipbook-container">
                         <div id="flipbook">
                             {% for s in subjects %}
-                                {% if s.get_thumbnail != 'http://ur.iaas.upenn.edu/static/img/no_img.jpg' %}
-                                    <div><img src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ s.get_thumbnail }}" alt="{{ s.subject }}" /></div>
+                                {% if s.get_thumbnail != no_img %}
+                                    <div><img src="{{ s.get_image }}" alt="{{ s.title }}" /></div>
                                 {% endif %}
                             {% endfor %}
                             {% for s in locations %}
-                                {% if s.get_thumbnail != 'http://ur.iaas.upenn.edu/static/img/no_img.jpg' %}
-                                    <div><img src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ s.get_thumbnail }}" alt="{{ s.subject }}" /></div>
+                                {% if s.get_thumbnail != no_img %}
+                                    <div><img src="{{ s.get_image }}" alt="{{ s.title }}" /></div>
                                 {% endif %}
                             {% endfor %}
                             {% for s in media %}
-                                {% if s.get_thumbnail != 'http://ur.iaas.upenn.edu/static/img/no_img.jpg' %}
-                                    <div><img src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ s.get_thumbnail }}" alt="{{ s.subject }}" /></div>
+                                {% if s.get_thumbnail != no_img %}
+                                    <div><img src="{{ s.get_image }}" alt="{{ s.title }}" /></div>
                                 {% endif %}
                             {% endfor %}
                             {% for s in people %}
-                                {% if s.get_thumbnail != 'http://ur.iaas.upenn.edu/static/img/no_img.jpg' %}
-                                    <div><img src="http://ur.iaas.upenn.edu/resourcespace/plugins/ref_urls/file.php?ref={{ s.get_thumbnail }}" alt="{{ s.subject }}" /></div>
+                                {% if s.get_thumbnail != no_img %}
+                                    <div><img src="{{ s.get_image }}" alt="{{ s.title }}" /></div>
                                 {% endif %}
                             {% endfor %}
+                            {% for s in files %}
+                                {% if s.get_thumbnail != no_img %}
+                                    <div><img src="{{ s.get_image }}" alt="{{ s.title }}" /></div>
+                                {% endif %}
+                            {% endfor %}                                    
                         </div>
+                    </div>                                     
+                    <ul class="nav nav-tabs">
+                        <li><a href="#tiles" data-toggle="tab">Tiles</a></li>
+                        <li><a href="#tables" data-toggle="tab">Tables</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div id="tiles" class="tab-pane active">
+                            <div class="row">
+                                {% for s in subjects %}
+                                    {% if s.get_thumbnail != no_img %}
+                                        <div class="col-md-4 col-lg-3">
+                                            <a class="browse-block browse-block-sub-id-{{ s.id }}" href="{% url 'subjectdetail' s.pk %}" style="background-image:url('{{ s.get_image }}')">
+                                                <div class="browse-block-title">
+                                                    <span class="badge"></span>
+                                                    <h4>{{ s.title }}</h4>
+                                                    <span class="arrow">&rarr;</span>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                {% for s in locations %}
+                                    {% if s.get_thumbnail != no_img %}
+                                        <div class="col-md-4 col-lg-3">
+                                            <a class="browse-block browse-block-loc-id-{{ s.id }}" href="{% url 'locationdetail' s.pk %}" style="background-image:url('{{ s.get_image }}')">
+                                                <div class="browse-block-title">
+                                                    <span class="badge"></span>
+                                                    <h4>{{ s.title }}</h4>
+                                                    <span class="arrow">&rarr;</span>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                {% for s in media %}
+                                    {% if s.get_thumbnail != no_img %}
+                                        <div class="col-md-4 col-lg-3">
+                                            <a class="browse-block browse-block-med-id-{{ s.id }}" href="{% url 'mediadetail' s.pk %}" style="background-image:url('{{ s.get_image }}')">
+                                                <div class="browse-block-title">
+                                                    <span class="badge"></span>
+                                                    <h4>{{ s.title }}</h4>
+                                                    <span class="arrow">&rarr;</span>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                {% for s in people %}
+                                    {% if s.get_thumbnail != no_img %}
+                                        <div class="col-md-4 col-lg-3">
+                                            <a class="browse-block browse-block-po-id-{{ s.id }}" href="{% url 'personorgdetail' s.pk %}" style="background-image:url('{{ s.get_image }}')">
+                                                <div class="browse-block-title">
+                                                    <span class="badge"></span>
+                                                    <h4>{{ s.title }}</h4>
+                                                    <span class="arrow">&rarr;</span>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                {% for s in files %}
+                                    {% if s.get_thumbnail != no_img %}
+                                        <div class="col-md-4 col-lg-3">
+                                            <a class="browse-block browse-block-file-id-{{ s.id }}" href="{% url 'filedetail' s.pk %}" style="background-image:url('{{ s.get_image }}')">
+                                                <div class="browse-block-title">
+                                                    <span class="badge"></span>
+                                                    <h4>{{ s.title }}</h4>
+                                                    <span class="arrow">&rarr;</span>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}                                
+                            </div>
+                        </div>
+                        <div id="tables" class="tab-pane">
+                            
+                            {% if subjects %}
+                            <div class="row" id="subjects">
+                                <div class="col-lg-12">
+                                    <h3>
+                                        Objects
+                                        <small>Export: </small>
+                                        <a class="subj-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=subject&format=json"><small>JSON</small></a>
+                                        <small> - </small>
+                                        <a class="subj-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=subject&format=xml"><small>XML</small></a>
+                                        <small> - </small>
+                                        <a class="subj-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=subject&format=csv"><small>CSV</small></a>
+                                    </h3>
+                                
+                                    <div id="subj-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
+                                        <p>Exporting large queries may take several minutes, please do not leave this page until the download completes.</p>
+                                    </div>
+                                    {% render_table subject_table %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if locations %}
+                            <div class="row" id="locations">
+                                <div class="col-lg-12">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <h3>
+                                                Locations
+                                                <small>Export: </small>
+                                                <a class="loc-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=location&format=json"><small>JSON</small></a>
+                                                <small> - </small>
+                                                <a class="loc-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=location&format=xml"><small>XML</small></a>
+                                                <small> - </small>
+                                                <a class="loc-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=location&format=csv"><small>CSV</small></a>
+                                            </h3>
+                                        </div>
+                                    </div>
+                                    <div id="loc-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
+                                        <p>Exporting large queries may take several minutes, please do not leave this page until the download completes.</p>
+                                    </div>
+                                    {% render_table location_table %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if media %}
+                            <div class="row" id="media">
+                                <div class="col-lg-12">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <h3>
+                                                Media
+                                                <small>Export: </small>
+                                                <a class="med-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=media&format=json"><small>JSON</small></a>
+                                                <small> - </small>
+                                                <a class="med-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=media&format=xml"><small>XML</small></a>
+                                                <small> - </small>
+                                                <a class="med-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=media&format=csv"><small>CSV</small></a>
+                                            </h3>
+                                        </div>
+                                    </div>
+                                    <div id="med-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
+                                        <p>Exporting large queries may take several minutes, please do not leave this page until the download completes.</p>
+                                    </div>
+                                    {% render_table media_table %}
+                                </div>
+                            </div>
+                            {% endif %}                            
+                            
+                            {% if people %}
+                            <div class="row" id="people">
+                                <div class="col-lg-12">
+                                    <div class="row">
+                                        <div class="col-sm-10">
+                                            <h3 style="border-bottom: 1px solid #eee; padding-bottom: 9px; margin: 40px 0 20px;">
+                                                People
+                                                <small>Export: </small>
+                                                <a class="people-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=people&format=json"><small>JSON</small></a>
+                                                <small> - </small>
+                                                <a class="people-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=people&format=xml"><small>XML</small></a>
+                                                <small> - </small>
+                                                <a class="people-ex" href="{% url 'collectiondetailexport' collection.id %}?entity=people&format=csv"><small>CSV</small></a>
+                                            </h3>
+                                        </div>
+                                    </div>
+                                    <div id="po-ex-warning" class="alert alert-warning" role="alert" style="display: none;">
+                                        <p>Exporting large queries may take several minutes, please do not leave this page until the download completes.</p>
+                                    </div>
+                                    {% render_table people_table %}
+                                </div>
+                            </div>
+                            {% endif %}
+                                                        
+                        </div>                        
                     </div>
                 </div>
             </div>  

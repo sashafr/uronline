@@ -120,8 +120,8 @@
                                                     <div class="row enlarge">
                                                         {% for file in file_group %}
                                                             <div class="enlarge col-sm-4 col-md-3">
-                                                                <a data-lightbox="location-file" href="{% load_globals 'image_uri' %}{{ file.rsid.id }}" data-title="{{ file.rsid.caption }}">
-                                                                    <img class="img-responsive" src="{% load_globals 'thumbnail_uri' %}{{ file.rsid.id }}">
+                                                                <a data-lightbox="location-file" href="{{ file.rsid.get_image }}" data-title="{{ file.rsid.caption }}">
+                                                                    <img class="img-responsive" src="{{ file.rsid.get_thumbnail }}">
                                                                 </a>
                                                                 <p><a href="{% url 'filedetail' file.rsid.id %}">{{ file.rsid.title }}</a> - <a href="{{ file.rsid.get_download }}">Download</a></p>
                                                             </div>
@@ -290,8 +290,8 @@
                     
                     </div>
                 <div class="col-md-4">
-                    {% if location.get_thumbnail != 'http://ur.iaas.upenn.edu/static/img/no_img.jpg' %}
-                        <img class="img-responsive img-full-width" src="{% load_globals 'image_uri' %}{{ location.get_thumbnail }}">
+                    {% if location.get_thumbnail != no_img %}
+                        <img class="img-responsive img-full-width" src="{{ location.get_image }}">
                     {% endif %}
                     <div class="well filters">
                     

@@ -42,9 +42,17 @@
 
 {% endblock %}
 
+<!-- Modifications to original Django Suit template begin here -->
+<!-- This is necessary on all forms using my tabular.html because their widths because something is broken in the Django Suit old templates -->
 {% block extrastyle %}
   {{ block.super }}
+    <style>
+        table select, table textarea {
+            width: 100%;
+        }
+    </style>  
 {% endblock %}
+<!-- End modifications --> 
 
 {% block content_title_value %}
   {% trans 'Add' %} {{ opts.verbose_name }}
@@ -114,9 +122,10 @@
                     </a></li>
                   {# {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}</a>#}
                 {% endif %}
-                
+
+                <!-- Modifications to original Django Suit template begin here -->
                 <li>
-                  <a href="mailto:?subject=[From UrOnline Admin] {{ request.user.first_name }} {{ request.user.last_name }} shared {{ original.title }}&amp;body=You can view this collection at http://www.ur-online.org{% url opts|admin_urlname:'change' original.pk|admin_urlquote %}" target="_blank">
+                  <a href="mailto:?subject=[From {{ 'ADMIN_NAME'|suit_conf }}] {{ request.user.first_name }} {{ request.user.last_name }} shared {{ original.title }}&amp;body=You can view this collection at {{ request.META.HTTP_HOST }}{% url opts|admin_urlname:'change' original.pk|admin_urlquote %}" target="_blank">
                     <i class="icon-envelope icon-alpha75"></i>
                     Email
                   </a>
@@ -157,10 +166,22 @@
                 </li>
                 <li>
                   <a href="{% url 'collectiondetailexport' object_id %}?entity=people&format=csv&a=y"><i class="icon-file icon-alpha75"></i>Export People (CSV)</a>
+                </li>
+                <li>
+                  <a href="{% url 'collectiondetailexport' object_id %}?entity=file&format=json&a=y"><i class="icon-file icon-alpha75"></i>Export Files (JSON)</a>
+                </li>
+                <li>
+                  <a href="{% url 'collectiondetailexport' object_id %}?entity=file&format=xml&a=y"><i class="icon-file icon-alpha75"></i>Export Files (XML)</a>
+                </li>
+                <li>
+                  <a href="{% url 'collectiondetailexport' object_id %}?entity=file&format=csv&a=y"><i class="icon-file icon-alpha75"></i>Export Files (CSV)</a>
                 </li>                 
 
               {% endblock %}
             </ul>
+            
+            <!-- End Modifications to original Django Suit template -->  
+            
           {% endif %}{% endif %}
         {% endblock %}
 
