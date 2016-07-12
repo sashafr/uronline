@@ -65,7 +65,7 @@
                     <div class="tab-content">
                         <div id="tiles" class="tab-pane active">
                             <div class="row">
-                                {% for s in subjects %}
+                                {% for s in subjects|slice:":48" %}
                                     {% if s.get_thumbnail != no_img %}
                                         <div class="col-md-4 col-lg-3">
                                             <a class="browse-block browse-block-sub-id-{{ s.id }}" href="{% url 'subjectdetail' s.pk %}" style="background-image:url('{{ s.get_image }}')">
@@ -78,7 +78,10 @@
                                         </div>
                                     {% endif %}
                                 {% endfor %}
-                                {% for s in locations %}
+                                {% if subjects|length > 48 %}
+                                    <p>To view all objects, go to the <a href="#tables" data-toggle="tab">Tables</a> tab</p>
+                                {% endif %}
+                                {% for s in locations|slice:":48" %}
                                     {% if s.get_thumbnail != no_img %}
                                         <div class="col-md-4 col-lg-3">
                                             <a class="browse-block browse-block-loc-id-{{ s.id }}" href="{% url 'locationdetail' s.pk %}" style="background-image:url('{{ s.get_image }}')">
@@ -91,7 +94,10 @@
                                         </div>
                                     {% endif %}
                                 {% endfor %}
-                                {% for s in media %}
+                                {% if locations|length > 48 %}
+                                    <p>To view all locations, go to the <a href="#tables" data-toggle="tab">Tables</a> tab</p>
+                                {% endif %}                                
+                                {% for s in media|slice:":48" %}
                                     {% if s.get_thumbnail != no_img %}
                                         <div class="col-md-4 col-lg-3">
                                             <a class="browse-block browse-block-med-id-{{ s.id }}" href="{% url 'mediadetail' s.pk %}" style="background-image:url('{{ s.get_image }}')">
@@ -104,7 +110,10 @@
                                         </div>
                                     {% endif %}
                                 {% endfor %}
-                                {% for s in people %}
+                                {% if media|length > 48 %}
+                                    <p>To view all media, go to the <a href="#tables" data-toggle="tab">Tables</a> tab</p>
+                                {% endif %}                                
+                                {% for s in people|slice:":48" %}
                                     {% if s.get_thumbnail != no_img %}
                                         <div class="col-md-4 col-lg-3">
                                             <a class="browse-block browse-block-po-id-{{ s.id }}" href="{% url 'personorgdetail' s.pk %}" style="background-image:url('{{ s.get_image }}')">
@@ -117,6 +126,9 @@
                                         </div>
                                     {% endif %}
                                 {% endfor %}
+                                {% if people|length > 48 %}
+                                    <p>To view all people, go to the <a href="#tables" data-toggle="tab">Tables</a> tab</p>
+                                {% endif %}                                
                                 {% for s in files %}
                                     {% if s.get_thumbnail != no_img %}
                                         <div class="col-md-4 col-lg-3">
@@ -129,7 +141,7 @@
                                             </a>
                                         </div>
                                     {% endif %}
-                                {% endfor %}                                
+                                {% endfor %}                               
                             </div>
                         </div>
                         <div id="tables" class="tab-pane">
