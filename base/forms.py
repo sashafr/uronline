@@ -2,7 +2,7 @@ from django import forms
 from haystack.forms import SearchForm, model_choices
 from base.models import *
 from haystack.inputs import Raw
-from haystack.query import SearchQuerySet, SQ
+from haystack.query import SearchQuerySet, SQ, RelatedSearchQuerySet
 from django.db import models
 import re
 from mptt.forms import TreeNodeChoiceField
@@ -31,6 +31,26 @@ SEARCH_TYPE = (
     ('lt', 'is less than'),
     ('lte', 'is less than or equal to'),
 )
+
+class SubjectChoices(AutoModelSelect2Field):
+    queryset = Subject.objects
+    search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',]
+    
+class MediaChoices(AutoModelSelect2Field):
+    queryset = Media.objects
+    search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',]    
+
+class LocationChoices(AutoModelSelect2Field):
+    queryset = Location.objects
+    search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',] 
+    
+class PersonOrgChoices(AutoModelSelect2Field):
+    queryset = PersonOrg.objects
+    search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',]
+    
+class FileChoices(AutoModelSelect2Field):
+    queryset = File.objects
+    search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',]
 
 class AdvancedSearchForm(SearchForm):
     """Search form allows user to search Solr index by property
@@ -297,7 +317,7 @@ class LocationAdvancedSearchForm(SearchForm):
     q3 = forms.CharField(label='Search Terms', required=False)
     order = forms.ModelChoiceField(label='', required=False, queryset=ResultProperty.objects.filter(display_field__startswith='loc'))
 
-     # filters
+    # filters
     sub = SubjectChoices(
         label = Subject._meta.verbose_name.capitalize(),
         required = False,
@@ -308,28 +328,28 @@ class LocationAdvancedSearchForm(SearchForm):
             }
         )
     )
-    med = MediaChoices(
-        label = Media._meta.verbose_name.capitalize(),
-        required = False,
-        widget = AutoHeavySelect2Widget(
-            select2_options = {
-                'width': '220px',
-                'placeholder': 'Lookup %s ...' % Media._meta.verbose_name
-            }
-        )
-    )
-    po = PersonOrgChoices(
-        label = PersonOrg._meta.verbose_name.capitalize(),
-        required = False,
-        widget = AutoHeavySelect2Widget(
-            select2_options = {
-                'width': '220px',
-                'placeholder': 'Lookup %s ...' % PersonOrg._meta.verbose_name
-            }
-        )
-    )    
-    img = forms.ChoiceField(label='Image', required=False, choices=(('default', '---'), ('yes', 'Yes'), ('no', 'No')))
-    col = forms.ModelChoiceField(label='Collection', required=False, queryset=Collection.objects.all())   
+    # med = MediaChoices(
+        # label = Media._meta.verbose_name.capitalize(),
+        # required = False,
+        # widget = AutoHeavySelect2Widget(
+            # select2_options = {
+                # 'width': '220px',
+                # 'placeholder': 'Lookup %s ...' % Media._meta.verbose_name
+            # }
+        # )
+    # )
+    # po = PersonOrgChoices(
+        # label = PersonOrg._meta.verbose_name.capitalize(),
+        # required = False,
+        # widget = AutoHeavySelect2Widget(
+            # select2_options = {
+                # 'width': '220px',
+                # 'placeholder': 'Lookup %s ...' % PersonOrg._meta.verbose_name
+            # }
+        # )
+    # )    
+    # img = forms.ChoiceField(label='Image', required=False, choices=(('default', '---'), ('yes', 'Yes'), ('no', 'No')))
+    # col = forms.ModelChoiceField(label='Collection', required=False, queryset=Collection.objects.all())   
 
     def search(self):
         """This search method starts from a new query of all documents
@@ -338,7 +358,7 @@ class LocationAdvancedSearchForm(SearchForm):
         redoing any actions normally taken before the SearchForm 
         is called, such as faceting the SearchQuerySet."""
               
-        sqs = SearchQuerySet()
+        sqs = RelatedSearchQuerySet()
         
         sqs = sqs.filter(django_ct = 'base.location')
         
@@ -376,28 +396,29 @@ class LocationAdvancedSearchForm(SearchForm):
                         sqs = sqs.filter(**kwargs)
 
         # RELATED TABLES FILTER
-        sub = adv_fields['sub']
-        if sub != '':
-            queryset = queryset.filter(locationsubjectrelations__subject_id=sub)
+        sub = self.cleaned_data['sub']
+        if sub != None and sub != '':
+            rels = Location.objects.filter(locationsubjectrelations__subject_id=sub).values_list('id', flat=True)
+            sqs = sqs.filter(django_id__in = rels)
 
-        med = adv_fields['med']
-        if med != '':
-            queryset = queryset.filter(medialocationrelations__media_id=med)
+        # med = adv_fields['med']
+        # if med != '':
+            # queryset = queryset.filter(medialocationrelations__media_id=med)
 
-        po = adv_fields['po']
-        if po != '':
-            queryset = queryset.filter(locationpersonorgrelations__person_org_id=po)
+        # po = adv_fields['po']
+        # if po != '':
+            # queryset = queryset.filter(locationpersonorgrelations__person_org_id=po)
             
-        img = adv_fields['img']
-        if img != '':
-            imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']
-            if img == 'yes':
-                queryset = queryset.filter(locationfile__rsid__filetype__in = imgs)
-            elif img == 'no':
-                queryset = queryset.exclude(locationfile__rsid__filetype__in = imgs)
-        col = adv_fields['col']
-        if col != '':
-            queryset = queryset.filter(locationcollection__collection_id = col)
+        # img = adv_fields['img']
+        # if img != '':
+            # imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']
+            # if img == 'yes':
+                # queryset = queryset.filter(locationfile__rsid__filetype__in = imgs)
+            # elif img == 'no':
+                # queryset = queryset.exclude(locationfile__rsid__filetype__in = imgs)
+        # col = adv_fields['col']
+        # if col != '':
+            # queryset = queryset.filter(locationcollection__collection_id = col)
         
         # ADVANCED SEARCH
         

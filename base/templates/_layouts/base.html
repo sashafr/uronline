@@ -59,6 +59,12 @@
     <link rel="stylesheet" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />
     <!-- More ideas for your <head> here: h5bp.com/d/head-Tips -->
     
+    <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
+    {% block cdn_js %}
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="{{ STATIC_URL }}js/libs/jquery-1.9.1.min.js"><\/script>')</script>
+    {% endblock cdn_js %}    
+    
     <!-- All JavaScript at the bottom, except this Modernizr build.
        Modernizr enables HTML5 elements & feature detects for optimal performance.
        Create your own custom Modernizr build: www.modernizr.com/download/ -->
@@ -167,11 +173,6 @@
     
     
     <!-- JavaScript at the bottom for fast page loading -->
-    <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
-    {% block cdn_js %}
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="{{ STATIC_URL }}js/libs/jquery-1.9.1.min.js"><\/script>')</script>
-    {% endblock cdn_js %}
     
     <!-- scripts concatenated and minified via django-compressor -->
     {% compress js %}

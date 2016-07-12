@@ -1,7 +1,13 @@
 {% extends '_layouts/base.html' %}
 {% load base_tags %}
+{% load staticfiles %}
 {% load mptt_tags %}
 {% load widget_tweaks %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'django_select2/css/select2.min.css' %}">
+{% endblock %}
 
 <!-- Metadata -->
 {% block page_title %}Search{% endblock %}
@@ -118,13 +124,20 @@
                             {{ form.q3|add_class:"form-control" }}
                         </div>
                     </div>
+                    <hr />
+                    <div class="row">
+                        <div class="col-sm-5 col-md-3">
+                            <label>{{ form.sub.label }}</label>
+                            {{ form.sub|add_class:"selectpicker" }}
+                        </div>
+                    </div>
+                    <hr />                    
                     <div class="row">
                         <div class="col-sm-5 col-md-3">
                             <label>Order: </label>
                             {{ form.order|add_class:"selectpicker mini" }}
                         </div>
-                    </div> 
-                    <hr />
+                    </div>
                 </form>
             </div>
         </div>

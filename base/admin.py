@@ -182,6 +182,7 @@ def import_data(modeladmin, request, queryset):
                 # GET ENTITY MATCHES
                 if matchers:
                     
+                    q = Q()
                     match_msg = "Tried to match on: "
                     
                     for matcher in matchers:
@@ -212,8 +213,10 @@ def import_data(modeladmin, request, queryset):
                         if matcher.matching_required:
                             matches = matches.filter(cq).distinct()
                         else:
-                            matches = matches | matches.model.objects.filter(cq)
+                            q |= cq
                     
+                    if not matcher.matching_required:
+                        matches = matches.filter(q).distinct()
                     match_count = matches.count()
                     
                 if match_count == 0 and not create:
