@@ -44,9 +44,6 @@
 
 {% block extrastyle %}
   {{ block.super }}
-  <!-- Modifications to original Django Suit template begin here -->
-  <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}suit/css/filer.css">
-  <!-- End modifications -->
 {% endblock %}
 
 {% block content_title_value %}
@@ -105,12 +102,6 @@
           {% block submit_buttons_bottom %}{% submit_row %}{% endblock %}
 
         </div>
-        
-        <!-- Modifications to original Django Suit template begin here -->
-        <div class="filebrowser">
-            {% include "admin/filer/tools/clipboard/clipboard_special.html" %}
-        </div>
-        <!-- End modifications --> 
 
         {% block object-tools %}
           {% if change %}{% if not is_popup %}
@@ -134,12 +125,7 @@
                   {# {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}</a>#}
                 {% endif %}
                 
-                <!-- Modifications to original Django Suit template begin here -->
-                <li>
-                  <a href="/admin/filer/folder/" onclick='return showAddAnotherPopup(this);'>
-                    <i class="icon-picture icon-alpha75"></i>Add Image to Clipboard
-                  </a>
-                </li>                
+                <!-- Modifications to original Django Suit template begin here -->           
                 {% if original.next %}
                   <li>
                     <a href="{% url opts|admin_urlname:'change' original.next.pk|admin_urlquote %}">

@@ -106,4 +106,4 @@ class PersonOrgTable(tables.Table):
                 
         model = PersonOrg
         attrs = {"class": "paleblue"}
-        fields = visible_fields        
+        fields = visible_fields 

@@ -61,6 +61,8 @@
                     <ul class="nav nav-tabs">
                         <li><a href="#tiles" data-toggle="tab">Tiles</a></li>
                         <li><a href="#tables" data-toggle="tab">Tables</a></li>
+                        <li><a href="mailto:?subject=[From {{ site_name }}] View this Collection&amp;body=You can view this collection at {{ collection.get_full_absolute_url }}" target="_blank">Email</a></li>
+                        <li><a href="{% url 'admin:base_collection_change' collection.id %}" target="_blank">Edit</a></li>
                     </ul>
                     <div class="tab-content">
                         <div id="tiles" class="tab-pane active">

@@ -34,23 +34,23 @@ SEARCH_TYPE = (
 
 class SubjectChoices(AutoModelSelect2Field):
     queryset = Subject.objects
-    search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',]
+    search_fields = ['title__icontains', 'title1__icontains', 'title2__icontains', 'title3__icontains',]
     
 class MediaChoices(AutoModelSelect2Field):
     queryset = Media.objects
-    search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',]    
+    search_fields = ['title__icontains', 'title1__icontains', 'title2__icontains', 'title3__icontains',]    
 
 class LocationChoices(AutoModelSelect2Field):
     queryset = Location.objects
-    search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',] 
+    search_fields = ['title__icontains', 'title1__icontains', 'title2__icontains', 'title3__icontains',] 
     
 class PersonOrgChoices(AutoModelSelect2Field):
     queryset = PersonOrg.objects
-    search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',]
+    search_fields = ['title__icontains', 'title1__icontains', 'title2__icontains', 'title3__icontains',]
     
 class FileChoices(AutoModelSelect2Field):
     queryset = File.objects
-    search_fields = ['title1__icontains', 'title2__icontains', 'title3__icontains',]
+    search_fields = ['title__icontains', 'title1__icontains', 'title2__icontains', 'title3__icontains',]
 
 class AdvancedSearchForm(SearchForm):
     """Search form allows user to search Solr index by property
@@ -328,26 +328,26 @@ class LocationAdvancedSearchForm(SearchForm):
             }
         )
     )
-    # med = MediaChoices(
-        # label = Media._meta.verbose_name.capitalize(),
-        # required = False,
-        # widget = AutoHeavySelect2Widget(
-            # select2_options = {
-                # 'width': '220px',
-                # 'placeholder': 'Lookup %s ...' % Media._meta.verbose_name
-            # }
-        # )
-    # )
-    # po = PersonOrgChoices(
-        # label = PersonOrg._meta.verbose_name.capitalize(),
-        # required = False,
-        # widget = AutoHeavySelect2Widget(
-            # select2_options = {
-                # 'width': '220px',
-                # 'placeholder': 'Lookup %s ...' % PersonOrg._meta.verbose_name
-            # }
-        # )
-    # )    
+    med = MediaChoices(
+        label = Media._meta.verbose_name.capitalize(),
+        required = False,
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % Media._meta.verbose_name
+            }
+        )
+    )
+    po = PersonOrgChoices(
+        label = PersonOrg._meta.verbose_name.capitalize(),
+        required = False,
+        widget = AutoHeavySelect2Widget(
+            select2_options = {
+                'width': '220px',
+                'placeholder': 'Lookup %s ...' % PersonOrg._meta.verbose_name
+            }
+        )
+    )    
     # img = forms.ChoiceField(label='Image', required=False, choices=(('default', '---'), ('yes', 'Yes'), ('no', 'No')))
     # col = forms.ModelChoiceField(label='Collection', required=False, queryset=Collection.objects.all())   
 
@@ -398,16 +398,18 @@ class LocationAdvancedSearchForm(SearchForm):
         # RELATED TABLES FILTER
         sub = self.cleaned_data['sub']
         if sub != None and sub != '':
-            rels = Location.objects.filter(locationsubjectrelations__subject_id=sub).values_list('id', flat=True)
-            sqs = sqs.filter(django_id__in = rels)
+            sub_rels = Location.objects.filter(locationsubjectrelations__subject_id=sub).values_list('id', flat=True)
+            sqs = sqs.filter(django_id__in = sub_rels)
+            
+        med = self.cleaned_data['med']
+        if med != None and med != '':
+            med_rels = Location.objects.filter(medialocationrelations__media_id=med).values_list('id', flat=True)
+            sqs = sqs.filter(django_id__in = med_rels)
 
-        # med = adv_fields['med']
-        # if med != '':
-            # queryset = queryset.filter(medialocationrelations__media_id=med)
-
-        # po = adv_fields['po']
-        # if po != '':
-            # queryset = queryset.filter(locationpersonorgrelations__person_org_id=po)
+        po = self.cleaned_data['po']
+        if po != None and po != '':
+            po_rels = Location.objects.filter(locationpersonorgrelations__person_org_id=po).values_list('id', flat=True)
+            sqs = sqs.filter(django_id__in = po_rels)
             
         # img = adv_fields['img']
         # if img != '':

@@ -2654,9 +2654,6 @@ class ControlFieldAdmin(MPTTModelAdmin, SortableModelAdmin):
     list_filter = (ControlFieldTypeListFilter,)
     list_display_links = ('title',)
     change_form_template = 'admin/base/change_form_tree_models.html'
-    suit_form_includes = (
-        ('admin/base/control_field_search.html', 'bottom'),
-    )
     form = ControlFieldForm
     fields = ('title', 'definition', 'notes', 'type', 'parent', 'created', 'modified', 'last_mod_by')
     sortable = 'order'
@@ -2673,7 +2670,7 @@ class ControlFieldAdmin(MPTTModelAdmin, SortableModelAdmin):
         for instance in instances:
             if isinstance(instance, ControlFieldLinkedData): #Check if it is the correct type of inline
                 instance.last_mod_by = request.user            
-                instance.save()
+            instance.save()
                 
     # limit types visible on change form to descriptive properties marked as control_field = true
     def formfield_for_foreignkey(self, db_field, request, **kwargs):

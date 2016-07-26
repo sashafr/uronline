@@ -308,6 +308,17 @@ class ControlField(MPTTModel):
         verbose_name = 'Controlled Term'    
         verbose_name_plural = 'Controlled Terms'
         
+    def get_absolute_url(self):
+        return reverse('termdetail', args=[str(self.id)])
+
+    def get_full_absolute_url(self):
+        domain = settings.ALLOWED_HOSTS[0]
+        
+        if domain.startswith('.'):
+            domain = domain[1:]
+
+        return 'http://%s%s' % (domain, self.get_absolute_url())        
+        
     def save(self, *args, **kwargs):
         super(ControlField, self).save(*args, **kwargs)
         ControlField.objects.rebuild()
@@ -341,14 +352,40 @@ class ControlField(MPTTModel):
         """ Returns the total of all instances of this Control Field as a value in the SubjectControlProperty table.
         
         The count is cumulative, so all descendants are included in the total. """
-        tree = self.get_descendants(include_self=True)
-        
+        tree = self.get_descendants(include_self=True)        
         total = 0
-        
         for node in tree:
             total += SubjectControlProperty.objects.filter(control_property_value = node).count()
-            
         return total
+        
+    def count_loc_instances(self):
+        tree = self.get_descendants(include_self=True)        
+        total = 0
+        for node in tree:
+            total += LocationControlProperty.objects.filter(control_property_value = node).count()
+        return total
+
+    def count_med_instances(self):
+        tree = self.get_descendants(include_self=True)        
+        total = 0
+        for node in tree:
+            total += MediaControlProperty.objects.filter(control_property_value = node).count()
+        return total
+
+    def count_po_instances(self):
+        tree = self.get_descendants(include_self=True)        
+        total = 0
+        for node in tree:
+            total += PersonOrgControlProperty.objects.filter(control_property_value = node).count()
+        return total
+
+    def count_file_instances(self):
+        tree = self.get_descendants(include_self=True)        
+        total = 0
+        for node in tree:
+            total += FileControlProperty.objects.filter(control_property_value = node).count()
+        return total
+        
         
     def get_siblings_same_type(self):
         """ Returns all the siblings of the current node which share the same "type" value """
@@ -1498,6 +1535,11 @@ class Collection(models.Model):
         
     def get_absolute_url(self):
         return reverse('collectiondetail', args=[str(self.id)])
+        
+    def get_full_absolute_url(self):
+        domain = settings.ALLOWED_HOSTS[0]
+
+        return 'http://www%s%s' % (domain, self.get_absolute_url())        
         
     def get_thumbnail(self):
         """ If the user hasn't set a thumbnail file, tries to find one. """

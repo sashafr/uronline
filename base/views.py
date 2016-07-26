@@ -1140,11 +1140,13 @@ def termdetail(request, term_id):
     term = get_object_or_404(ControlField, pk=term_id)
     sub_coll_id = request.GET.get('subcol', '')
     loc_coll_id = request.GET.get('loccol', '')
+    med_coll_id = request.GET.get('medcol', '')
     po_coll_id = request.GET.get('pocol', '')
     
     show_contents = 'false'
     sub_col_title = ''
     loc_col_title = ''
+    med_col_title = ''
     po_col_title = ''
     
     # linked data
@@ -1154,18 +1156,25 @@ def termdetail(request, term_id):
     subjects = Subject.objects.filter(subjectcontrolproperty__control_property_value__in = term.get_descendants(include_self = True)).distinct()
     # locations
     locations = Location.objects.filter(locationcontrolproperty__control_property_value__in = term.get_descendants(include_self = True)).distinct()
+    # media
+    media = Media.objects.filter(mediacontrolproperty__control_property_value__in = term.get_descendants(include_self = True)).distinct()    
     # people
-    people = PersonOrg.objects.filter(personorgcontrolproperty__control_property_value__in = term.get_descendants(include_self = True)).distinct()      
+    people = PersonOrg.objects.filter(personorgcontrolproperty__control_property_value__in = term.get_descendants(include_self = True)).distinct()
+    # files
+    files = File.objects.filter(filecontrolproperty__control_property_value__in = term.get_descendants(include_self = True)).distinct()       
     
     # collections that include the selected objects
     scs = SubjectCollection.objects.filter(subject__in = subjects)
     subject_collections = Collection.objects.filter(subjectcollection__in = scs).distinct()
     # collections that include the selected locations
     lcs = LocationCollection.objects.filter(location__in = locations)
-    location_collections = Collection.objects.filter(locationcollection__in = lcs).distinct()     
+    location_collections = Collection.objects.filter(locationcollection__in = lcs).distinct()
+    # collections that include the selected media
+    mcs = MediaCollection.objects.filter(media__in = media)
+    media_collections = Collection.objects.filter(mediacollection__in = mcs).distinct()    
     # collections that include the selected people
     pcs = PersonOrgCollection.objects.filter(person_org__in = people)
-    people_collections = Collection.objects.filter(personorgcollection__in = pcs).distinct()         
+    people_collections = Collection.objects.filter(personorgcollection__in = pcs).distinct()
     
     # if a specific collection was requested, get only objects in selected collection
     if sub_coll_id != '' and sub_coll_id != '0':
@@ -1183,6 +1192,14 @@ def termdetail(request, term_id):
             loc_col = Collection.objects.filter(pk=loc_coll_id)
             if loc_col:
                 loc_col_title = loc_col[0].title
+    # if a specific collection was requested, get only media in selected collection
+    if med_coll_id != '' and med_coll_id != '0':
+        selected_cols = Collection.objects.filter(pk=med_coll_id)
+        if selected_cols:
+            media = media.filter(mediacollection__collection = selected_cols[0])
+            med_col = Collection.objects.filter(pk=med_coll_id)
+            if med_col:
+                med_col_title = med_col[0].title                
     # if a specific collection was requested, get only people in selected collection
     if po_coll_id != '' and po_coll_id != '0':
         selected_cols = Collection.objects.filter(pk=po_coll_id)
@@ -1190,7 +1207,7 @@ def termdetail(request, term_id):
             people = people.filter(personorgcollection__collection = selected_cols[0])
             po_col = Collection.objects.filter(pk=po_coll_id)
             if po_col:
-                po_col_title = po_col[0].title                 
+                po_col_title = po_col[0].title          
     
     # create the object table
     subject_table = SubjectTable(subjects, prefix='subj-')
@@ -1198,15 +1215,20 @@ def termdetail(request, term_id):
     # create the location table
     location_table = LocationTable(locations, prefix='loc-')
     RequestConfig(request).configure(location_table)
+    # create the media table
+    media_table = MediaTable(media, prefix='med-')
+    RequestConfig(request).configure(media_table)    
     # create the people table
     people_table = PersonOrgTable(people, prefix='po-')
-    RequestConfig(request).configure(people_table)    
+    RequestConfig(request).configure(people_table)
     
     # determine if menu is needed
-    if linked_data or subjects or locations or people or term.get_siblings_same_type or term.get_children_same_type:
+    if linked_data or subjects or locations or media or files or people or term.get_siblings_same_type or term.get_children_same_type:
         show_contents = 'true'
+        
+    site_name = settings.SITE_NAME        
     
-    return render(request, 'base/termdetail.html', {'term': term, 'subjects': subjects, 'locations': locations, 'people': people, 'linked_data': linked_data, 'show_contents': show_contents, 'subject_table': subject_table, 'location_table': location_table, 'people_table': people_table, 'subject_collections': subject_collections, 'location_collections': location_collections, 'people_collections': people_collections, 'sub_col': sub_coll_id, 'loc_col': loc_coll_id, 'po_col': po_coll_id, 'sub_col_title': sub_col_title, 'loc_col_title': loc_col_title, 'po_col_title': po_col_title })
+    return render(request, 'base/termdetail.html', {'term': term, 'subjects': subjects, 'locations': locations, 'media': media, 'people': people, 'files': files, 'linked_data': linked_data, 'show_contents': show_contents, 'subject_table': subject_table, 'location_table': location_table, 'media_table': media_table, 'people_table': people_table, 'subject_collections': subject_collections, 'location_collections': location_collections, 'media_collections': media_collections, 'people_collections': people_collections, 'sub_col': sub_coll_id, 'loc_col': loc_coll_id, 'med_col': med_coll_id, 'po_col': po_coll_id, 'sub_col_title': sub_col_title, 'loc_col_title': loc_col_title, 'med_col_title': med_col_title, 'po_col_title': po_col_title, 'site_name': site_name })
     
 def termdetailexport (request, term_id):
     
@@ -1241,6 +1263,18 @@ def termdetailexport (request, term_id):
             if selected_cols:
                 qs = qs.filter(locationcollection__collection = selected_cols[0])
                 filename += '_collection-' + format_filename(selected_cols[0].title)
+                
+    # media export
+    if entity == 'media':
+        filename += '_media_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        qs = Media.objects.filter(mediacontrolproperty__control_property_value__in = term.get_descendants(include_self = True))
+        
+        # if a specific collection was requested, get only objects in selected collection
+        if coll_id != '' and coll_id != '0':
+            selected_cols = Collection.objects.filter(pk=coll_id)
+            if selected_cols:
+                qs = qs.filter(mediacollection__collection = selected_cols[0])
+                filename += '_collection-' + format_filename(selected_cols[0].title)
 
     # people export
     if entity == 'person':
@@ -1252,104 +1286,20 @@ def termdetailexport (request, term_id):
             selected_cols = Collection.objects.filter(pk=coll_id)
             if selected_cols:
                 qs = qs.filter(personorgcollection__collection = selected_cols[0])
-                filename += '_collection-' + format_filename(selected_cols[0].title)                
+                filename += '_collection-' + format_filename(selected_cols[0].title)
                 
     if qs:
         # json
         if format == 'json':
-            if entity == 'location':
-                serializer = LocationSerializer(qs, many=True)
-            elif entity == 'person':
-                serializer = PersonOrgSerializer(qs, many=True)
-            else:
-                serializer = SubjectSerializer(qs, many=True)
-            response = JSONResponse(serializer.data)
-            response['Content-Disposition'] = 'attachment; filename="' + filename + '.json"'
-            return response
+            return serialize_data(filename, qs, entity, 'json', request, is_admin=False)
             
         # xml
         elif format == 'xml':
-            if entity == 'location':
-                serializer = LocationSerializer(qs, many=True)
-            elif entity == 'person':
-                serializer = PersonOrgSerializer(qs, many=True)                
-            else:
-                serializer = SubjectSerializer(qs, many=True)
-            response = XMLResponse(serializer.data)
-            response['Content-Disposition'] = 'attachment; filename="' + filename + '.xml"'
-            return response
+            return serialize_data(filename, qs, entity, 'xml', request, is_admin=False)
             
         # csv - evil, evil, flattened csv
         elif format == 'csv':
-            response = HttpResponse(content_type='text/csv')
-            response['Content-Disposition'] = 'attachment; filename="' + filename + '.csv"'
-
-            writer = csv.writer(response)
-            titles = []
-            titles.append('__Title__')
-            titles.append('__URL__')
-            rows = []
-            for result in qs:
-                row = []
-                row_dict = {}
-                
-                # store title and url
-                row_dict[0] = result.title
-                row_dict[1] = result.get_full_absolute_url()
-                
-                # controlled properties
-                if entity == 'location':
-                    cps = result.locationcontrolproperty_set.all()
-                elif entity == 'person':
-                    cps = result.personorgcontrolproperty_set.all()
-                else:
-                    cps = result.subjectcontrolproperty_set.all()
-                for each_prop in cps:
-                    if each_prop.control_property.visible:
-                        prop_name = each_prop.control_property.property.strip()
-                        prop_value = each_prop.control_property_value.title.strip()
-                        if not (prop_name in titles):
-                            column_index = len(titles)                        
-                            titles.append(prop_name)
-                        else:
-                            column_index = titles.index(prop_name)
-                            if column_index in row_dict:
-                                prop_value = row_dict[column_index] + '; ' + prop_value
-                        row_dict[column_index] = prop_value
-                
-                # free-form properties
-                if entity == 'location':
-                    ps = result.locationproperty_set.all()
-                elif entity == 'person':
-                    ps = result.personorgproperty_set.all()
-                else:
-                    ps = result.subjectproperty_set.all()                
-                for each_prop in ps:
-                    if each_prop.property.visible:
-                        prop_name = each_prop.property.property.strip()
-                        prop_value = each_prop.property_value.strip()
-                        if not (prop_name in titles):
-                            column_index = len(titles)                        
-                            titles.append(prop_name)
-                        else:
-                            column_index = titles.index(prop_name)
-                            if column_index in row_dict:
-                                prop_value = row_dict[column_index] + '; ' + prop_value
-                        row_dict[column_index] = prop_value                    
-                                
-                # store row in list
-                for i in range(len(titles)):
-                    if i in row_dict:
-                        row.append(row_dict[i])
-                    else:
-                        row.append('')
-                rows.append(row)
-
-            # write out the rows, starting with header
-            writer.writerow(titles)
-            for each_row in rows:
-                writer.writerow(each_row)
-            return response
+            return flatten_to_csv(filename, qs, entity, is_file=False, is_admin=False)
     
 def mapdetail(request, location_id):
     
@@ -1425,9 +1375,10 @@ def collectiondetail(request, collection_id):
     if subjects or locations or media or people or files:
         show_contents = 'true'
         
+    site_name = settings.SITE_NAME        
     no_img = settings.NO_IMG
     
-    return render(request, 'base/collectiondetail.html', {'collection': collection, 'subjects': subjects, 'locations': locations, 'media': media, 'people': people, 'files': files, 'show_contents': show_contents, 'subject_table': subject_table, 'location_table': location_table, 'media_table': media_table, 'people_table': people_table, 'no_img': no_img })
+    return render(request, 'base/collectiondetail.html', {'collection': collection, 'subjects': subjects, 'locations': locations, 'media': media, 'people': people, 'files': files, 'show_contents': show_contents, 'subject_table': subject_table, 'location_table': location_table, 'media_table': media_table, 'people_table': people_table, 'site_name': site_name, 'no_img': no_img })
         
 def export_property_details(request, prop_id):
     order = request.GET.get('o', '')

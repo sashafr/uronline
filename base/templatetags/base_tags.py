@@ -490,7 +490,10 @@ def get_museum(subj):
         
 @register.assignment_tag
 def get_control_fields(type):
-    fields = DescriptiveProperty.objects.filter(Q(control_field=True) & (Q(primary_type=type) | Q(primary_type='AL')))
+    if type == 'ALL':
+        fields = DescriptiveProperty.objects.all()
+    else:
+        fields = DescriptiveProperty.objects.filter(Q(control_field=True) & (Q(primary_type=type) | Q(primary_type='AL')))
     if fields:
         return fields
     return []
