@@ -271,12 +271,23 @@ class DescriptiveProperty(models.Model):
     order = models.IntegerField(blank = True, default=99)
     visible = models.BooleanField(default = False)
     solr_type = models.CharField(max_length = 45, choices = SOLR_TYPE, default = TEXT, blank = True)
-    facet = models.BooleanField(default = False)
-    control_field = models.BooleanField(default = False)
+    facet = models.BooleanField(default = False, blank = True)
+    control_field = models.BooleanField(default = False, verbose_name = 'Controlled Field')
     property_type = models.ForeignKey(PropertyType, blank = True, null = True)
 
     def __unicode__(self):
         return self.property
+        
+    def get_absolute_url(self):
+        return reverse('propertydetail', args=[str(self.id)])
+
+    def get_full_absolute_url(self):
+        domain = settings.ALLOWED_HOSTS[0]
+        
+        if domain.startswith('.'):
+            domain = domain[1:]
+
+        return 'http://%s%s' % (domain, self.get_absolute_url())           
         
     class Meta:
         verbose_name = 'Descriptive Property'

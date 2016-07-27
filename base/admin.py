@@ -2056,6 +2056,14 @@ class ControlFieldLinkedDataInline(admin.TabularInline):
     }
     extra = 1
     
+class DescPropertyLinkedDataInline(admin.TabularInline):
+    model = DescPropertyLinkedData
+    fields = ['source', 'link']    
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    extra = 1    
+    
 class SubjectLinkedDataInline(admin.TabularInline):
     model = SubjectLinkedData
     fields = ['source', 'link']
@@ -2679,6 +2687,38 @@ class ControlFieldAdmin(MPTTModelAdmin, SortableModelAdmin):
         return super(ControlFieldAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 admin.site.register(ControlField, ControlFieldAdmin)
+
+class DescriptivePropertyAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'modified', 'last_mod_by')
+    inlines = [DescPropertyLinkedDataInline]    
+    fields = ['property', 'primary_type', 'order', 'property_type', 'visible', 'control_field', 'notes', 'created', 'modified', 'last_mod_by']
+    list_display = ['property', 'primary_type', 'order', 'property_type', 'visible', 'control_field', 'created', 'modified', 'last_mod_by']
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2})},
+    }
+    search_fields = ['property', 'notes']
+    list_filter = ('primary_type', 'visible', 'control_field', 'property_type')
+    list_editable = ('primary_type', 'order', 'visible', 'property_type')
+    
+    def save_model(self, request, obj, form, change):
+        obj.last_mod_by = request.user
+        obj.save()
+        
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
+        for instance in instances:
+            if isinstance(instance, DescPropertyLinkedData): #Check if it is the correct type of inline
+                instance.last_mod_by = request.user            
+            instance.save()        
+        
+    def get_readonly_fields(self, request, obj=None):
+        if obj: #This is the case when obj is already created i.e. it's an edit
+            return self.readonly_fields + ('control_field',)
+        else:
+            return self.readonly_fields      
+
+admin.site.register(DescriptiveProperty, DescriptivePropertyAdmin)
 
 """ ARCHAEOLOGICAL ENTITY ADMIN """
 
@@ -5066,22 +5106,6 @@ admin.site.register(SiteContent, SiteContentAdmin)
 
 admin.site.register(MediaType)
 
-class DescriptivePropertyAdmin(admin.ModelAdmin):
-    readonly_fields = ('created', 'modified', 'last_mod_by')
-    fields = ['property', 'primary_type', 'order', 'property_type', 'visible', 'solr_type', 'facet', 'notes', 'created', 'modified', 'last_mod_by']
-    list_display = ['property', 'primary_type', 'order', 'property_type', 'visible', 'solr_type', 'facet', 'notes', 'created', 'modified', 'last_mod_by']
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2})},
-    }
-    search_fields = ['property']
-    list_filter = ('primary_type', 'visible', 'solr_type', 'facet', 'property_type')
-    list_editable = ('primary_type', 'order', 'visible', 'solr_type', 'facet', 'notes', 'property_type')
-    
-    def save_model(self, request, obj, form, change):
-        obj.last_mod_by = request.user
-        obj.save()
-
-admin.site.register(DescriptiveProperty, DescriptivePropertyAdmin)
 admin.site.register(Relations)      
 
 class PostAdmin(admin.ModelAdmin):
