@@ -263,21 +263,21 @@
                     <div class="well filters">
                     
                         <h3>Share</h3>
-                        <p><a href="mailto:?subject=[From {{ site_name }}] View this Term&amp;body=You can view this term at {{ term.get_full_absolute_url }}" target="_blank"> Email</a> | <a href="{% url 'admin:base_controlfield_change' term.id %}" target="_blank"> Edit</a></p>
-                        <hr />
+                        <p><a href="mailto:?subject=[From {{ site_name }}] View this Term&amp;body=You can view this term at {{ term.get_full_absolute_url }}" target="_blank"> Email</a> | <a href="{% url 'admin:base_controlfield_change' term.id %}" target="_blank"> Edit</a> | <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ term.type_id }}:{{ term.id }}"> Build Search</a></p>
                         
                         {% if term.get_ancestors %}
+                            <hr />                        
                             <h3>Parent Terms</h3>
                                 <p>
                                     {% for anc in term.get_ancestors %}
                                         <a href="{% url 'termdetail' anc.id %}">{{ anc.title }}</a> >
                                     {% endfor %}
                                     {{ term.title }}
-                                </p>                                
-                            <hr />                                
+                                </p>                      
                         {% endif %}
 
                         {% if linked_data %}
+                            <hr />                        
                             <h3>Linked Resources</h3>
                             {% for web in linked_data %}
                                 <p>

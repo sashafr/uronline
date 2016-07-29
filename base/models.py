@@ -155,7 +155,7 @@ def get_display_field_header(result_property):
 """ HELPER MODELS """
 
 class ObjectType(models.Model):
-    """ Sub-groupings of Entities """
+    """ Sub-groupings of Entities - currently only being used for locations """
     
     type = models.CharField(max_length = 40)
     notes = models.TextField(blank = True)
@@ -168,8 +168,8 @@ class ObjectType(models.Model):
         return self.type
         
     class Meta:
-        verbose_name = 'Entity Type'
-        verbose_name_plural = 'Entity Types'
+        verbose_name = 'Location Type'
+        verbose_name_plural = 'Location Types'
         
 class PropertyType(models.Model):
     """ Sub-groupings of Properties """
@@ -287,7 +287,7 @@ class DescriptiveProperty(models.Model):
         if domain.startswith('.'):
             domain = domain[1:]
 
-        return 'http://%s%s' % (domain, self.get_absolute_url())           
+        return 'http://www.%s%s' % (domain, self.get_absolute_url())           
         
     class Meta:
         verbose_name = 'Descriptive Property'
@@ -328,7 +328,7 @@ class ControlField(MPTTModel):
         if domain.startswith('.'):
             domain = domain[1:]
 
-        return 'http://%s%s' % (domain, self.get_absolute_url())        
+        return 'http://www.%s%s' % (domain, self.get_absolute_url())        
         
     def save(self, *args, **kwargs):
         super(ControlField, self).save(*args, **kwargs)
@@ -980,7 +980,7 @@ class File(models.Model):
         if domain.startswith('.'):
             domain = domain[1:]
 
-        return 'http://%s%s' % (domain, self.get_absolute_url())        
+        return 'http://www.%s%s' % (domain, self.get_absolute_url())        
         
     def save(self, *args, **kwargs):
         """ Auto fills the main title field. If file does not have a value for title1, title2, or title3,
@@ -2179,8 +2179,15 @@ class AboutPage(models.Model):
         ordering = ['order']
     
     def __unicode__(self):
-        return self.title     
+        return self.title         
         
+class FileUpload(models.Model):
+    title = models.CharField(max_length = 255)
+    file = FilerImageField(blank = True)
+    attribution = models.TextField(blank = True)
+        
+""" UPCOMING FEATURES """
+
 class Post(models.Model):
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, max_length=255)
@@ -2198,14 +2205,7 @@ class Post(models.Model):
         return self.title
 
     def get_absolute_url(self):
-        return reverse('base.views.post', args=[self.slug])        
-        
-class FileUpload(models.Model):
-    title = models.CharField(max_length = 255)
-    file = FilerImageField(blank = True)
-    attribution = models.TextField(blank = True)
-        
-""" UPCOMING FEATURES """
+        return reverse('base.views.post', args=[self.slug])    
 
 class AdminPost(models.Model):
     """ Admin forum posts. """

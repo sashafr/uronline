@@ -2647,7 +2647,7 @@ class PropertyTypeAdmin(admin.ModelAdmin):
         obj.last_mod_by = request.user
         obj.save()
 
-admin.site.register(PropertyType, PropertyTypeAdmin)    
+admin.site.register(PropertyType, PropertyTypeAdmin)   
     
 """ DESCRIPTIVE PROPERTY & CONTROLLED PROPERTY ADMIN """    
  
@@ -3298,12 +3298,12 @@ class LocationAdmin(MPTTModelAdmin):
 admin.site.register(Location, LocationAdmin)
 
 class MediaAdmin(admin.ModelAdmin):
-    fields = ['get_thumbnail_admin', 'title', 'type', 'notes', 'created', 'modified', 'last_mod_by', 'public', 'upload_batch']
+    fields = ['get_thumbnail_admin', 'title', 'notes', 'created', 'modified', 'last_mod_by', 'public', 'upload_batch']
     readonly_fields = ('get_thumbnail_admin', 'title', 'created', 'modified', 'last_mod_by', 'upload_batch')    
     inlines = [MediaPropertyInline, MediaControlPropertyInline, SubjectMediaRelationsInline, LocationMediaRelationsInline, MediaPersonOrgRelationsInline, MediaFileInline, MediaCollectionEntityInline, MediaLinkedDataInline]
     search_fields = ['title', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3']
     list_display = ('get_thumbnail_admin', 'title1', 'title2', 'title3', 'desc1', 'desc2', 'desc3', 'public', 'modified', 'last_mod_by')
-    list_filter = ('public', 'type', 'last_mod_by')
+    list_filter = ('public', 'last_mod_by')
     list_display_links = ('title1', )
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
@@ -3312,7 +3312,7 @@ class MediaAdmin(admin.ModelAdmin):
     fieldsets = [
         (None, {
             'classes': ('suit-tab', 'suit-tab-general'),
-            'fields': ['get_thumbnail_admin', 'title', 'type', 'notes', 'created', 'modified', 'last_mod_by', 'public', 'upload_batch']
+            'fields': ['get_thumbnail_admin', 'title', 'notes', 'created', 'modified', 'last_mod_by', 'public', 'upload_batch']
         }),
     ]
     advanced_search_form = MediaAdvSearchForm()
@@ -4210,6 +4210,19 @@ class ResultPropertyAdmin(admin.ModelAdmin):
     
 admin.site.register(ResultProperty, ResultPropertyAdmin)
 
+class ObjectTypeAdmin(admin.ModelAdmin):
+    readonly_fields = ('last_mod_by',)
+    list_display = ('type', 'notes', 'control_field')
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
+    }
+    
+    def save_model(self, request, obj, form, change):
+        obj.last_mod_by = request.user
+        obj.save()
+        
+admin.site.register(ObjectType, ObjectTypeAdmin)
+
 class AboutPageAdmin(SortableModelAdmin):   
     form = CMSPageForm
     sortable = 'order'
@@ -5104,9 +5117,7 @@ class SiteContentAdmin(admin.ModelAdmin):
     
 admin.site.register(SiteContent, SiteContentAdmin)
 
-admin.site.register(MediaType)
-
-admin.site.register(Relations)      
+""" UPCOMING FEATURES """
 
 class PostAdmin(admin.ModelAdmin):
     form = BlogPostForm
@@ -5116,41 +5127,6 @@ class PostAdmin(admin.ModelAdmin):
     date_hierarchy = 'created'
     save_on_top = True
     prepopulated_fields = {"slug": ("title",)}
-
-admin.site.register(Post, PostAdmin)
-
-class ObjectTypeAdmin(admin.ModelAdmin):
-    readonly_fields = ('last_mod_by',)
-    list_display = ('type', 'notes', 'control_field')
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':40})},
-    }
-    
-    def save_model(self, request, obj, form, change):
-        obj.last_mod_by = request.user
-        obj.save()
-        
-admin.site.register(ObjectType, ObjectTypeAdmin)
-
-class LinkedDataAdmin(admin.ModelAdmin):
-    list_display = ['control_field', 'source', 'show_url']
-    search_fields = ['control_field']
-    
-    def show_url(self, obj):
-        return '<a href="%s">%s</a>' % (obj.link, obj.link)
-    show_url.allow_tags = True
-    show_url.short_description = "Link"
-
-admin.site.register(ControlFieldLinkedData, LinkedDataAdmin)
-
-class UploadBatchAdmin(admin.ModelAdmin):
-    fields = ['name']
-    readonly_fields = ('name', )
-    search_fields = ['name']
-    
-admin.site.register(UploadBatch, UploadBatchAdmin)
-
-""" UPCOMING FEATURES """
 
 class AdminForumPostForm(ModelForm):
     """ Used on Admin Post Change Form page to edit admin forum posts """

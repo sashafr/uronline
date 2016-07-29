@@ -1089,31 +1089,34 @@ def contact(request):
 
 def propertydetail(request, prop_id):
 
-    order = request.GET.get('o', '')
-    type = request.GET.get('type', '')
-    
     prop = get_object_or_404(DescriptiveProperty, pk=prop_id)
+    
+    # if property is not set to public, return 404
+    if not prop.visible:
+        raise Http404("This page does not exist")    
+    
+    order = request.GET.get('o', '')
+
+    # linked data
+    linked_data = DescPropertyLinkedData.objects.filter(desc_prop_id=prop_id)
     
     if not(order == 'property_value' or order == 'count' or order == '-property_value' or order == '-count'):
             order = 'property_value'
 
-    all_objs = None
-    
-    linked_data = DescPropertyLinkedData.objects.filter(desc_prop_id=prop_id)
+    all_objs = 'false'
 
-    if prop:
-        if prop.facet:
-            all_objs = ControlField.objects.filter(type_id = prop_id)
-        elif type == 'l':
-            all_objs = LocationProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
-        elif type == 'm':
-            all_objs = MediaProperty.objects.filter(property_id = prop_id, media__type__id = 2).values('property_value').annotate(count = Count('property_value')).order_by(order)
-        elif type == 'po':
-            all_objs = PersonOrgProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
-        else: 
-            all_objs = SubjectProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)       
+    cntl_props = ControlField.objects.filter(type_id = prop_id)
+    sub_props = SubjectProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
+    loc_props = LocationProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
+    med_props = MediaProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
+    po_props = PersonOrgProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
+    file_props = FileProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
+    if cntl_props or sub_props or loc_props or med_props or po_props or file_props:
+        all_objs = 'true'
+        
+    site_name = settings.SITE_NAME         
             
-    return render(request, 'base/propertydetail.html', {'property': prop, 'all_objs': all_objs, 'order': order, 'type': type, 'linked_data': linked_data })
+    return render(request, 'base/propertydetail.html', {'property': prop, 'all_objs': all_objs, 'order': order, 'linked_data': linked_data, 'cntl_props': cntl_props, 'sub_props': sub_props, 'loc_props': loc_props, 'med_props': med_props, 'po_props': po_props, 'file_props': file_props, 'site_name': site_name })
     
 def terminology(request):
 

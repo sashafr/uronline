@@ -22,14 +22,14 @@
             <div class="row">
                 <div class="col-sm-8">
                     <p>{{ property.notes }}</p>
-                    {% if all_objs %}
+                    {% if all_objs == 'true' %}
                         {% if property.facet %}
                             <table class="table table-striped">
                                 <tbody>
-                                {% recursetree all_objs %}
+                                {% recursetree cntl_props %}
                                     <tr>
                                         <td width="800">
-                                            <a href="{% url 'haystack_search' %}?selected_facets=facet_prop_{{ property.id }}:{{ node.id }}" data-toggle="popover" data-html="true" data-content="{{ node.definition }}"><span class="badge">{{ node.count_subj_instances }}</span>&nbsp;&nbsp;{{ node.title }}</a>
+                                            <a href="{% url 'termdetail' node.id %}" data-toggle="popover" data-html="true" data-content="{{ node.definition }}"><span class="badge">{{ node.count_subj_instances }}</span>&nbsp;&nbsp;{{ node.title }}</a>
                                         {% if not node.is_leaf_node %}
                                             <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse">  + Expand</a>
                                             <table class="table table-striped table-bordered collapse collapse-unit" style="margin: 10px 0;" id="{{ node.id }}-collapse">
@@ -43,27 +43,99 @@
                                 {% endrecursetree %}
                                 </tbody>
                             </table>
-                        {% else %}                    
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th><h4>Property</h4></th>
-                                        <th><h4>Count</h4></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for sp in all_objs %}
+                        {% else %}
+                            {% if sub_props %}
+                                <h3>Object Properties</h3>
+                                <table class="table table-striped">
+                                    <thead>
                                         <tr>
-                                            <td>
-                                                <a href="{% url 'haystack_search' %}?property={{ property.id }}&search_type=exact&q={{ sp.property_value }}&op=and&property2=&search_type2=contains&q2=&op2=and&property3=&search_type3=contains&q3=&order=">{{ sp.property_value }}:</a>
-                                            </td>
-                                            <td>
-                                                {{ sp.count }}
-                                            </td>
+                                            <th><h4>Property</h4></th>
+                                            <th><h4>Count</h4></th>
                                         </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>                                
+                                        {% for sp in sub_props %}
+                                            <tr>
+                                                <td>
+                                                    <a href="{% url 'haystack_search' %}?property={{ property.id }}&search_type=exact&q={{ sp.property_value }}">{{ sp.property_value }}:</a>
+                                                </td>
+                                                <td>
+                                                    {{ sp.count }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% endif %}
+                            {% if loc_props %}
+                                <h3>Location Properties</h3>
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th><h4>Property</h4></th>
+                                            <th><h4>Count</h4></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>                                
+                                        {% for sp in loc_props %}
+                                            <tr>
+                                                <td>
+                                                    <a href="{% url 'haystack_search' %}?property={{ property.id }}&search_type=exact&q={{ sp.property_value }}">{{ sp.property_value }}:</a>
+                                                </td>
+                                                <td>
+                                                    {{ sp.count }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% endif %}
+                            {% if med_props %}
+                                <h3>Media Properties</h3>
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th><h4>Property</h4></th>
+                                            <th><h4>Count</h4></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>                                
+                                        {% for sp in med_props %}
+                                            <tr>
+                                                <td>
+                                                    <a href="{% url 'haystack_search' %}?property={{ property.id }}&search_type=exact&q={{ sp.property_value }}">{{ sp.property_value }}:</a>
+                                                </td>
+                                                <td>
+                                                    {{ sp.count }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% endif %}
+                            {% if po_props %}
+                                <h3>Person Properties</h3>
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th><h4>Property</h4></th>
+                                            <th><h4>Count</h4></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>                                
+                                        {% for sp in po_props %}
+                                            <tr>
+                                                <td>
+                                                    <a href="{% url 'haystack_search' %}?property={{ property.id }}&search_type=exact&q={{ sp.property_value }}">{{ sp.property_value }}:</a>
+                                                </td>
+                                                <td>
+                                                    {{ sp.count }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% endif %}                            
                         {% endif %}
                     {% else %}
                         <p>There are currently no values for this property.</p>
@@ -71,18 +143,21 @@
                 </div>
                 
                 <div class="col-sm-4">
-                    {% if linked_data %}
-                        <div class="well filters padding">
-                            <h3>Linked Data</h3>
-                            <ul class="list-unstyled">
+                    <div class="well filters">
+                    
+                        <h3>Share</h3>
+                        <p><a href="mailto:?subject=[From {{ site_name }}] View this Property&amp;body=You can view this property at {{ property.get_full_absolute_url }}" target="_blank"> Email</a> | <a href="{% url 'admin:base_descriptiveproperty_change' property.id %}" target="_blank"> Edit</a></p>                   
+                    
+                        {% if linked_data %}  
+                            <hr />                         
+                            <h3>Linked Resources</h3>
                             {% for link in linked_data %}
-                                <li>
+                                <p>
                                     <a href="{{ link.link }}">{{ link.source.title }}</a>
-                                </li>
+                                </p>
                             {% endfor %}
-                            </ul>
-                        </div>
-                    {% endif %}
+                        {% endif %}
+                    </div>
                     {% if property.facet %}
                         <a class="btn btn-default btn-gray btn-block" type="button" href="{% url 'export_control_property_details' property.id %}">Export this Property</a>                            
                     {% else %}
