@@ -632,6 +632,7 @@ def get_facet_values(property):
         
 @register.assignment_tag
 def build_facet_counts(facets):
+    # facets = fields[facet_id]
     totals = {}
     for facet in facets:
         try:

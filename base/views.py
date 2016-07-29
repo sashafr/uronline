@@ -2,8 +2,8 @@
 
 from django.shortcuts import render, get_object_or_404, render_to_response
 from base.models import *
-from haystack.views import SearchView
-from base.forms import AdvancedSearchForm, AdvModelSearchForm, FileUploadForm
+import haystack.views
+from base.forms import *
 from django.forms.formsets import formset_factory
 from base import tasks
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
@@ -65,7 +65,7 @@ def format_filename(s):
     filename = ''.join(c for c in s if c in valid_chars)
     filename = filename.replace(' ','_') # I don't like spaces in filenames.
     return filename
-    
+        
 class JSONResponse(HttpResponse):
     def __init__(self, data, **kwargs):
         content = JSONRenderer().render(data)
@@ -1018,7 +1018,74 @@ def filedetailexport (request, file_id):
 def search_help(request):
 
     return render(request, 'base/search_help.html')
+ 
+def location_search_export(request, selected_facets):
+    if request.method == 'GET':
+        form = LocationFacetedSearchForm(request.GET)
+        if form.is_valid():
+            qs = form.search()
+            
+            #deal with facets
+            facets = selected_facets.split("&")
+            
+            for facet in facets:
+                if ":" not in facet:
+                    continue
+
+                field, value = facet.split(":", 1)
+
+                if value:
+                    control_value = ControlField.objects.filter(pk=qs.query.clean(value))
+                    if control_value:
+                        value_tree = control_value[0].get_descendants(include_self=True)
+                        sq = SQ()
+                        for index, node in enumerate(value_tree):
+                            kwargs = {str("%s" % (field)) : str("%s" % (node.id))}
+                            if index == 0:
+                                sq = SQ(**kwargs)
+                            else:
+                                sq = sq | SQ(**kwargs)
+                        qs = qs.filter(sq)                
+            
+            response = HttpResponse(content_type='text/csv')
+            filename_str = '"location_search_results_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S") + '.csv"'
+            response['Content-Disposition'] = 'attachment; filename=' + filename_str
+
+            writer = csv.writer(response)
+            titles = []
+            rows = []
+            for result in qs:
+                row = []
+                row_dict = {}
+                properties = result.text
+                for each_prop in properties:
+                    prop_pair = each_prop.split(':', 1)
+                    if len(prop_pair) < 2:
+                        continue
+                    prop_name = smart_str(prop_pair[0].strip())
+                    prop_value = smart_str(prop_pair[1].strip())
+                    if not (prop_name in titles):
+                        column_index = len(titles)                        
+                        titles.append(prop_name)
+                    else:
+                        column_index = titles.index(prop_name)
+                        if column_index in row_dict:
+                            prop_value = row_dict[column_index] + '; ' + prop_value
+                    row_dict[column_index] = prop_value
+                for i in range(len(titles)):
+                    if i in row_dict:
+                        row.append(row_dict[i])
+                    else:
+                        row.append('')
+                rows.append(row)
+
+            writer.writerow(titles)
+            for each_row in rows:
+                writer.writerow(each_row)
+            return response
     
+    return HttpResponseRedirect('/failed_export/')
+       
 def help(request):
 
     return render(request, 'base/help.html')
@@ -1385,31 +1452,29 @@ def collectiondetail(request, collection_id):
         
 def export_property_details(request, prop_id):
     order = request.GET.get('o', '')
-    type = request.GET.get('type', '')
 
     if not(order == 'property_value' or order == 'count' or order == '-property_value' or order == '-count'):
         order = 'property_value'
 
     prop = get_object_or_404(DescriptiveProperty, pk=prop_id)        
-    all_objs = None
 
-    if prop:
-        if type == 'l':
-            all_objs = LocationProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
-        elif type == 'm':
-            all_objs = MediaProperty.objects.filter(property_id = prop_id, media__type__id = 2).values('property_value').annotate(count = Count('property_value')).order_by(order)
-        elif type == 'po':
-            all_objs = PersonOrgProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
-        else: 
-            all_objs = SubjectProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
+    sub_props = SubjectProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
+    loc_props = LocationProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
+    med_props = MediaProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
+    po_props = PersonOrgProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
+    file_props = FileProperty.objects.filter(property_id = prop_id).values('property_value').annotate(count = Count('property_value')).order_by(order)
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="property_detail.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['Property Value', 'Count'])
-    for obj in all_objs:
-        writer.writerow([str(obj['property_value']), obj['count']])
+    writer.writerow(['Entity', 'Property Value', 'Count'])
+    all_objs = [sub_props, loc_props, med_props, po_props, file_props]
+    entities = ['Object', 'Location', 'Media', 'People', 'File']
+    for i in range(0,4):
+        props_list = all_objs[i]
+        for obj in props_list:
+            writer.writerow([entities[i], str(obj['property_value']), obj['count']])
     return response
     
 def export_control_property_details(request, prop_id):
@@ -1424,13 +1489,23 @@ def export_control_property_details(request, prop_id):
     response['Content-Disposition'] = 'attachment; filename="' + prop.property + '_property_detail.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['Parent Category', 'Property Value', 'Definition', 'Specific Count', 'Cumulative Count'])
+    writer.writerow(['Parent Category', 'Property Value', 'Definition', 'Object Specific Count', 'Object Cumulative Count', 'Location Specific Count', 'Location Cumulative Count', 'Media Specific Count', 'Media Cumulative Count', 'People Specific Count', 'People Cumulative Count', 'File Specific Count', 'File Cumulative Count'])
     for obj in all_objs:
         ancs = obj.ancestors()
-        spec_count = SubjectControlProperty.objects.filter(control_property_value_id = obj.id).count()
-        cum_count = obj.count_subj_instances()
+        sub_spec_count = SubjectControlProperty.objects.filter(control_property_value_id = obj.id).count()
+        sub_cum_count = obj.count_subj_instances()
+        loc_spec_count = LocationControlProperty.objects.filter(control_property_value_id = obj.id).count()
+        loc_cum_count = obj.count_loc_instances()
+        med_spec_count = MediaControlProperty.objects.filter(control_property_value_id = obj.id).count()
+        med_cum_count = obj.count_med_instances()
+        po_spec_count = PersonOrgControlProperty.objects.filter(control_property_value_id = obj.id).count()
+        po_cum_count = obj.count_po_instances()
+        file_spec_count = FileControlProperty.objects.filter(control_property_value_id = obj.id).count()
+        file_cum_count = obj.count_file_instances()        
+        
         desc = obj.definition.encode('ascii', 'ignore')
-        writer.writerow([ancs, obj.title, desc, spec_count, cum_count])
+        writer.writerow([ancs, obj.title, desc, sub_spec_count, sub_cum_count, loc_spec_count, loc_cum_count, med_spec_count, med_cum_count, po_spec_count, po_cum_count, file_spec_count, file_cum_count])
+    
     return response
     
 def export_search_results(request):

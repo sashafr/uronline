@@ -349,7 +349,7 @@ class LocationAdvancedSearchForm(SearchForm):
         )
     )    
     # img = forms.ChoiceField(label='Image', required=False, choices=(('default', '---'), ('yes', 'Yes'), ('no', 'No')))
-    # col = forms.ModelChoiceField(label='Collection', required=False, queryset=Collection.objects.all())   
+    col = forms.ModelChoiceField(label='Collection', required=False, queryset=Collection.objects.all())   
 
     def search(self):
         """This search method starts from a new query of all documents
@@ -358,12 +358,12 @@ class LocationAdvancedSearchForm(SearchForm):
         redoing any actions normally taken before the SearchForm 
         is called, such as faceting the SearchQuerySet."""
               
-        sqs = RelatedSearchQuerySet()
+        sqs = SearchQuerySet()
         
         sqs = sqs.filter(django_ct = 'base.location')
         
         # faceting must be done here manually b/c we are creating a new SearchQuerySet
-        facet_fields = DescriptiveProperty.objects.filter(control_field = True)
+        facet_fields = DescriptiveProperty.objects.filter(control_field = True, visible = True)
         for facet_field in facet_fields:
             sqs = sqs.facet('facet_prop_' + str(facet_field.pk))
         
@@ -411,16 +411,19 @@ class LocationAdvancedSearchForm(SearchForm):
             po_rels = Location.objects.filter(locationpersonorgrelations__person_org_id=po).values_list('id', flat=True)
             sqs = sqs.filter(django_id__in = po_rels)
             
-        # img = adv_fields['img']
-        # if img != '':
+        # img = self.cleaned_data['img']
+        # if img != None and img != '':
             # imgs = ['jpg', 'jpeg', 'png', 'tif', 'JPG', 'JPEG', 'PNG', 'TIF']
             # if img == 'yes':
-                # queryset = queryset.filter(locationfile__rsid__filetype__in = imgs)
-            # elif img == 'no':
-                # queryset = queryset.exclude(locationfile__rsid__filetype__in = imgs)
-        # col = adv_fields['col']
-        # if col != '':
-            # queryset = queryset.filter(locationcollection__collection_id = col)
+                # img_locs = Location.objects.filter(locationfile__rsid__filetype__in = imgs).values_list('id', flat=True)
+            # else:
+                # img_locs = Location.objects.exclude(locationfile__rsid__filetype__in = imgs).values_list('id', flat=True)
+            # sqs = sqs.filter(django_id__in = img_locs)
+            
+        col = self.cleaned_data['col']
+        if col != None and col != '':
+            loc_cols = Location.objects.filter(locationcollection__collection_id = col).values_list('id', flat=True)
+            sqs = sqs.filter(django_id__in = loc_cols)
         
         # ADVANCED SEARCH
         

@@ -7,6 +7,12 @@
 {% block css %}
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'django_select2/css/select2.min.css' %}">
+    
+    <style>
+        .select2-chosen {
+            color: black;
+        }
+    </style>
 {% endblock %}
 
 <!-- Metadata -->
@@ -62,10 +68,11 @@
                                 {{ form.custom_loc_desc3|add_class:"form-control selectpicker" }}
                             </div>
                         </div>                    
-                        <div class="col-sm-3 col-md-2">
+                        <div class="col-sm-3 col-md-3">
                             <div class="btn-group pull-right" role="group">
+                                <input type="submit" class="btn btn-default" id="export" style="margin-top:20px; padding: 12px 20px;" value="Export">
                                 <input type="submit" class="btn btn-default" id="search" value="Search">
-                                <button class="btn btn-default {% adv_searchform_has_changed request as asf_changed %}{% if asf_changed %}active{% endif %}" data-toggle="collapse" id="searchCollapse" href="#advancedsearch"><span class="glyphicon glyphicon-triangle-bottom"></span></button>
+                                <button class="btn btn-default {% adv_searchform_has_changed request as asf_changed %}{% if asf_changed %}active{% endif %}" data-toggle="collapse" id="searchCollapse" href="#advancedsearch"><em>More  </em><span class="glyphicon glyphicon-triangle-bottom"></span></button>
                             </div>
                         </div>
                     </div>                    
@@ -142,6 +149,10 @@
                     <hr />                    
                     <div class="row">
                         <div class="col-sm-5 col-md-3">
+                            <label>Collection: </label>
+                            {{ form.col|add_class:"selectpicker mini" }}
+                        </div>                        
+                        <div class="col-sm-5 col-md-3">
                             <label>Order: </label>
                             {{ form.order|add_class:"selectpicker mini" }}
                         </div>
@@ -158,10 +169,6 @@
         <div class="results">
             <div class="container">
                 <h1><strong>{{ page.paginator.count }}</strong> Results</h1>
-                <div id="sort-export" class="pull-right hidden-xs hidden-sm">
-                    <input type="submit" class="btn btn-default" id="export" value="Export Results">
-                </div>
-
                 <div class="row">
                     <!-- Results Column -->
                     <div class="col-md-8">
@@ -196,76 +203,31 @@
 
                     <!-- Facets Column -->
                     <div class="col-md-4">
-                        <div class="well filters">
-                            <!-- Begin faceting -->
-                            <div id="ot_facetname"><h5>Filter by Object Type</h5></div>
-                            <ul>
-                                {% get_facet_values 19 as facet_values %}
-                                {% build_facet_counts facets.fields.facet_prop_19 as facet_counts %}
-                                {% recursetree facet_values %}
-                                    {% get_node_facet_count facet_counts node as current_total %}
-                                    {% if current_total > 0 %}
-                                    <li>
-                                        <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_19:{{ node.id|urlencode }}"><span class="badge">{{ current_total }}</span>{{ node.title }}</a>
-                                        {% if not node.is_leaf_node %}
-                                            <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse">  +</a>
-                                            <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
-                                                <ul>
-                                                    {{ children }}
-                                                </ul>
-                                            </div>
+                        {% for facet in location_facets %}
+                            <div class="well filters">
+                                <div id="ot_facetname"><h5>Filter by {{ facet.property }}</h5></div>
+                                <ul>
+                                    {% get_facet_values facet.id as facet_values %}
+                                    {% build_facet_counts facets.fields.facet_prop_46 as facet_counts %}
+                                    {% recursetree facet_values %}
+                                        {% get_node_facet_count facet_counts node as current_total %}
+                                        {% if current_total > 0 %}
+                                        <li>
+                                            <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_{{ facet.id }}:{{ node.id|urlencode }}"><span class="badge">{{ current_total }}</span>{{ node.title }}</a>
+                                            {% if not node.is_leaf_node %}
+                                                <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse">  +</a>
+                                                <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
+                                                    <ul>
+                                                        {{ children }}
+                                                    </ul>
+                                                </div>
+                                            {% endif %}
+                                        </li>
                                         {% endif %}
-                                    </li>
-                                    {% endif %}
-                                {% endrecursetree %}
-                            </ul>
-                        </div>
-                        <div class="well filters">
-                            <div id="m_facetname"><h5>Filter by Material</h5></div>
-                            <ul>
-                                {% get_facet_values 12 as facet_values %}
-                                {% build_facet_counts facets.fields.facet_prop_12 as facet_counts %}
-                                {% recursetree facet_values %}
-                                    {% get_node_facet_count facet_counts node as current_total %}
-                                    {% if current_total > 0 %}
-                                    <li>
-                                        <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_12:{{ node.id|urlencode }}"><span class="badge">{{ current_total }}</span>{{ node.title }}</a>
-                                        {% if not node.is_leaf_node %}
-                                            <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse">  +</a>
-                                            <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
-                                                <ul>
-                                                    {{ children }}
-                                                </ul>
-                                            </div>
-                                        {% endif %}
-                                    </li>
-                                    {% endif %}
-                                {% endrecursetree %}
-                            </ul> 
-                        </div>
-                        <div class="well filters">
-                            <div id="muse_facetname"><h5>Filter by Museum</h5></div>
-                            <ul>
-                                {% get_facet_values 59 as facet_values %}
-                                {% build_facet_counts facets.fields.facet_prop_59 as facet_counts %}
-                                {% recursetree facet_values %}
-                                    {% get_node_facet_count facet_counts node as current_total %}
-                                    {% if current_total > 0 %}
-                                    <li>
-                                        <a href="{{ request.get_full_path }}&amp;selected_facets=facet_prop_59:{{ node.id|urlencode }}"><span class="badge">{{ current_total }}</span>{{ node.title }}</a>
-                                        {% if not node.is_leaf_node %}
-                                            <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse">  +</a>
-                                            <div class="collapse collapse-unit" id="{{ node.id }}-collapse">
-                                                <ul>
-                                                    {{ children }}
-                                                </ul>
-                                            </div>
-                                        {% endif %}
-                                    </li>
-                                    {% endif %}
-                                {% endrecursetree %}
-                            </ul>                                 
-                        </div>  
+                                    {% endrecursetree %}
+                                </ul>
+                            </div>
+                        {% endfor %}                    
                     </div>
                 </div>
             </div>
@@ -308,9 +270,9 @@
         });
         
         $("#export").click(function() {
-            $(this).closest("form").attr('action', "{% query_params_getlist request 'selected_facets' as facets %}{% url 'search_export' facets %}");
-        });
-        
+            $(this).closest("form").attr('action', "{% query_params_getlist request 'selected_facets' as facets %}{% url 'location_search_export' facets %}");
+        });        
+
         $("#search").click(function() {
             $(this).closest("form").attr('action', ".");
         });

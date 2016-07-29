@@ -7,6 +7,19 @@ from haystack.query import SearchQuerySet
 
 sqs = SearchQuerySet().facet('prop_19_exact')
 
+class LocationFacetedSearchView(FacetedSearchView):
+    """
+    We subclass the base haystack view in order to add context.
+    """
+    
+    def extra_context(self):
+    
+        extra_context = super(LocationFacetedSearchView, self).extra_context()
+        location_facets = DescriptiveProperty.objects.filter(control_field = True, visible = True).filter(Q(primary_type='SL') | Q(primary_type='AL'))
+        extra_context['location_facets'] = location_facets
+            
+        return extra_context
+
 urlpatterns = patterns('base.views',
     url(r'^admin/base/file/add/', 'addfile', name='addfile'),
     url(r'^$', 'home', name='home'),
@@ -61,9 +74,10 @@ urlpatterns = patterns('base.views',
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^bulk_upload_file/', 'bulk_upload_file', name='bulk_upload_file'),
     url(r'^export/$', 'export', name='export'),
-    url(r'^search_locations/', FacetedSearchView(
+    url(r'^search_locations/', LocationFacetedSearchView(
         form_class = LocationFacetedSearchForm,
         searchqueryset = sqs,
         template = 'search/search_locations.html',
-    ), name='haystack_search_locations'),    
+    ), name='haystack_search_locations'),   
+    url(r'^location_search_export/(?P<selected_facets>\S+)/$', 'location_search_export', name='location_search_export'),    
 )

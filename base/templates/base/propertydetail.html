@@ -24,6 +24,7 @@
                     <p>{{ property.notes }}</p>
                     {% if all_objs == 'true' %}
                         {% if property.facet %}
+                            <h3>Object Properties</h3>
                             <table class="table table-striped">
                                 <tbody>
                                 {% recursetree cntl_props %}
@@ -43,6 +44,86 @@
                                 {% endrecursetree %}
                                 </tbody>
                             </table>
+                            <h3>Location Properties</h3>
+                            <table class="table table-striped">
+                                <tbody>
+                                {% recursetree cntl_props %}
+                                    <tr>
+                                        <td width="800">
+                                            <a href="{% url 'termdetail' node.id %}" data-toggle="popover" data-html="true" data-content="{{ node.definition }}"><span class="badge">{{ node.count_loc_instances }}</span>&nbsp;&nbsp;{{ node.title }}</a>
+                                        {% if not node.is_leaf_node %}
+                                            <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse">  + Expand</a>
+                                            <table class="table table-striped table-bordered collapse collapse-unit" style="margin: 10px 0;" id="{{ node.id }}-collapse">
+                                                <tbody>
+                                                    {{ children }}
+                                                </tbody>
+                                            </table>
+                                        {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endrecursetree %}
+                                </tbody>
+                            </table>
+                            <h3>Media Properties</h3>
+                            <table class="table table-striped">
+                                <tbody>
+                                {% recursetree cntl_props %}
+                                    <tr>
+                                        <td width="800">
+                                            <a href="{% url 'termdetail' node.id %}" data-toggle="popover" data-html="true" data-content="{{ node.definition }}"><span class="badge">{{ node.count_med_instances }}</span>&nbsp;&nbsp;{{ node.title }}</a>
+                                        {% if not node.is_leaf_node %}
+                                            <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse">  + Expand</a>
+                                            <table class="table table-striped table-bordered collapse collapse-unit" style="margin: 10px 0;" id="{{ node.id }}-collapse">
+                                                <tbody>
+                                                    {{ children }}
+                                                </tbody>
+                                            </table>
+                                        {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endrecursetree %}
+                                </tbody>
+                            </table>
+                            <h3>People Properties</h3>
+                            <table class="table table-striped">
+                                <tbody>
+                                {% recursetree cntl_props %}
+                                    <tr>
+                                        <td width="800">
+                                            <a href="{% url 'termdetail' node.id %}" data-toggle="popover" data-html="true" data-content="{{ node.definition }}"><span class="badge">{{ node.count_po_instances }}</span>&nbsp;&nbsp;{{ node.title }}</a>
+                                        {% if not node.is_leaf_node %}
+                                            <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse">  + Expand</a>
+                                            <table class="table table-striped table-bordered collapse collapse-unit" style="margin: 10px 0;" id="{{ node.id }}-collapse">
+                                                <tbody>
+                                                    {{ children }}
+                                                </tbody>
+                                            </table>
+                                        {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endrecursetree %}
+                                </tbody>
+                            </table>
+                            <h3>File Properties</h3>
+                            <table class="table table-striped">
+                                <tbody>
+                                {% recursetree cntl_props %}
+                                    <tr>
+                                        <td width="800">
+                                            <a href="{% url 'termdetail' node.id %}" data-toggle="popover" data-html="true" data-content="{{ node.definition }}"><span class="badge">{{ node.count_file_instances }}</span>&nbsp;&nbsp;{{ node.title }}</a>
+                                        {% if not node.is_leaf_node %}
+                                            <a data-toggle="collapse" class="collapse-button" href="#{{ node.id }}-collapse">  + Expand</a>
+                                            <table class="table table-striped table-bordered collapse collapse-unit" style="margin: 10px 0;" id="{{ node.id }}-collapse">
+                                                <tbody>
+                                                    {{ children }}
+                                                </tbody>
+                                            </table>
+                                        {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endrecursetree %}
+                                </tbody>
+                            </table>                            
                         {% else %}
                             {% if sub_props %}
                                 <h3>Object Properties</h3>
