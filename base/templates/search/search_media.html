@@ -30,14 +30,14 @@
                             <a class="btn btn-default" href="{% url 'haystack_search' %}">Search Objects</a>
                         </div>                     
                         <div class="col-sm-3 col-md-3">
-                            <a class="btn btn-default active" href="{% url 'haystack_search_locations' %}">Search Locations</a>
-                        </div>      
+                            <a class="btn btn-default" href="{% url 'haystack_search_locations' %}">Search Locations</a>
+                        </div>   
                         <div class="col-sm-3 col-md-3">
-                            <a class="btn btn-default" href="{% url 'haystack_search_media' %}">Search Media</a>
+                            <a class="btn btn-default active" href="{% url 'haystack_search_media' %}">Search Media</a>
                         </div>   
                         <div class="col-sm-3 col-md-3">
                             <a class="btn btn-default" href="{% url 'haystack_search_people' %}">Search People</a>
-                        </div>                        
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-sm-5 col-md-3 pull-down">
@@ -48,40 +48,40 @@
                         </div>
                         <div class="col-sm-5 col-md-3 pull-down">
                             <div class="form-group">
-                                <label>{{ form.custom_loc_title1.label }}</label>
-                                {{ form.custom_loc_title1|add_class:"form-control selectpicker" }}
+                                <label>{{ form.custom_med_title1.label }}</label>
+                                {{ form.custom_med_title1|add_class:"form-control selectpicker" }}
                             </div>
                         </div>
                         <div class="col-sm-5 col-md-3 pull-down">
                             <div class="form-group">
-                                <label>{{ form.custom_loc_title2.label }}</label>
-                                {{ form.custom_loc_title2|add_class:"form-control selectpicker" }}
+                                <label>{{ form.custom_med_title2.label }}</label>
+                                {{ form.custom_med_title2|add_class:"form-control selectpicker" }}
                             </div>
                         </div>
                         <div class="col-sm-5 col-md-3 pull-down">
                             <div class="form-group">
-                                <label>{{ form.custom_loc_title3.label }}</label>
-                                {{ form.custom_loc_title3 |add_class:"form-control selectpicker"}}
+                                <label>{{ form.custom_med_title3.label }}</label>
+                                {{ form.custom_med_title3 |add_class:"form-control selectpicker"}}
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-sm-5 col-md-3 pull-down">
                             <div class="form-group">
-                                <label>{{ form.custom_loc_desc1.label }}</label>
-                                {{ form.custom_loc_desc1|add_class:"form-control selectpicker" }}
+                                <label>{{ form.custom_med_desc1.label }}</label>
+                                {{ form.custom_med_desc1|add_class:"form-control selectpicker" }}
                             </div>
                         </div>
                         <div class="col-sm-5 col-md-3 pull-down">
                             <div class="form-group">
-                                <label>{{ form.custom_loc_desc2.label }}</label>
-                                {{ form.custom_loc_desc2|add_class:"form-control selectpicker" }}
+                                <label>{{ form.custom_med_desc2.label }}</label>
+                                {{ form.custom_med_desc2|add_class:"form-control selectpicker" }}
                             </div>
                         </div>
                         <div class="col-sm-5 col-md-3 pull-down">
                             <div class="form-group">
-                                <label>{{ form.custom_loc_desc3.label }}</label>
-                                {{ form.custom_loc_desc3|add_class:"form-control selectpicker" }}
+                                <label>{{ form.custom_med_desc3.label }}</label>
+                                {{ form.custom_med_desc3|add_class:"form-control selectpicker" }}
                             </div>
                         </div>                    
                         <div class="col-sm-3 col-md-3">
@@ -154,8 +154,8 @@
                             {{ form.sub|add_class:"selectpicker" }}
                         </div>
                         <div class="col-sm-5 col-md-3">
-                            <label>{{ form.med.label }}</label>
-                            {{ form.med|add_class:"selectpicker" }}
+                            <label>{{ form.loc.label }}</label>
+                            {{ form.loc|add_class:"selectpicker" }}
                         </div>
                         <div class="col-sm-5 col-md-3">
                             <label>{{ form.po.label }}</label>
@@ -219,7 +219,7 @@
 
                     <!-- Facets Column -->
                     <div class="col-md-4">
-                        {% for facet in location_facets %}
+                        {% for facet in media_facets %}
                             <div class="well filters">
                                 <div id="ot_facetname"><h5>Filter by {{ facet.property }}</h5></div>
                                 <ul>
@@ -286,7 +286,7 @@
         });
         
         $("#export").click(function() {
-            $(this).closest("form").attr('action', "{% query_params_getlist request 'selected_facets' as facets %}{% url 'location_search_export' facets %}");
+            $(this).closest("form").attr('action', "{% query_params_getlist request 'selected_facets' as facets %}{% url 'media_search_export' facets %}");
         });        
 
         $("#search").click(function() {

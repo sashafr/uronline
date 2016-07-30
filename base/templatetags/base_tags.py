@@ -631,8 +631,8 @@ def get_facet_values(property):
     return ControlField.objects.filter(type_id = property)
         
 @register.assignment_tag
-def build_facet_counts(facets):
-    # facets = fields[facet_id]
+def build_facet_counts(fields, facet):
+    facets = fields['facet_prop_' + str(facet.id)]
     totals = {}
     for facet in facets:
         try:

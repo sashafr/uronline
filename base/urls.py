@@ -5,7 +5,18 @@ from forms import *
 from haystack.views import SearchView, search_view_factory, FacetedSearchView
 from haystack.query import SearchQuerySet
 
-sqs = SearchQuerySet().facet('prop_19_exact')
+class SubjectFacetedSearchView(FacetedSearchView):
+    """
+    We subclass the base haystack view in order to add context.
+    """
+    
+    def extra_context(self):
+    
+        extra_context = super(SubjectFacetedSearchView, self).extra_context()
+        subject_facets = DescriptiveProperty.objects.filter(control_field = True, visible = True).filter(Q(primary_type='SO') | Q(primary_type='AL'))
+        extra_context['subject_facets'] = subject_facets
+            
+        return extra_context
 
 class LocationFacetedSearchView(FacetedSearchView):
     """
@@ -19,6 +30,33 @@ class LocationFacetedSearchView(FacetedSearchView):
         extra_context['location_facets'] = location_facets
             
         return extra_context
+        
+class MediaFacetedSearchView(FacetedSearchView):
+    """
+    We subclass the base haystack view in order to add context.
+    """
+    
+    def extra_context(self):
+    
+        extra_context = super(MediaFacetedSearchView, self).extra_context()
+        media_facets = DescriptiveProperty.objects.filter(control_field = True, visible = True).filter(Q(primary_type='MP') | Q(primary_type='AL'))
+        extra_context['media_facets'] = media_facets
+            
+        return extra_context
+        
+class PeopleFacetedSearchView(FacetedSearchView):
+    """
+    We subclass the base haystack view in order to add context.
+    """
+    
+    def extra_context(self):
+    
+        extra_context = super(PeopleFacetedSearchView, self).extra_context()
+        people_facets = DescriptiveProperty.objects.filter(control_field = True, visible = True).filter(Q(primary_type='PO') | Q(primary_type='AL'))
+        extra_context['people_facets'] = people_facets
+            
+        return extra_context
+        
 
 urlpatterns = patterns('base.views',
     url(r'^admin/base/file/add/', 'addfile', name='addfile'),
@@ -31,10 +69,10 @@ urlpatterns = patterns('base.views',
     url(r'^about/cast-of-characters/', 'characters', name='characters'),
     url(r'^developers/', 'developers', name='developers'),
     url(r'^sample/', 'sample', name='sample'),
-    url(r'^search/', FacetedSearchView(
-        form_class = AdvModelSearchForm,
-        searchqueryset = sqs
-    ), name='haystack_search'),
+    url(r'^search/', SubjectFacetedSearchView(
+        form_class = AdvFacetedSearchForm,
+        template = 'search/search.html',
+    ), name='haystack_search'),    
     # ex: /ur.iaas.upenn.edu/subject/5/
     url(r'^subject/(?P<subject_id>\d+)/$', 'subjectdetail', name='subjectdetail'),
     url(r'^subject_export/(?P<subject_id>\d+)/$', 'subjectdetailexport', name='subjectdetailexport'),        
@@ -76,8 +114,18 @@ urlpatterns = patterns('base.views',
     url(r'^export/$', 'export', name='export'),
     url(r'^search_locations/', LocationFacetedSearchView(
         form_class = LocationFacetedSearchForm,
-        searchqueryset = sqs,
         template = 'search/search_locations.html',
     ), name='haystack_search_locations'),   
-    url(r'^location_search_export/(?P<selected_facets>\S+)/$', 'location_search_export', name='location_search_export'),    
+    url(r'^location_search_export/(?P<selected_facets>\S+)/$', 'location_search_export', name='location_search_export'),
+    url(r'^search_media/', MediaFacetedSearchView(
+        form_class = MediaFacetedSearchForm,
+        template = 'search/search_media.html',
+    ), name='haystack_search_media'),   
+    url(r'^media_search_export/(?P<selected_facets>\S+)/$', 'media_search_export', name='media_search_export'),
+    url(r'^search_people/', PeopleFacetedSearchView(
+        form_class = PeopleFacetedSearchForm,
+        template = 'search/search_people.html',
+    ), name='haystack_search_people'),   
+    url(r'^people_search_export/(?P<selected_facets>\S+)/$', 'people_search_export', name='people_search_export'),    
+    
 )

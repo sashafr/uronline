@@ -1085,7 +1085,141 @@ def location_search_export(request, selected_facets):
             return response
     
     return HttpResponseRedirect('/failed_export/')
-       
+ 
+def media_search_export(request, selected_facets):
+    if request.method == 'GET':
+        form = MediaFacetedSearchForm(request.GET)
+        if form.is_valid():
+            qs = form.search()
+            
+            #deal with facets
+            facets = selected_facets.split("&")
+            
+            for facet in facets:
+                if ":" not in facet:
+                    continue
+
+                field, value = facet.split(":", 1)
+
+                if value:
+                    control_value = ControlField.objects.filter(pk=qs.query.clean(value))
+                    if control_value:
+                        value_tree = control_value[0].get_descendants(include_self=True)
+                        sq = SQ()
+                        for index, node in enumerate(value_tree):
+                            kwargs = {str("%s" % (field)) : str("%s" % (node.id))}
+                            if index == 0:
+                                sq = SQ(**kwargs)
+                            else:
+                                sq = sq | SQ(**kwargs)
+                        qs = qs.filter(sq)                
+            
+            response = HttpResponse(content_type='text/csv')
+            filename_str = '"media_search_results_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S") + '.csv"'
+            response['Content-Disposition'] = 'attachment; filename=' + filename_str
+
+            writer = csv.writer(response)
+            titles = []
+            rows = []
+            for result in qs:
+                row = []
+                row_dict = {}
+                properties = result.text
+                for each_prop in properties:
+                    prop_pair = each_prop.split(':', 1)
+                    if len(prop_pair) < 2:
+                        continue
+                    prop_name = smart_str(prop_pair[0].strip())
+                    prop_value = smart_str(prop_pair[1].strip())
+                    if not (prop_name in titles):
+                        column_index = len(titles)                        
+                        titles.append(prop_name)
+                    else:
+                        column_index = titles.index(prop_name)
+                        if column_index in row_dict:
+                            prop_value = row_dict[column_index] + '; ' + prop_value
+                    row_dict[column_index] = prop_value
+                for i in range(len(titles)):
+                    if i in row_dict:
+                        row.append(row_dict[i])
+                    else:
+                        row.append('')
+                rows.append(row)
+
+            writer.writerow(titles)
+            for each_row in rows:
+                writer.writerow(each_row)
+            return response
+    
+    return HttpResponseRedirect('/failed_export/')
+ 
+def people_search_export(request, selected_facets):
+    if request.method == 'GET':
+        form = PeopleFacetedSearchForm(request.GET)
+        if form.is_valid():
+            qs = form.search()
+            
+            #deal with facets
+            facets = selected_facets.split("&")
+            
+            for facet in facets:
+                if ":" not in facet:
+                    continue
+
+                field, value = facet.split(":", 1)
+
+                if value:
+                    control_value = ControlField.objects.filter(pk=qs.query.clean(value))
+                    if control_value:
+                        value_tree = control_value[0].get_descendants(include_self=True)
+                        sq = SQ()
+                        for index, node in enumerate(value_tree):
+                            kwargs = {str("%s" % (field)) : str("%s" % (node.id))}
+                            if index == 0:
+                                sq = SQ(**kwargs)
+                            else:
+                                sq = sq | SQ(**kwargs)
+                        qs = qs.filter(sq)                
+            
+            response = HttpResponse(content_type='text/csv')
+            filename_str = '"people_search_results_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S") + '.csv"'
+            response['Content-Disposition'] = 'attachment; filename=' + filename_str
+
+            writer = csv.writer(response)
+            titles = []
+            rows = []
+            for result in qs:
+                row = []
+                row_dict = {}
+                properties = result.text
+                for each_prop in properties:
+                    prop_pair = each_prop.split(':', 1)
+                    if len(prop_pair) < 2:
+                        continue
+                    prop_name = smart_str(prop_pair[0].strip())
+                    prop_value = smart_str(prop_pair[1].strip())
+                    if not (prop_name in titles):
+                        column_index = len(titles)                        
+                        titles.append(prop_name)
+                    else:
+                        column_index = titles.index(prop_name)
+                        if column_index in row_dict:
+                            prop_value = row_dict[column_index] + '; ' + prop_value
+                    row_dict[column_index] = prop_value
+                for i in range(len(titles)):
+                    if i in row_dict:
+                        row.append(row_dict[i])
+                    else:
+                        row.append('')
+                rows.append(row)
+
+            writer.writerow(titles)
+            for each_row in rows:
+                writer.writerow(each_row)
+            return response
+    
+    return HttpResponseRedirect('/failed_export/')
+ 
 def help(request):
 
     return render(request, 'base/help.html')
@@ -1573,7 +1707,7 @@ def kyra_special_2(request):
     
 def search_export(request, selected_facets):
     if request.method == 'GET':
-        form = AdvModelSearchForm(request.GET)
+        form = AdvFacetedSearchForm(request.GET)
         if form.is_valid():
             qs = form.search()
             
@@ -1600,7 +1734,7 @@ def search_export(request, selected_facets):
                         qs = qs.filter(sq)                
             
             response = HttpResponse(content_type='text/csv')
-            filename_str = '"search_results_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S") + '.csv"'
+            filename_str = '"object_search_results_' + datetime.now().strftime("%Y.%m.%d_%H.%M.%S") + '.csv"'
             response['Content-Disposition'] = 'attachment; filename=' + filename_str
 
             writer = csv.writer(response)
