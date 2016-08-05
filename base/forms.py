@@ -147,6 +147,11 @@ class AdvancedSearchForm(SearchForm):
         query_list = [self.cleaned_data['q'], self.cleaned_data['q2'], self.cleaned_data['q3']]
         op_list = [self.cleaned_data['op'], self.cleaned_data['op2']]
         
+        # KEYWORD SEARCH
+        if self.cleaned_data['keyword']:
+            pg_fix = re.sub(r'(\s*)([pPlL][gG]?)(\s*?[\./]?\s*)(\d+)', r'\1\2* *\4*', self.cleaned_data['keyword'])
+            sqs = sqs.filter(content = pg_fix)        
+        
         # SELECTED FIELDS SEARCH
         custom_fields = ResultProperty.objects.filter(display_field__startswith = 'sub')
         
@@ -433,6 +438,11 @@ class LocationAdvancedSearchForm(SearchForm):
         type_list = [self.cleaned_data['search_type'], self.cleaned_data['search_type2'], self.cleaned_data['search_type3']]
         query_list = [self.cleaned_data['q'], self.cleaned_data['q2'], self.cleaned_data['q3']]
         op_list = [self.cleaned_data['op'], self.cleaned_data['op2']]
+
+        # KEYWORD SEARCH
+        if self.cleaned_data['keyword']:
+            pg_fix = re.sub(r'(\s*)([pPlL][gG]?)(\s*?[\./]?\s*)(\d+)', r'\1\2* *\4*', self.cleaned_data['keyword'])
+            sqs = sqs.filter(content = pg_fix)
         
         # SELECTED FIELDS SEARCH
         custom_fields = ResultProperty.objects.filter(display_field__startswith = 'loc')
@@ -721,6 +731,11 @@ class MediaAdvancedSearchForm(SearchForm):
         query_list = [self.cleaned_data['q'], self.cleaned_data['q2'], self.cleaned_data['q3']]
         op_list = [self.cleaned_data['op'], self.cleaned_data['op2']]
         
+        # KEYWORD SEARCH
+        if self.cleaned_data['keyword']:
+            pg_fix = re.sub(r'(\s*)([pPlL][gG]?)(\s*?[\./]?\s*)(\d+)', r'\1\2* *\4*', self.cleaned_data['keyword'])
+            sqs = sqs.filter(content = pg_fix)        
+        
         # SELECTED FIELDS SEARCH
         custom_fields = ResultProperty.objects.filter(display_field__startswith = 'med')
         
@@ -1007,6 +1022,11 @@ class PeopleAdvancedSearchForm(SearchForm):
         type_list = [self.cleaned_data['search_type'], self.cleaned_data['search_type2'], self.cleaned_data['search_type3']]
         query_list = [self.cleaned_data['q'], self.cleaned_data['q2'], self.cleaned_data['q3']]
         op_list = [self.cleaned_data['op'], self.cleaned_data['op2']]
+
+        # KEYWORD SEARCH
+        if self.cleaned_data['keyword']:
+            pg_fix = re.sub(r'(\s*)([pPlL][gG]?)(\s*?[\./]?\s*)(\d+)', r'\1\2* *\4*', self.cleaned_data['keyword'])
+            sqs = sqs.filter(content = pg_fix)
         
         # SELECTED FIELDS SEARCH
         custom_fields = ResultProperty.objects.filter(display_field__startswith = 'po')
