@@ -1058,20 +1058,21 @@ def location_search_export(request, selected_facets):
                 row = []
                 row_dict = {}
                 properties = result.text
-                for each_prop in properties:
-                    prop_pair = each_prop.split(':', 1)
-                    if len(prop_pair) < 2:
-                        continue
-                    prop_name = smart_str(prop_pair[0].strip())
-                    prop_value = smart_str(prop_pair[1].strip())
-                    if not (prop_name in titles):
-                        column_index = len(titles)                        
-                        titles.append(prop_name)
-                    else:
-                        column_index = titles.index(prop_name)
-                        if column_index in row_dict:
-                            prop_value = row_dict[column_index] + '; ' + prop_value
-                    row_dict[column_index] = prop_value
+                if properties:
+                    for each_prop in properties:
+                        prop_pair = each_prop.split(':', 1)
+                        if len(prop_pair) < 2:
+                            continue
+                        prop_name = smart_str(prop_pair[0].strip())
+                        prop_value = smart_str(prop_pair[1].strip())
+                        if not (prop_name in titles):
+                            column_index = len(titles)                        
+                            titles.append(prop_name)
+                        else:
+                            column_index = titles.index(prop_name)
+                            if column_index in row_dict:
+                                prop_value = row_dict[column_index] + '; ' + prop_value
+                        row_dict[column_index] = prop_value
                 for i in range(len(titles)):
                     if i in row_dict:
                         row.append(row_dict[i])
@@ -1125,20 +1126,21 @@ def media_search_export(request, selected_facets):
                 row = []
                 row_dict = {}
                 properties = result.text
-                for each_prop in properties:
-                    prop_pair = each_prop.split(':', 1)
-                    if len(prop_pair) < 2:
-                        continue
-                    prop_name = smart_str(prop_pair[0].strip())
-                    prop_value = smart_str(prop_pair[1].strip())
-                    if not (prop_name in titles):
-                        column_index = len(titles)                        
-                        titles.append(prop_name)
-                    else:
-                        column_index = titles.index(prop_name)
-                        if column_index in row_dict:
-                            prop_value = row_dict[column_index] + '; ' + prop_value
-                    row_dict[column_index] = prop_value
+                if properties:
+                    for each_prop in properties:
+                        prop_pair = each_prop.split(':', 1)
+                        if len(prop_pair) < 2:
+                            continue
+                        prop_name = smart_str(prop_pair[0].strip())
+                        prop_value = smart_str(prop_pair[1].strip())
+                        if not (prop_name in titles):
+                            column_index = len(titles)                        
+                            titles.append(prop_name)
+                        else:
+                            column_index = titles.index(prop_name)
+                            if column_index in row_dict:
+                                prop_value = row_dict[column_index] + '; ' + prop_value
+                        row_dict[column_index] = prop_value
                 for i in range(len(titles)):
                     if i in row_dict:
                         row.append(row_dict[i])
@@ -1192,20 +1194,21 @@ def people_search_export(request, selected_facets):
                 row = []
                 row_dict = {}
                 properties = result.text
-                for each_prop in properties:
-                    prop_pair = each_prop.split(':', 1)
-                    if len(prop_pair) < 2:
-                        continue
-                    prop_name = smart_str(prop_pair[0].strip())
-                    prop_value = smart_str(prop_pair[1].strip())
-                    if not (prop_name in titles):
-                        column_index = len(titles)                        
-                        titles.append(prop_name)
-                    else:
-                        column_index = titles.index(prop_name)
-                        if column_index in row_dict:
-                            prop_value = row_dict[column_index] + '; ' + prop_value
-                    row_dict[column_index] = prop_value
+                if properties:                
+                    for each_prop in properties:
+                        prop_pair = each_prop.split(':', 1)
+                        if len(prop_pair) < 2:
+                            continue
+                        prop_name = smart_str(prop_pair[0].strip())
+                        prop_value = smart_str(prop_pair[1].strip())
+                        if not (prop_name in titles):
+                            column_index = len(titles)                        
+                            titles.append(prop_name)
+                        else:
+                            column_index = titles.index(prop_name)
+                            if column_index in row_dict:
+                                prop_value = row_dict[column_index] + '; ' + prop_value
+                        row_dict[column_index] = prop_value
                 for i in range(len(titles)):
                     if i in row_dict:
                         row.append(row_dict[i])
@@ -1744,20 +1747,21 @@ def search_export(request, selected_facets):
                 row = []
                 row_dict = {}
                 properties = result.text
-                for each_prop in properties:
-                    prop_pair = each_prop.split(':', 1)
-                    if len(prop_pair) < 2:
-                        continue
-                    prop_name = smart_str(prop_pair[0].strip())
-                    prop_value = smart_str(prop_pair[1].strip())
-                    if not (prop_name in titles):
-                        column_index = len(titles)                        
-                        titles.append(prop_name)
-                    else:
-                        column_index = titles.index(prop_name)
-                        if column_index in row_dict:
-                            prop_value = row_dict[column_index] + '; ' + prop_value
-                    row_dict[column_index] = prop_value
+                if properties:
+                    for each_prop in properties:
+                        prop_pair = each_prop.split(':', 1)
+                        if len(prop_pair) < 2:
+                            continue
+                        prop_name = smart_str(prop_pair[0].strip())
+                        prop_value = smart_str(prop_pair[1].strip())
+                        if not (prop_name in titles):
+                            column_index = len(titles)                        
+                            titles.append(prop_name)
+                        else:
+                            column_index = titles.index(prop_name)
+                            if column_index in row_dict:
+                                prop_value = row_dict[column_index] + '; ' + prop_value
+                        row_dict[column_index] = prop_value
                 for i in range(len(titles)):
                     if i in row_dict:
                         row.append(row_dict[i])
